@@ -312,7 +312,7 @@ def _os_listfolder() -> List[str]:
     folders = []
     for k in dirs:
         if os.path.isdir(k):
-            folders.append(k)
+            folders.append(k + '/')
     return folders
 
 
