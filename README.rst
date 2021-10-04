@@ -14,7 +14,7 @@ A python application that removes LaTeX code and transforms it to plain text for
     :target: https://www.python.org/downloads
     :alt: Python 3.6+
 
-.. image:: https://badge.fury.io/py/pygame-menu.svg
+.. image:: https://badge.fury.io/py/pydetex.svg
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
@@ -22,26 +22,26 @@ A python application that removes LaTeX code and transforms it to plain text for
     :target: https://travis-ci.com/ppizarror/pydetex
     :alt: Travis
 
-.. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/pygame-menu.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/pygame-menu/alerts
+.. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/pydetex.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/ppizarror/pydetex/alerts
     :alt: Total alerts
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/ppizarror/pygame-menu.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/pygame-menu/context:python
+.. image:: https://img.shields.io/lgtm/grade/python/g/ppizarror/pydetex.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/ppizarror/pydetex/context:python
     :alt: Language grade: Python
 
-.. image:: https://codecov.io/gh/ppizarror/pygame-menu/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/ppizarror/pygame-menu
+.. image:: https://codecov.io/gh/ppizarror/pydetex/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/ppizarror/pydetex
     :alt: Codecov
 
-.. image:: https://img.shields.io/github/issues/ppizarror/pygame-menu
-    :target: https://github.com/ppizarror/pygame-menu/issues
+.. image:: https://img.shields.io/github/issues/ppizarror/pydetex
+    :target: https://github.com/ppizarror/pydetex/issues
     :alt: Open issues
 
-.. image:: https://img.shields.io/pypi/dm/pygame-menu?color=purple
-    :target: https://pypi.org/project/pygame-menu/
+.. image:: https://img.shields.io/pypi/dm/pydetex?color=purple
+    :target: https://pypi.org/project/pydetex/
     :alt: PyPi downloads
 
-.. image:: https://static.pepy.tech/personalized-badge/pygame-menu?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=total%20downloads
-    :target: https://pepy.tech/project/pygame-menu
+.. image:: https://static.pepy.tech/personalized-badge/pydetex?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=total%20downloads
+    :target: https://pepy.tech/project/pydetex
     :alt: Total downloads
