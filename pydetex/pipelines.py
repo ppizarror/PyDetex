@@ -19,10 +19,11 @@ def simple_pipeline(s: str) -> str:
     :return: String with no latex!
     """
     s = par.simple_replace(s)
-    for tag in ['textbf', 'textit', 'texttt', 'doublequotes', 'section',
-                'subsection', 'chapter', 'subsubsection', 'subsubsubsection']:
-        s = par.remove_tag(s, tag)
+    s = par.remove_common_tags(s)
     s = par.process_cite(s)
     s = par.process_ref(s)
+    s = par.process_labels(s)
     s = par.remove_comments(s)
+    s = par.process_quotes(s)
+    s = par.process_inputs(s)
     return s

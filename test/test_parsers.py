@@ -19,6 +19,15 @@ class ParserTest(BaseTest):
         """
         self.assertNotEqual(pydetex.version.vernum, '')
 
+    def test_process_labels(self) -> None:
+        """
+        Removes labels.
+        """
+        self.assertEqual(par.process_labels('\\section{Research method}\\label{researchmethod}'),
+                         '\\section{Research method}')
+        self.assertEqual(par.process_labels('This is \\label{epic} a very nice latex'),
+                         'This is  a very nice latex')
+
     def test_find_str(self) -> None:
         """
         Test find string.
@@ -72,8 +81,47 @@ class ParserTest(BaseTest):
         self.assertEqual(par.remove_comments(s),
                          'This is a multi-line file, typical from latex\n\nWhereas this is another line or paragraph. So boring')
 
+        # Comments right to text
+        s = """
+        Web of Science, % https://webofknowledge.com/
+        Scopus, % https://www.scopus.com/
+        IEEE/IET Xplore, % https://ieeexplore.ieee.org/
+        Science Direct, % https://uchile.idm.oclc.org/login?url=https://www.sciencedirect.com/
+        """
+        self.assertEqual(par.remove_comments(s), 'Web of Science, Scopus, IEEE/IET Xplore, Science Direct,')
+
+        # Comments at start
+        s = """% !TeX spellcheck = en_US
+
+        \section{Introduction}
+        
+        Architectural floor plans are documents that result from an iterative design, planning, and engineering pro"""
+        self.assertEqual(par.remove_comments(s),
+                         '\\section{Introduction}\n\nArchitectural floor plans are documents that result from an iterative design, planning, and engineering pro')
+
     def test_simple_replace(self) -> None:
         """
         Test simple replace format.
         """
         self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
+
+    def test_remove_common_tags(self) -> None:
+        """
+        Remove common tags.
+        """
+        self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
+
+    def test_process_quotes(self) -> None:
+        """
+        Test quotes.
+        """
+        self.assertEqual(par.process_quotes('This is \\quotes{a quoted} string'), 'This is "a quoted" string')
+
+    def test_parse_inputs(self) -> None:
+        """
+        Parse inputs.
+        """
+        self.assertEqual(par.process_inputs('This loads a \\input{latex} or \\input{} epic'),
+                         'This loads a \\input{latex} or \\input{} epic')
+        self.assertEqual(par.process_inputs('This loads a \\input{tex/simple} epic'),
+                         'This loads a this is a simple file epic')
