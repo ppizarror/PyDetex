@@ -19,7 +19,7 @@ PyDetex
     :alt: PyPi package
 
 .. image:: https://travis-ci.com/ppizarror/pydetex.svg?branch=master
-    :target: https://travis-ci.com/ppizarror/pydetex
+    :target: https://app.travis-ci.com/github/ppizarror/pydetex
     :alt: Travis
 
 .. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/pydetex.svg?logo=lgtm&logoWidth=18
