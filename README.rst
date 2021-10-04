@@ -2,8 +2,6 @@
 PyDetex
 =======
 
-A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things...
-
 .. image:: https://img.shields.io/badge/author-Pablo%20Pizarro%20R.-lightgray.svg
     :target: https://ppizarror.com
     :alt: @ppizarror
@@ -47,3 +45,32 @@ A python application that removes LaTeX code and transforms it to plain text for
 .. image:: https://static.pepy.tech/personalized-badge/pydetex?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=total%20downloads
     :target: https://pepy.tech/project/pydetex
     :alt: Total downloads
+
+Introduction
+------------
+
+A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things...
+
+Install Instructions
+--------------------
+
+PyDetex can be installed via pip. Simply run:
+
+.. code-block:: bash
+
+    $> python3 pip install pydetex
+
+Launch the GUI, or use the library
+----------------------------------
+
+Simply run this command anywhere to execute the application, or just import pydetex and play.
+
+.. code-block:: bash
+
+    $> python3 -m pydetex.gui
+
+.. figure:: docs/_static/example_basic.png
+    :scale: 40%
+    :align: center
+
+    Tadada... !!! A simple GUI to process your LaTex, and paste into Grammarly?? ＼(^o^)／
