@@ -20,7 +20,7 @@ class GuiTest(BaseTest):
         Gui test.
         """
         if 'TRAVIS' in os.environ:
-            os.environ['DISPLAY'] = ':0'
+            return
         gui = PyDetexGUI()
         gui._clear()
         self.assertEqual(gui.pipeline, pip.simple_pipeline)
