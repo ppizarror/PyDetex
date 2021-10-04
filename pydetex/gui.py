@@ -15,6 +15,7 @@ import os
 from typing import Callable
 import pyperclip
 
+import pydetex.version
 from pydetex.pipelines import simple_pipeline
 
 # Check OS
@@ -53,7 +54,7 @@ class PyDetexGUI(object):
         self._root = tk.Tk()
 
         # Configure window
-        self._root.title('PyDetex')
+        self._root.title('PyDetex v{}'.format(pydetex.version.ver))
         if platform.system() == 'Darwin':
             self._root.iconbitmap(respath + 'icon.gif')
             img = tk.Image('photo', file=respath + 'icon.gif')
