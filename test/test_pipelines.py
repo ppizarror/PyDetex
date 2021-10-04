@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/PyDetex
+https://github.com/ppizarror/pydetex
 
 TEST PIPELINES
 Test the pipelines.

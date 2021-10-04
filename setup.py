@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/PyDetex
+https://github.com/ppizarror/pydetex
 
 SETUP DISTRIBUTION
 Create setup for PyPI

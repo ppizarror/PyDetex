@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/PyDetex
+https://github.com/ppizarror/pydetex
 
 PARSERS
 Defines parsers, which perform a single task for removal LaTex things.
@@ -174,7 +174,7 @@ def simple_replace(s: str) -> str:
     :return: String with replaced items
     """
     library = [
-        ('\item', '-'),
+        ('\\item', '-'),
         ('--', '–'),
         ('\\alpha', 'α'),
         ('\\beta', 'β'),
