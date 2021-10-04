@@ -56,7 +56,7 @@ A python application that removes LaTeX code and transforms it to plain text for
 Install Instructions
 --------------------
 
-PyDetex can be installed via pip. Simply run:
+PyDetex can be installed via pip, for both MacOS, Windows & Linux. Simply run:
 
 .. code-block:: bash
 

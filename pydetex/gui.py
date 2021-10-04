@@ -9,7 +9,6 @@ Basic gui that convers and executes a given pipeline.
 __all__ = ['PyDetexGUI']
 
 import tkinter as tk
-from tkmacosx import Button
 
 import platform
 import os
@@ -22,8 +21,12 @@ from pydetex.pipelines import simple_pipeline
 IS_OSX = platform.system() == 'Darwin'
 
 if IS_OSX:
+    from tkmacosx import Button
+
     PROGRAMSIZE = 700, 360
 else:
+    from tkinter import Button
+
     PROGRAMSIZE = 700, 415
 
 # Set resouces path
