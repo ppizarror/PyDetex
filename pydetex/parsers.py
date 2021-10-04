@@ -9,14 +9,20 @@ Defines parsers, which perform a single task for removal LaTex things.
 __all__ = [
     'find_str',
     'process_cite',
+    'process_inputs',
     'process_labels',
+    'process_quotes',
     'process_ref',
     'remove_comments',
+    'remove_common_tags',
     'remove_tag',
     'simple_replace'
 ]
 
+import os
 from typing import List, Tuple, Union
+
+PRINT_LOCATION = False
 
 
 def _find_str(s: str, char: str) -> int:
@@ -87,6 +93,30 @@ def remove_tag(s: str, tagname: str) -> str:
                 break
 
 
+def remove_common_tags(s: str) -> str:
+    """
+    Remove common tags from string.
+
+    :param s: Text
+    :return: Text without tags
+    """
+    for tag in [
+        'emph',
+        'textbf',
+        'textit',
+        'texttt',
+        'section',
+        'subsection',
+        'chapter',
+        'subsubsection',
+        'subsubsubsection',
+        'end{itemize}',
+        'begin{itemize}'
+    ]:
+        s = remove_tag(s, tag)
+    return s
+
+
 def process_cite(s: str) -> str:
     """
     Transforms all cites to a text-based with numbers. For example,
@@ -154,6 +184,26 @@ def process_ref(s) -> str:
                 break
 
 
+def process_quotes(s) -> str:
+    """
+    Process quotes.
+
+    :param s: String
+    :return: String with "quotes"
+    """
+    while True:
+        k = find_str(s, ['\\quotes{', '\\doublequotes{'])
+        if k == -1:
+            return s
+        m = 0
+        for j in range(len(s)):
+            if s[k + j] == '{':
+                m = j
+            if s[k + j] == '}':
+                s = s[:k] + '"' + s[k + m + 1:k + j] + '"' + s[k + j + 1:]
+                break
+
+
 def remove_comments(s: str) -> str:
     """
     Remove comments from text.
@@ -162,13 +212,38 @@ def remove_comments(s: str) -> str:
     :return: Text without comments
     """
     symbol = '|COMMENTPERCENTAGESYMBOL|'
-    s = s.replace('  ', ' ').replace(' %', '%')
+    s = s.replace('  ', ' ')
     s = s.replace('\\%', symbol)
     k = s.split('\n')
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
+    line_merge = []
     for r in range(len(k)):
-        k[r] = k[r].split('%')[0]  # Removes all comments from list
+        sp = k[r].split('%')
+        k[r] = sp[0]  # Removes all comments from list
+        line_merge.append(len(sp) > 1)
+    line_merge.append(False)
+    k.append('')
+    for r in range(len(k)):
+        if line_merge[r] and not line_merge[r + 1] and k[r + 1] != '':
+            line_merge[r + 1] = True
+    new_k = []
+    j = 0
+    merged_str = ''
+    while True:  # Merge comment lines
+        if not line_merge[j]:
+            if merged_str != '':  # Add current merged str
+                new_k.append(merged_str)
+                merged_str = ''
+            new_k.append(k[j])
+        else:
+            merged_str += k[j]
+        if j == len(k) - 1:
+            break
+        j += 1
+    if merged_str != '':
+        new_k.append(merged_str)
+    k = new_k
     w = []  # Removes duplicates '' lines to single ''
     last = ''
     for j in k:
@@ -180,7 +255,7 @@ def remove_comments(s: str) -> str:
     if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
     s = '\n'.join(w)
-    s = s.replace(symbol, '%')
+    s = s.replace(symbol, '%').strip()
     return s
 
 
@@ -205,3 +280,57 @@ def simple_replace(s: str) -> str:
     for w in library:
         s = s.replace(w[0], w[1])
     return s
+
+
+def _load_file(f: str, path: str) -> str:
+    """
+    Try to load a file.
+
+    :param f: Filename
+    :param path: Path to look from
+    :return: File contents
+    """
+    try:
+        fo = open(path + f, 'r')
+        s = '\n'.join(fo.readlines())
+        fo.close()
+        return s
+    except FileNotFoundError:
+        return '|FILEERROR|'
+
+
+def process_inputs(s: str) -> str:
+    """
+    Process inputs, and try to copy the content.
+
+    :param s: Text with inputs
+    :return: Text copied with data
+    """
+    while True:
+        k = find_str(s, '\\input{')
+        if k == -1:
+            return s.replace('|INPUTFILETAG', '\\input{')
+        m = 0
+        for j in range(len(s)):
+            if s[k + j] == '{':
+                m = j
+            if s[k + j] == '}':
+                tex_file = s[k + m + 1:k + j]
+                if '.tex' not in tex_file:
+                    tex_file += '.tex'
+                global PRINT_LOCATION
+                if not PRINT_LOCATION:
+                    print('Current path location: {0}'.format(os.getcwd()))
+                    PRINT_LOCATION = True
+                print('Detected file {0}:'.format(tex_file))
+                tx = _load_file(tex_file, './')
+                if tx == '|FILEERROR|':
+                    print('\tFile not found in path, trying in parent folder')
+                    tx = _load_file(tex_file, '../')
+                if tx == '|FILEERROR|':
+                    print('\tFile not found in parent, skipping')
+                    s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
+                else:
+                    print('\tFile found and loaded')
+                    s = s[:k] + tx + s[k + j + 1:]
+                break

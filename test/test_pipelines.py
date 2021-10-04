@@ -35,3 +35,23 @@ class ParserTest(BaseTest):
 
         # Empty
         self.assertEqual(pip.simple_pipeline(''), '')
+
+        # Lists
+        # noinspection HttpUrlsUsage
+        s = """
+        \\begin{itemize}
+        \item The academic databases 
+        Web of Science, % http://uchile.idm.oclc.org/login?url=http://webofknowledge.com/
+        Scopus, % http://uchile.idm.oclc.org/login?url=http://www.scopus.com/
+        IEEE/IET Xplore, % http://uchile.idm.oclc.org/login?url=http://ieeexplore.ieee.org/
+        Science Direct, % http://uchile.idm.oclc.org/login?url=http://www.sciencedirect.com/
+        ACM Digital Library, % http://uchile.idm.oclc.org/login?url=https://dl.acm.org/dl.cfm
+        ASCE Library, % http://uchile.idm.oclc.org/login?url=http://ascelibrary.org
+        ProQuest, % https://uchile.idm.oclc.org/login?url=http://search.proquest.com/computing?accountid=14621
+        and Springer % http://uchile.idm.oclc.org/login?url=https://link.springer.com
+        were used for article search and selection. Also, online tools Semantic Scholar and Connected Papers were employed to retrieve similar articles powered by AI and visual graphs.
+        
+        \item Keywords such as \doublequotes{floor plan analysis}, \doublequotes{floor plan recognition and interpretation}, \doublequotes{floor plan segmentation}, \doublequotes{floor plan image}, \doublequotes{apartment structure}, \doublequotes{wall segmentation}, \doublequotes{architectural plan vectorization}, \doublequotes{room and wall retrieval}, \doublequotes{apartment graph}, \doublequotes{object detection in floor plans}, and \doublequotes{parsing floor plan images} were used to search the databases. The search date period ranged from 1995 to \\fecha. For each article, its cross-references and similar works were also considered for revision.
+        """
+        self.assertEqual(pip.simple_pipeline(s),
+                         '- The academic databases\nWeb of Science, Scopus, IEEE/IET Xplore, Science Direct, ACM Digital Library, ASCE Library, ProQuest, and Springer were used for article search and selection. Also, online tools Semantic Scholar and Connected Papers were employed to retrieve similar articles powered by AI and visual graphs.\n\n- Keywords such as "floor plan analysis", "floor plan recognition and interpretation", "floor plan segmentation", "floor plan image", "apartment structure", "wall segmentation", "architectural plan vectorization", "room and wall retrieval", "apartment graph", "object detection in floor plans", and "parsing floor plan images" were used to search the databases. The search date period ranged from 1995 to \\fecha. For each article, its cross-references and similar works were also considered for revision.')

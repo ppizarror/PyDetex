@@ -7,7 +7,6 @@ Create setup for PyPI
 """
 
 from setuptools import setup, find_packages
-import platform
 import pydetex
 
 # Load readme
