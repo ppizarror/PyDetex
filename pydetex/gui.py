@@ -34,7 +34,9 @@ class PyDetexGUI(object):
     GUI.
     """
     pipeline: Callable[[str], str]
+
     _copy_clip: 'tk.Button'
+    _ready: bool
     _root: 'tk.Tk'
     _text_in: 'tk.Text'
     _text_out: 'tk.Text'
@@ -90,6 +92,7 @@ class PyDetexGUI(object):
         # Write basic text
         self._clear()  # This also changes states
         self._text_in.insert(0.0, 'Write or paste here your LaTeX code')
+        self._ready = False
 
     def start(self) -> None:
         """
@@ -105,6 +108,7 @@ class PyDetexGUI(object):
         self._text_out.delete(0.0, tk.END)
         self._text_out['state'] = tk.DISABLED
         self._copy_clip['state'] = tk.DISABLED
+        self._ready = False
 
     def _process(self) -> None:
         """
@@ -116,6 +120,7 @@ class PyDetexGUI(object):
         out = self.pipeline(text)
         self._text_out.delete(0.0, tk.END)
         self._text_out.insert(0.0, out)
+        self._ready = True
 
     def _process_clip(self) -> None:
         """
@@ -125,6 +130,14 @@ class PyDetexGUI(object):
         self._text_in.delete(0.0, tk.END)
         self._text_in.insert(0.0, text)
         self._process()
+
+    def _get_pipeline_results(self) -> str:
+        """
+        Returns the pipeline results.
+
+        :return: Text
+        """
+        return str(self._text_out.get(0.0, tk.END)).strip()
 
     def _copy_to_clip(self) -> None:
         """
