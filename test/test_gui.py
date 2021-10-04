@@ -10,6 +10,7 @@ from test._base import BaseTest
 
 from pydetex.gui import PyDetexGUI
 import pydetex.pipelines as pip
+import os
 
 
 class GuiTest(BaseTest):
@@ -18,6 +19,8 @@ class GuiTest(BaseTest):
         """
         Gui test.
         """
+        if 'TRAVIS' in os.environ:
+            os.environ['DISPLAY'] = ':0'
         gui = PyDetexGUI()
         gui._clear()
         self.assertEqual(gui.pipeline, pip.simple_pipeline)

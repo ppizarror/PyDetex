@@ -22,6 +22,8 @@ __all__ = [
 import os
 from typing import List, Tuple, Union
 
+TAG_FILE_ERROR = '|FILEERROR|'
+
 NOT_FOUND_FILES = []
 PRINT_LOCATION = False
 
@@ -297,7 +299,21 @@ def _load_file(f: str, path: str) -> str:
         fo.close()
         return s
     except FileNotFoundError:
-        return '|FILEERROR|'
+        return TAG_FILE_ERROR
+
+
+def _os_listfolder() -> List[str]:
+    """
+    Returns the folders from the current path.
+
+    :return: Folder list
+    """
+    dirs = os.listdir('./')
+    folders = []
+    for k in dirs:
+        if os.path.isdir(k):
+            folders.append(k)
+    return folders
 
 
 def process_inputs(s: str) -> str:
@@ -308,6 +324,7 @@ def process_inputs(s: str) -> str:
     :return: Text copied with data
     """
     global PRINT_LOCATION, NOT_FOUND_FILES
+    tx = ''
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
@@ -325,12 +342,18 @@ def process_inputs(s: str) -> str:
                         print('Current path location: {0}'.format(os.getcwd()))
                         PRINT_LOCATION = True
                     print('Detected file {0}:'.format(tex_file))
-                    tx = _load_file(tex_file, './')
-                    if tx == '|FILEERROR|':
-                        print('\tFile not found in path, trying in parent folder')
-                        tx = _load_file(tex_file, '../')
-                    if tx == '|FILEERROR|':
-                        print('\tFile not found in parent, skipping')
+
+                    # Get folder locations
+                    folders = _os_listfolder()
+                    folders.insert(0, '../')
+                    folders.insert(0, './')
+                    for f in folders:
+                        tx = _load_file(tex_file, f)
+                        if tx == TAG_FILE_ERROR:
+                            print('\tFile not found in {0}'.format(f))
+                        else:
+                            break
+                    if tx == TAG_FILE_ERROR:
                         NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
                     else:
