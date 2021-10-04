@@ -9,6 +9,8 @@ Basic gui that convers and executes a given pipeline.
 __all__ = ['PyDetexGUI']
 
 import tkinter as tk
+from tkmacosx import Button
+
 import platform
 import os
 from typing import Callable
@@ -77,14 +79,18 @@ class PyDetexGUI(object):
         f3 = tk.Frame(self._root, border=2)
         f3.pack()
 
-        tk.Button(f3, text='Process', command=self._process, relief=tk.GROOVE).pack(side=tk.LEFT)
+        Button(f3, text='Process', command=self._process, relief=tk.GROOVE, bg='#475aff').pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
+
         tk.Button(f3, text='Process from clipboard', command=self._process_clip, relief=tk.GROOVE).pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
-        tk.Button(f3, text='Clear', command=self._clear, relief=tk.GROOVE, bg='red').pack(side=tk.LEFT)
-        tk.Label(f3, text='    ').pack(side=tk.LEFT)
+
         self._copy_clip = tk.Button(f3, text='Copy to clipboard', command=self._copy_to_clip, relief=tk.GROOVE)
         self._copy_clip.pack(side=tk.LEFT)
+        tk.Label(f3, text='    ').pack(side=tk.LEFT)
+
+        Button(f3, text='Clear', command=self._clear, relief=tk.GROOVE, bg='#ff7878').pack(side=tk.LEFT)
+        # tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
         # Set the pipeline
         self.pipeline = simple_pipeline

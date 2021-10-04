@@ -76,4 +76,4 @@ class ParserTest(BaseTest):
         """
         Test simple replace format.
         """
-        self.assertEqual(par.simple_replace('This is an \item a'), 'This is an - a')
+        self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')

@@ -159,7 +159,7 @@ def remove_comments(s: str) -> str:
         else:
             w.append(j)
         last = j
-    if w[-1] == '':  # Removes last space
+    if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
     s = '\n'.join(w)
     s = s.replace(symbol, '%')
