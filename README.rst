@@ -84,6 +84,5 @@ TO-DOs
 
 Currently, many things must be improved:
 
-- Process the \input{files}
 - Learn \def and replace properly
 - Support for environments, such as *figure*, *equation*, *table*, etc..
