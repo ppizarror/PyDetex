@@ -22,6 +22,7 @@ __all__ = [
 import os
 from typing import List, Tuple, Union
 
+NOT_FOUND_FILES = []
 PRINT_LOCATION = False
 
 
@@ -306,6 +307,7 @@ def process_inputs(s: str) -> str:
     :param s: Text with inputs
     :return: Text copied with data
     """
+    global PRINT_LOCATION, NOT_FOUND_FILES
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
@@ -318,19 +320,22 @@ def process_inputs(s: str) -> str:
                 tex_file = s[k + m + 1:k + j]
                 if '.tex' not in tex_file:
                     tex_file += '.tex'
-                global PRINT_LOCATION
-                if not PRINT_LOCATION:
-                    print('Current path location: {0}'.format(os.getcwd()))
-                    PRINT_LOCATION = True
-                print('Detected file {0}:'.format(tex_file))
-                tx = _load_file(tex_file, './')
-                if tx == '|FILEERROR|':
-                    print('\tFile not found in path, trying in parent folder')
-                    tx = _load_file(tex_file, '../')
-                if tx == '|FILEERROR|':
-                    print('\tFile not found in parent, skipping')
-                    s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
+                if tex_file not in NOT_FOUND_FILES:
+                    if not PRINT_LOCATION:
+                        print('Current path location: {0}'.format(os.getcwd()))
+                        PRINT_LOCATION = True
+                    print('Detected file {0}:'.format(tex_file))
+                    tx = _load_file(tex_file, './')
+                    if tx == '|FILEERROR|':
+                        print('\tFile not found in path, trying in parent folder')
+                        tx = _load_file(tex_file, '../')
+                    if tx == '|FILEERROR|':
+                        print('\tFile not found in parent, skipping')
+                        NOT_FOUND_FILES.append(tex_file)
+                        s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
+                    else:
+                        print('\tFile found and loaded')
+                        s = s[:k] + tx + s[k + j + 1:]
                 else:
-                    print('\tFile found and loaded')
-                    s = s[:k] + tx + s[k + j + 1:]
+                    s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
                 break

@@ -121,6 +121,10 @@ class ParserTest(BaseTest):
         """
         Parse inputs.
         """
+        self.assertEqual(par.NOT_FOUND_FILES, [])
+        self.assertEqual(par.process_inputs('This loads a \\input{latex} or \\input{} epic'),
+                         'This loads a \\input{latex} or \\input{} epic')
+        self.assertEqual(par.NOT_FOUND_FILES, ['latex.tex', '.tex'])
         self.assertEqual(par.process_inputs('This loads a \\input{latex} or \\input{} epic'),
                          'This loads a \\input{latex} or \\input{} epic')
         self.assertEqual(par.process_inputs('This loads a \\input{tex/simple} epic'),
