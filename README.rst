@@ -1,4 +1,6 @@
-# PyDetex
+=======
+PyDetex
+=======
 
 A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things...
 
