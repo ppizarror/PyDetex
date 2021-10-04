@@ -9,6 +9,7 @@ Defines parsers, which perform a single task for removal LaTex things.
 __all__ = [
     'find_str',
     'process_cite',
+    'process_labels',
     'process_ref',
     'remove_comments',
     'remove_tag',
@@ -114,6 +115,23 @@ def process_cite(s: str) -> str:
                         cites[w] = len(cites.keys()) + 1
                     c = c.replace(w, str(cites[w]))
                 s = s[:k] + '[' + c + ']' + s[k + j + 1:]
+                break
+
+
+def process_labels(s: str) -> str:
+    """
+    Removes labels.
+
+    :param s: String
+    :return:
+    """
+    while True:
+        k = find_str(s, '\\label{')
+        if k == -1:
+            return s
+        for j in range(len(s)):
+            if s[k + j] == '}':
+                s = s[:k] + s[k + j + 1:]
                 break
 
 

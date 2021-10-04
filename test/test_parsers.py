@@ -19,6 +19,15 @@ class ParserTest(BaseTest):
         """
         self.assertNotEqual(pydetex.version.vernum, '')
 
+    def test_process_labels(self) -> None:
+        """
+        Removes labels.
+        """
+        self.assertEqual(par.process_labels('\\section{Research method}\\label{researchmethod}'),
+                         '\\section{Research method}')
+        self.assertEqual(par.process_labels('This is \\label{epic} a very nice latex'),
+                         'This is  a very nice latex')
+
     def test_find_str(self) -> None:
         """
         Test find string.
