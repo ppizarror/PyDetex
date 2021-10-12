@@ -1,2 +1,3 @@
+langdetect
 pyperclip
 tkmacosx
