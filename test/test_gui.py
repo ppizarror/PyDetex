@@ -8,7 +8,8 @@ Test guis.
 
 from test._base import BaseTest
 
-from pydetex.gui import PyDetexGUI
+# noinspection PyProtectedMember
+from pydetex.gui import PyDetexGUI, _Settings
 import pydetex.pipelines as pip
 import os
 
@@ -39,3 +40,12 @@ class GuiTest(BaseTest):
         # Check clip
         gui._process_clip()
         gui._copy_to_clip()
+
+    def test_settings(self) -> None:
+        """
+        Test the app settings.
+        """
+        cfg = _Settings()
+        self.assertEqual(cfg.get('PIPELINE'), pip.simple_pipeline)
+        self.assertTrue(cfg.get('CHECK_REPETITION'))
+        cfg.save()
