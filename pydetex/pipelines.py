@@ -6,9 +6,15 @@ PIPELINES
 Defines the pipelines which apply parsers.
 """
 
-__all__ = ['simple_pipeline']
+__all__ = [
+    'simple_pipeline',
+    'PipelineType'
+]
 
 import pydetex.parsers as par
+from typing import Callable
+
+PipelineType = Callable[[str], str]
 
 
 def simple_pipeline(s: str) -> str:

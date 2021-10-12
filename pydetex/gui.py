@@ -9,16 +9,17 @@ Basic gui that convers and executes a given pipeline.
 __all__ = ['PyDetexGUI']
 
 import tkinter as tk
+from tkinter import messagebox
 
 import platform
 import os
 import pyperclip
 
-from typing import Callable, Tuple, Dict, Any, List, Type, Union
+from typing import Callable, Tuple, Dict, Any, List, Type, Union, Optional
 from warnings import warn
 
 import pydetex.version
-from pydetex.pipelines import simple_pipeline
+import pydetex.pipelines as pip
 import pydetex.utils as ut
 
 # Check OS
@@ -39,8 +40,42 @@ _respath = __actualpath + 'res/'
 
 # Store the pipelines
 _PIPELINES = {
-    'simple_pipeline': simple_pipeline
+    'simple_pipeline': pip.simple_pipeline
 }
+
+
+def _validate_int(p: str) -> bool:
+    """
+    Validate an integer.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        p = float(p)
+        return int(p) == p
+    except ValueError:
+        pass
+    return False
+
+
+def _validate_float(p: str) -> bool:
+    """
+    Validate a float.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        float(p)
+        return True
+    except ValueError:
+        pass
+    return False
 
 
 class _SettingsWindow(object):
@@ -48,11 +83,19 @@ class _SettingsWindow(object):
     Settings window.
     """
 
-    def __init__(self, window_size: Tuple[int, int]) -> None:
+    _cfg: '_Settings'
+    on_destroy: Optional[Callable[[], None]]
+
+    def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
         """
         Constructor.
+
+        :param window_size: Window size (width, height)
+        :param cfg: Settings
         """
         self.root = tk.Tk()
+        self.on_destroy = None
+        self._cfg = cfg  # Store setting reference
 
         # Configure window
         self.root.title('Settings')
@@ -61,6 +104,75 @@ class _SettingsWindow(object):
         self.root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
                                             (self.root.winfo_screenwidth() - window_size[0]) / 2,
                                             (self.root.winfo_screenheight() - window_size[1]) / 2))
+        self.root.protocol('WM_DELETE_WINDOW', self._close)
+
+        # Registers
+        reg_int = self.root.register(_validate_int)
+
+        # Main frame
+        f0 = tk.Frame(self.root, border=5)
+        f0.pack(fill='both')
+
+        label_w = 15
+
+        # Set pipelines
+        f1 = tk.Frame(f0, border=0)
+        f1.pack(fill='both', pady=5)
+        tk.Label(f1, text='Pipeline', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+
+        self._var_pipeline = tk.StringVar(self.root)
+        self._var_pipeline.set(cfg.get(cfg.CFG_PIPELINE, update=False))  # default value
+
+        tk.OptionMenu(f1, self._var_pipeline, *list(_PIPELINES.keys())).pack(side=tk.LEFT)
+
+        # Check repetition
+        f2 = tk.Frame(f0, border=0)
+        f2.pack(fill='both')
+        tk.Label(f2, text='Check repetition', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_check_repetition = tk.BooleanVar(self.root)
+        self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
+        tk.Checkbutton(f2, variable=self._var_check_repetition).pack(side=tk.LEFT)
+
+        # Repetition min char
+        f3 = tk.Frame(f0, border=0)
+        f3.pack(fill='both')
+        tk.Label(f3, text='Repetition min chars', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_repetition_min_char = tk.Entry(f3, validate='all', validatecommand=(reg_int, '%P'))
+        self._var_repetition_min_char.pack(side=tk.LEFT)
+        self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR))
+
+        # Save
+        fbuttons = tk.Frame(f0, border=15)
+        fbuttons.pack(side=tk.BOTTOM, expand=True)
+        Button(fbuttons, text='Save', command=self._save, relief=tk.GROOVE).pack()
+
+    def _close(self) -> None:
+        """
+        Close the window.
+        """
+        if self.on_destroy:
+            self.on_destroy()
+        self.root.destroy()
+
+    def _save(self) -> None:
+        """
+        Save the settings.
+        """
+        store = (
+            (self._cfg.CFG_PIPELINE, self._var_pipeline.get(),
+             'Invalid pipeline value'),
+            (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
+             'Invalid repetition value'),
+            (self._cfg.CFG_REPETITION_MIN_CHAR, self._var_repetition_min_char.get(),
+             'Repetition min chars must be greater than zero')
+        )
+        for cfg in store:
+            try:
+                self._cfg.set(cfg[0], cfg[1])
+            except ValueError:
+                messagebox.showerror('Error', cfg[2])
+        self._cfg.save()
+        self._close()
 
 
 class _Settings(object):
@@ -68,30 +180,42 @@ class _Settings(object):
     Settings.
     """
 
-    def __init__(self) -> None:
+    _default_settings: Dict[str, Tuple[Any, Type, Union[List[Any], Callable[[Any], bool]]]]
+    _settings: Dict[str, Any]
+
+    def __init__(self, ignore_file: bool = False) -> None:
         """
         Constructor.
+
+        :param ignore_file: If True, the settings file is ignored
         """
         load = []
-        try:
-            f = open(_respath + 'settings.cfg', 'r')
-            load = f.readlines()
-            f.close()
-        except FileNotFoundError:
-            warn('Setting file could not be loaded or not exist. Creating new file')
+        if not ignore_file:
+            try:
+                f = open(_respath + 'settings.cfg', 'r')
+                load = f.readlines()
+                f.close()
+            except FileNotFoundError:
+                warn('Setting file could not be loaded or not exist. Creating new file')
+
+        # Defines settings
+        self.CFG_CHECK_REPETITION = 'CHECK_REPETITION'
+        self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_REPETITION_MIN_CHAR = 'REPETITION_MIN_CHAR'
+        self.CFG_TOTAL_PROCESSED_WORDS = 'TOTAL_PROCESSED_WORDS'
 
         # Stores default settings and the valid values
-        default_settings: Dict[str, Tuple[str, Type, Union[List[Any], Callable[[Any], bool]]]] = {
-            'PIPELINE': ('simple_pipeline', str, list(_PIPELINES.keys())),
-            'CHECK_REPETITION': (True, bool, [True, False]),
-            'REPETITION_MIN_CHAR': (4, int, lambda x: x > 0),
-            'TOTAL_PROCESSED_WORDS': (0, int, lambda x: x > 0)
+        self._default_settings = {
+            self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
+            self.CFG_PIPELINE: ('simple_pipeline', str, list(_PIPELINES.keys())),
+            self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
+            self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
         }
 
         # The valid settings
         self._settings = {}
-        for k in default_settings.keys():
-            self._settings[k] = default_settings[k][0]
+        for k in self._default_settings.keys():
+            self._settings[k] = self._default_settings[k][0]
 
         # Load the user settings
         for f in load:
@@ -101,56 +225,97 @@ class _Settings(object):
                     continue
                 j = sp[0].strip()
                 val = sp[1].strip()
-
-                # Apply custom values
-                if val == 'True':
-                    val = True
-                elif val == 'False':
-                    val = False
-                elif val.isdigit():
-                    val = int(val)
-                else:
-                    try:
-                        val = float(val)
-                    except ValueError:
-                        pass
-
-                if j in default_settings.keys():  # Setting exist
-                    val_type = default_settings[j][1]
-                    val_valids = default_settings[j][2]
-                    # Check val type
-                    if not isinstance(val, val_type):
-                        warn('Stored setting {0} should be type {1}'.format(j, val_type))
-                        continue
-                    if isinstance(val_valids, list):
-                        if val in val_valids:  # Setting is within valid ones
-                            self._settings[j] = val  # Update setting value
-                        else:
-                            warn('Stored setting {0} value should have these values: {1}'
-                                 .format(j, ','.join(val_valids)))
-                    else:  # Is a function
-                        if not val_valids(val):
-                            warn('Stored setting {0} do not pass valid test'.format(j))
-                        else:
-                            self._settings[j] = val  # Update setting value
+                if self.check_setting(j, val):
+                    self._settings[j] = self._parse_str(val)  # Update setting value
 
         # Save the settings
         self.save()
 
-    def get(self, key: str) -> Any:
+    @staticmethod
+    def _parse_str(value: Any) -> Any:
+        """
+        Parse common string values.
+
+        :param value: Value
+        :return: Parsed value
+        """
+        if isinstance(value, str):
+            if value == 'True':
+                value = True
+            elif value == 'False':
+                value = False
+            elif value.replace('.', '').replace('-', '').replace('+', '').isdigit():
+                try:
+                    old_val = value
+                    value = float(value)
+                    if '.' not in old_val and int(value) == value:
+                        value = int(value)
+                except ValueError:
+                    pass
+        return value
+
+    def check_setting(self, key: str, value: Any) -> bool:
+        """
+        Check if a setting is valid.
+
+        :param key: Key setting
+        :param value: Value
+        :return: True if valid
+        """
+        # Apply custom values
+        if isinstance(value, str):
+            value = self._parse_str(value)
+
+        # Checks
+        if key in self._default_settings.keys():
+            val_type = self._default_settings[key][1]
+            val_valids = self._default_settings[key][2]
+            # Check val type
+            if not isinstance(value, val_type):
+                warn('Setting {0} should be type {1}, but received {2}'.format(key, val_type, type(value)))
+                return False
+            if isinstance(val_valids, list):
+                if value in val_valids:  # Setting is within valid ones
+                    return True
+                else:
+                    warn('Setting {0} value should have these values: {1}'
+                         .format(key, ','.join(val_valids)))
+            else:  # Is a function
+                if not val_valids(value):
+                    warn('Setting {0} do not pass valid test'.format(key))
+                else:
+                    return True
+        else:
+            warn('Setting {0} does not exist'.format(key))
+        return False
+
+    def get(self, key: str, update: bool = True) -> Any:
         """
         Return the settings value.
 
         :param key: Setting key
+        :param update: Updates settings value
         :return: Value
         """
         val = self._settings[key]
 
         # Update for some values
-        if key == 'PIPELINE':
-            val = _PIPELINES[val]
+        if update:
+            if key == self.CFG_PIPELINE:
+                val = _PIPELINES[val]
 
         return val
+
+    def set(self, key: str, value: Any) -> None:
+        """
+        Update a setting value.
+
+        :param key: Setting key
+        :param value: Value
+        """
+        if not self.check_setting(key, value):
+            raise ValueError('Invalid value for {0}'.format(key))
+        self._settings[key] = self._parse_str(value)
 
     def add_words(self, w: int) -> None:
         """
@@ -158,7 +323,7 @@ class _Settings(object):
 
         :param w: Words
         """
-        self._settings['TOTAL_PROCESSED_WORDS'] += w
+        self._settings[self.CFG_TOTAL_PROCESSED_WORDS] += w
         self.save()
 
     def save(self) -> None:
@@ -177,13 +342,13 @@ class PyDetexGUI(object):
     """
     GUI.
     """
-    pipeline: Callable[[str], str]
 
     _cfg: '_Settings'
     _copy_clip: 'tk.Button'
     _label_lang: 'tk.Label'
     _ready: bool
     _root: 'tk.Tk'
+    _settings_window: Optional['_SettingsWindow']
     _text_in: 'tk.Text'
     _text_out: 'tk.Text'
 
@@ -247,8 +412,7 @@ class PyDetexGUI(object):
         Button(f3, text='Clear', command=self._clear, relief=tk.GROOVE, bg='#ff7878').pack(side=tk.LEFT)
         # tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
-        # Set the pipeline
-        self.pipeline = simple_pipeline
+        self._settings_window = None
 
         # Write basic text
         self._clear()  # This also changes states
@@ -270,6 +434,15 @@ class PyDetexGUI(object):
         self._text_out['state'] = tk.DISABLED
         self._copy_clip['state'] = tk.DISABLED
         self._ready = False
+
+    @property
+    def pipeline(self) -> pip.PipelineType:
+        """
+        Return the pipeline.
+
+        :return: Pipeline
+        """
+        return self._cfg.get(self._cfg.CFG_PIPELINE)
 
     def _process(self) -> None:
         """
@@ -319,8 +492,18 @@ class PyDetexGUI(object):
         """
         Launch settings.
         """
-        app = _SettingsWindow((300, 400))
-        app.root.mainloop(1)
+        if self._settings_window:
+            self._settings_window.root.lift()
+            return
+        self._settings_window = _SettingsWindow((325, 150), self._cfg)
+        self._settings_window.on_destroy = self._close_settings
+        self._settings_window.root.mainloop(1)
+
+    def _close_settings(self) -> None:
+        """
+        Close settings.
+        """
+        self._settings_window = None
 
 
 if __name__ == '__main__':
