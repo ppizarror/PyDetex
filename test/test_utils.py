@@ -71,6 +71,10 @@ class UtilsTest(BaseTest):
         s = 'This should not be repeated [NOT_REPEAT][NOT_REPEAT]a [OTHER_TAG][OTHER_TAG] [NOT_REPEAT][NOT_REPEAT]a'
         self.assertEqual(ut.check_repeated_words(s, 'en', 3, 15, True, True, remove_tokens=['[NOT_REPEAT]']), s)
 
+        # Test with commands
+        s = 'These commands \\texttt be removed \\texttt not \\texttt \\texttt \\texttt'
+        self.assertEqual(ut.check_repeated_words(s, 'en', 3, 15, True, True), s)
+
     def test_split_tags(self) -> None:
         """
         Test split.

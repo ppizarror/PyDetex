@@ -283,7 +283,8 @@ def check_repeated_words(
         remove_tokens: Optional[List[str]] = None,
         font_tag_format: str = '',
         font_param_format: str = '',
-        font_normal_format: str = ''
+        font_normal_format: str = '',
+        tag: str = 'repeated'
 ) -> str:
     """
     Check repeated words.
@@ -299,6 +300,7 @@ def check_repeated_words(
     :param font_tag_format: Tag's format
     :param font_param_format: Param's format
     :param font_normal_format. Normal's format
+    :param tag: Tag's name
     :return: Text with repeated words marked
     """
     assert isinstance(window, int) and window > 1
@@ -364,6 +366,10 @@ def check_repeated_words(
             for rt in remove_tokens:
                 w = w.replace(rt, '')
 
+        # If command in word
+        if '\\' in w:
+            w = ''
+
         # Apply filters
         if len(w) <= min_chars:
             w = ''
@@ -381,9 +387,9 @@ def check_repeated_words(
         # Check if the word exist on list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
-            original_w = '{2}<repeated:{0}>{3}{1}{2}</repeated>{4}' \
-                         ''.format(ww, original_w, font_tag_format, font_param_format,
-                                   font_normal_format)
+            original_w = f'{font_tag_format}<{tag}:{ww}>' \
+                         f'{font_param_format}{original_w}' \
+                         f'{font_tag_format}</{tag}>{font_normal_format}'
 
         # Push the new word
         wordswin.append(w)
