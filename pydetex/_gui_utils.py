@@ -15,7 +15,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
-from typing import Callable, Tuple, Optional
+from typing import Callable, Tuple, Optional, Dict
 
 import pydetex.utils as ut
 from pydetex._gui_settings import Settings as _Settings
@@ -28,8 +28,11 @@ class SettingsWindow(object):
     """
 
     _cfg: '_Settings'
+    _dict_langs: Dict[str, str]
+    _dict_pipelines: Dict[str, str]
     on_destroy: Optional[Callable[[], None]]
 
+    # noinspection PyProtectedMember
     def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
         """
         Constructor.
@@ -61,26 +64,44 @@ class SettingsWindow(object):
 
         label_w = 17
 
-        # Set pipelines
+        # Set languages
         f = tk.Frame(f0, border=0)
         f.pack(fill='both', pady=5)
-        tk.Label(f, text='Pipeline', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        tk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
 
-        self._var_pipeline = tk.StringVar(self.root)
-        self._var_pipeline.set(cfg.get(cfg.CFG_PIPELINE, update=False))  # default value
+        self._dict_langs = {}
+        for k in self._cfg._lang.get_available():
+            self._dict_langs[self._cfg._lang.get(k, 'lang')] = k
 
-        # noinspection PyProtectedMember
-        pipe = tk.OptionMenu(f, self._var_pipeline, *self._cfg._available_pipelines)
+        self._var_lang = tk.StringVar(self.root)
+        self._var_lang.set(self._cfg._lang.get(cfg.get(cfg.CFG_LANG), 'lang'))  # default value
+
+        pipe = tk.OptionMenu(f, self._var_lang, *list(self._dict_langs.keys()))
         pipe.focus()
         pipe.pack(side=tk.LEFT)
 
+        # Set pipelines
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+
+        self._dict_pipelines = {}
+        for k in self._cfg._available_pipelines:
+            self._dict_pipelines[self._cfg.lang(k)] = k
+
+        self._var_pipeline = tk.StringVar(self.root)
+        self._var_pipeline.set(self._cfg.lang(cfg.get(cfg.CFG_PIPELINE, update=False)))  # default value
+
+        pipe = tk.OptionMenu(f, self._var_pipeline, *list(self._dict_pipelines.keys()))
+        pipe.pack(side=tk.LEFT)
+
         # Check repetition
-        f_repetition = tk.LabelFrame(f0, text='Words repetition', bd=1, relief=tk.GROOVE)
+        f_repetition = tk.LabelFrame(f0, text=self._cfg.lang('cfg_words_repetition'), bd=1, relief=tk.GROOVE)
         f_repetition.pack(fill='both')
 
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Check', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_check'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 4))
         self._var_check_repetition = tk.BooleanVar(self.root)
@@ -90,7 +111,7 @@ class SettingsWindow(object):
         # Repetition min chars
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Repetition min chars', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
         )
@@ -101,7 +122,7 @@ class SettingsWindow(object):
         # Repetition distance
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Repetition distance', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
         )
@@ -112,7 +133,7 @@ class SettingsWindow(object):
         # Repetition use stemming
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Use stemming', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 4)
         )
@@ -123,7 +144,7 @@ class SettingsWindow(object):
         # Repetition use stopwords
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Use stopwords', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 4)
         )
@@ -134,7 +155,7 @@ class SettingsWindow(object):
         # Repetition ignore words
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
-        tk.Label(f, text='Repetition ignore words', width=label_w, anchor='w').pack(
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
         )
@@ -151,7 +172,7 @@ class SettingsWindow(object):
         # Font format
         f = tk.Frame(f0, border=0, relief=tk.GROOVE)
         f.pack(fill='both')
-        tk.Label(f, text='Output font format', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
         self._var_output_font_format = tk.BooleanVar(self.root)
         self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
         tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
@@ -159,7 +180,7 @@ class SettingsWindow(object):
         # Save
         fbuttons = tk.Frame(f0)
         fbuttons.pack(side=tk.BOTTOM, expand=True)
-        ut.Button(fbuttons, text=ut.button_text('Save'), command=self._save,
+        ut.Button(fbuttons, text=ut.button_text(self._cfg.lang('cfg_save')), command=self._save,
                   relief=tk.GROOVE).pack(pady=(12 if IS_OSX else 8, 0))
 
         # Update
@@ -177,8 +198,13 @@ class SettingsWindow(object):
         """
         Save the settings.
         """
+        lang_value = self._dict_langs[self._var_lang.get()]
+        current_lang = self._cfg.get(self._cfg.CFG_LANG)
+
         store: Tuple[Tuple[str, str, str], ...] = (
-            (self._cfg.CFG_PIPELINE, self._var_pipeline.get(),
+            (self._cfg.CFG_LANG, lang_value,
+             'Invalid lang value'),
+            (self._cfg.CFG_PIPELINE, self._dict_pipelines[self._var_pipeline.get()],
              'Invalid pipeline value'),
             (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
              'Invalid repetition value'),
@@ -195,6 +221,8 @@ class SettingsWindow(object):
             (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
              'Invalid output font format value')
         )
+
+        # Set values
         do_close = True
         for cfg in store:
             try:
@@ -202,6 +230,13 @@ class SettingsWindow(object):
             except ValueError:
                 messagebox.showerror('Error', cfg[2])
                 do_close = False
+
+        # Check if lang has changed
+        if lang_value != current_lang:
+            messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
+                                message=self._cfg.lang('reload_message_message'))
+
+        # Save
         self._cfg.save()
         if do_close:
             self.close()

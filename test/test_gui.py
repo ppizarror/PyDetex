@@ -80,3 +80,9 @@ class GuiTest(BaseTest):
 
         # Test without ignore
         Settings()
+
+        # Test language entries
+        cfg.set(cfg.CFG_LANG, 'en')
+        self.assertEqual(cfg.lang('lang'), 'English')
+        cfg.set(cfg.CFG_LANG, 'es')
+        self.assertEqual(cfg.lang('lang'), 'Español')

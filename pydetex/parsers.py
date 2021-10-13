@@ -347,9 +347,9 @@ def process_inputs(s: str) -> str:
                     tex_file += '.tex'
                 if tex_file not in NOT_FOUND_FILES:
                     if not PRINT_LOCATION:
-                        print('Current path location: {0}'.format(os.getcwd()))
+                        print(f'Current path location: {os.getcwd()}')
                         PRINT_LOCATION = True
-                    print('Detected file {0}:'.format(tex_file))
+                    print(f'Detected file {tex_file}:')
 
                     # Get folder locations
                     folders = _os_listfolder()
@@ -358,7 +358,7 @@ def process_inputs(s: str) -> str:
                     for f in folders:
                         tx = _load_file(tex_file, f)
                         if tx == TAG_FILE_ERROR:
-                            print('\tFile not found in {0}'.format(f))
+                            print(f'\tFile not found in {f}')
                         else:
                             break
                     if tx == TAG_FILE_ERROR:

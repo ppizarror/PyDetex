@@ -78,7 +78,7 @@ class PyDetexGUI(object):
         self._cfg = Settings()
 
         # Configure window
-        self._root.title('PyDetex v{}'.format(pydetex.version.ver))
+        self._root.title(f'PyDetex v{pydetex.version.ver}')
         if IS_OSX:
             img = tk.Image('photo', file=ut.RESOURCES_PATH + 'icon.gif')
             # noinspection PyProtectedMember
@@ -93,12 +93,12 @@ class PyDetexGUI(object):
         self._root.protocol('WM_DELETE_WINDOW', self._close)
 
         # Settings button and detected language
-        f0 = tk.Frame(self._root, border=10, width=700, height=45)
+        f0 = tk.Frame(self._root, border=10, width=700, height=50)
         f0.pack()
         f0.pack_propagate(0)
-        tk.Button(f0, text=ut.button_text('Settings'), command=self._open_settings,
+        tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
                   relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, 10))
-        tk.Button(f0, text=ut.button_text('About'), command=self._about,
+        tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
                   relief=tk.GROOVE).pack(side=tk.LEFT)
         self._label_lang = tk.Label(f0, fg='#999999' if IS_OSX else '#666666')
         self._label_lang.pack(side=tk.RIGHT)
@@ -122,20 +122,20 @@ class PyDetexGUI(object):
         f3 = tk.Frame(self._root, border=2)
         f3.pack(pady=(5 if IS_OSX else 10, 0))
 
-        ut.Button(f3, text=ut.button_text('Process'), command=self._process, relief=tk.GROOVE,
+        ut.Button(f3, text=ut.button_text(self._cfg.lang('process')), command=self._process, relief=tk.GROOVE,
                   bg='#475aff' if IS_OSX else '#6388ff').pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
-        tk.Button(f3, text=ut.button_text('Process from clipboard'), command=self._process_clip,
+        tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')), command=self._process_clip,
                   relief=tk.GROOVE).pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
-        self._copy_clip = tk.Button(f3, text=ut.button_text('Copy to clipboard'), command=self._copy_to_clip,
+        self._copy_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')), command=self._copy_to_clip,
                                     relief=tk.GROOVE)
         self._copy_clip.pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
-        ut.Button(f3, text=ut.button_text('Clear'), command=self._clear,
+        ut.Button(f3, text=ut.button_text(self._cfg.lang('clear')), command=self._clear,
                   relief=tk.GROOVE, bg='#ff7878').pack(side=tk.LEFT)
         # tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
@@ -143,8 +143,7 @@ class PyDetexGUI(object):
 
         # Write basic text
         self._clear()  # This also changes states
-        self._text_in.insert(0.0, 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, '
-                                  'and returns a nice plain text!')
+        self._text_in.insert(0.0, self._cfg.lang('placeholder'))
         self._ready = False
         self._tokenizer = RegexpTokenizer(r'\w+')
 
@@ -227,7 +226,8 @@ class PyDetexGUI(object):
                 font_tag_format=_FONT_TAGS['italic'] if font_format else '',
                 font_param_format=_FONT_TAGS['bold'] if font_format else '',
                 font_normal_format=_FONT_TAGS['normal'] if font_format else '',
-                remove_tokens=tags
+                remove_tokens=tags,
+                tag=self._cfg.lang('tag_repeated')
             )
 
         # Write results
@@ -236,7 +236,7 @@ class PyDetexGUI(object):
             tag, text = t
             self._text_out.insert('end', text, _TAGS_FONT[tag])
 
-        self._label_lang['text'] = 'Detected language: {0} ({1}). Words: {2}'.format(lang, lang_code, words)
+        self._label_lang['text'] = self._cfg.lang('detected_lang').format(lang, lang_code, words)
         self._ready = True
 
     def _process_clip(self) -> None:
@@ -270,7 +270,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((360, 320), self._cfg)
+        self._settings_window = SettingsWindow((360, 360), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             self._settings_window.root.mainloop(1)
@@ -304,19 +304,19 @@ class PyDetexGUI(object):
         try:
             is_outdated, latest_version = check_outdated('pydetex', str(pydetex.version.ver))
             if is_outdated:
-                ver = f'Note: You are using an outdated version, consider upgrading to v{latest_version}'
+                ver = self._cfg.lang('about_ver_upgrade').format(latest_version)
         except ValueError:
-            ver = 'Development version'
+            ver = self._cfg.lang('about_ver_dev')
         except requests.exceptions.ConnectionError:
-            ver = 'Cannot check for new versions (Connection Error)'
+            ver = self._cfg.lang('about_ver_err_conn')
         except Exception:
-            ver = 'Cannot check for new versions (Unknown Error)'
+            ver = self._cfg.lang('about_ver_err_unkn')
 
         msg = f'PyDetex v{pydetex.version.ver}\n' \
-              f'Author: {pydetex.__author__}\n\n' \
-              f'Total processed words: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
+              f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
+              f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
               f'{ver}'
-        messagebox.showinfo(message=msg, title='About')
+        messagebox.showinfo(title='About', message=msg)
 
 
 if __name__ == '__main__':
