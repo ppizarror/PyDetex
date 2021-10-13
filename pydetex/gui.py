@@ -141,10 +141,10 @@ class _SettingsWindow(object):
         tk.OptionMenu(f, self._var_pipeline, *list(_PIPELINES.keys())).pack(side=tk.LEFT)
 
         # Check repetition
-        f_repetition = tk.LabelFrame(f0, text='Words repetition', bd=1)
+        f_repetition = tk.LabelFrame(f0, text='Words repetition', bd=1, relief=tk.GROOVE)
         f_repetition.pack(fill='both')
 
-        f = tk.Frame(f_repetition, border=0, relief=tk.GROOVE)
+        f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
         tk.Label(f, text='Check', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
         self._var_check_repetition = tk.BooleanVar(self.root)
@@ -514,21 +514,21 @@ class PyDetexGUI(object):
         f0.pack()
         f0.pack_propagate(0)
         Button(f0, text='Settings', command=self._open_settings, relief=tk.GROOVE).pack(side=tk.LEFT)
-        self._label_lang = tk.Label(f0, fg='#CCCCCC')
+        self._label_lang = tk.Label(f0, fg='#AAAAAA')
         self._label_lang.pack(side=tk.RIGHT)
 
         f1 = tk.Frame(self._root, border=0)
-        f1.pack()
-        self._text_in = tk.Text(f1, wrap='word', height=11, undo=True)
-        self._text_in.pack()
+        f1.pack(fill='both', padx=10)
+        self._text_in = tk.Text(f1, wrap='word', height=11, undo=True, highlightthickness=1, highlightcolor='#475aff')
+        self._text_in.pack(fill='both')
         self._text_in.focus_force()
         self._text_in.focus()
 
-        f2 = tk.Frame(self._root, border=5)
-        f2.pack()
-        self._text_out = RichText(f2, wrap='word', height=11)
+        f2 = tk.Frame(self._root, border=0)
+        f2.pack(fill='both', padx=10, pady=5)
+        self._text_out = RichText(f2, wrap='word', height=11, highlightthickness=1, highlightcolor='#475aff')
         self._text_out.bind('<Key>', self._process_out_key)
-        self._text_out.pack()
+        self._text_out.pack(fill='both')
 
         f3 = tk.Frame(self._root, border=2)
         f3.pack()
