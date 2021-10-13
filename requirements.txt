@@ -1,2 +1,4 @@
+nltk >= 3
+langdetect
 pyperclip
 tkmacosx
