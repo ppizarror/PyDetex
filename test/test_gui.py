@@ -9,8 +9,11 @@ Test guis.
 from test._base import BaseTest
 
 # noinspection PyProtectedMember
-from pydetex.gui import PyDetexGUI, Settings, _validate_int, _validate_float
+from pydetex.gui import PyDetexGUI, SettingsWindow
+# noinspection PyProtectedMember
+from pydetex._gui_settings import Settings
 import pydetex.pipelines as pip
+
 import os
 
 
@@ -23,6 +26,9 @@ class GuiTest(BaseTest):
         if 'TRAVIS' in os.environ:
             return
         gui = PyDetexGUI()
+        cfg = gui._cfg
+        cfg.set(cfg.CFG_CHECK_REPETITION, False)
+        cfg.set(cfg.CFG_OUTPUT_FONT_FORMAT, False)
         gui._clear()
         self.assertEqual(gui.pipeline, pip.simple_pipeline)
         self.assertFalse(gui._ready)
@@ -40,6 +46,10 @@ class GuiTest(BaseTest):
         # Check clip
         gui._process_clip()
         gui._copy_to_clip()
+
+        # Test gui settings
+        gui_settings = SettingsWindow((360, 320), cfg)
+        gui_settings.close()
 
     def test_settings(self) -> None:
         """
@@ -70,15 +80,3 @@ class GuiTest(BaseTest):
 
         # Test without ignore
         Settings()
-
-    def test_validate(self) -> None:
-        """
-        Test validate.
-        """
-        self.assertTrue(_validate_float('1.32'))
-        self.assertTrue(_validate_float('-1.32'))
-        self.assertFalse(_validate_float('12e'))
-        self.assertTrue(_validate_int('123'))
-        self.assertTrue(_validate_int('123.0'))
-        self.assertFalse(_validate_int('123.01'))
-        self.assertFalse(_validate_int('abc'))

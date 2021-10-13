@@ -100,11 +100,16 @@ class UtilsTest(BaseTest):
         """
         Test validate.
         """
+        self.assertTrue(ut.validate_int(''))
+        self.assertTrue(ut.validate_int('-'))
         self.assertTrue(ut.validate_int('1'))
         self.assertTrue(ut.validate_int('-1'))
         self.assertTrue(ut.validate_int('-1.0000000000'))
         self.assertFalse(ut.validate_int('-1.01'))
+        self.assertFalse(ut.validate_int('eee'))
         self.assertTrue(ut.validate_float('1'))
+        self.assertTrue(ut.validate_float(''))
+        self.assertTrue(ut.validate_float('-'))
         self.assertTrue(ut.validate_float('1.324'))
         self.assertTrue(ut.validate_float('-0.000123'))
         self.assertFalse(ut.validate_float('-0.123e'))
