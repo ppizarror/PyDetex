@@ -40,7 +40,7 @@ _respath = __actualpath + 'res/'
 
 # Store the pipelines
 _PIPELINES = {
-    'simple_pipeline': pip.simple_pipeline
+    'Simple': pip.simple_pipeline
 }
 
 
@@ -104,7 +104,7 @@ class _SettingsWindow(object):
         self.root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
                                             (self.root.winfo_screenwidth() - window_size[0]) / 2,
                                             (self.root.winfo_screenheight() - window_size[1]) / 2))
-        self.root.protocol('WM_DELETE_WINDOW', self._close)
+        self.root.protocol('WM_DELETE_WINDOW', self.close)
 
         # Registers
         reg_int = self.root.register(_validate_int)
@@ -116,37 +116,64 @@ class _SettingsWindow(object):
         label_w = 15
 
         # Set pipelines
-        f1 = tk.Frame(f0, border=0)
-        f1.pack(fill='both', pady=5)
-        tk.Label(f1, text='Pipeline', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text='Pipeline', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
 
         self._var_pipeline = tk.StringVar(self.root)
         self._var_pipeline.set(cfg.get(cfg.CFG_PIPELINE, update=False))  # default value
 
-        tk.OptionMenu(f1, self._var_pipeline, *list(_PIPELINES.keys())).pack(side=tk.LEFT)
+        tk.OptionMenu(f, self._var_pipeline, *list(_PIPELINES.keys())).pack(side=tk.LEFT)
 
         # Check repetition
-        f2 = tk.Frame(f0, border=0)
-        f2.pack(fill='both')
-        tk.Label(f2, text='Check repetition', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        f_repetition = tk.LabelFrame(f0, text='Words repetition', bd=1)
+        f_repetition.pack(fill='both')
+
+        f = tk.Frame(f_repetition, border=0, relief=tk.GROOVE)
+        f.pack(fill='both')
+        tk.Label(f, text='Check', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
         self._var_check_repetition = tk.BooleanVar(self.root)
         self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
-        tk.Checkbutton(f2, variable=self._var_check_repetition).pack(side=tk.LEFT)
+        tk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
 
-        # Repetition min char
-        f3 = tk.Frame(f0, border=0)
-        f3.pack(fill='both')
-        tk.Label(f3, text='Repetition min chars', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
-        self._var_repetition_min_char = tk.Entry(f3, validate='all', validatecommand=(reg_int, '%P'))
+        # Repetition min chars
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text='Repetition min chars', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'))
         self._var_repetition_min_char.pack(side=tk.LEFT)
         self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR))
 
+        # Repetition distance
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text='Repetition distance', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'))
+        self._var_repetition_distance.pack(side=tk.LEFT)
+        self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE))
+
+        # Repetition use stemming
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text='Use stemming', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_check_repetition_stemming = tk.BooleanVar(self.root)
+        self._var_check_repetition_stemming.set(cfg.get(cfg.CFG_REPETITION_USE_STEMMING))
+        tk.Checkbutton(f, variable=self._var_check_repetition_stemming).pack(side=tk.LEFT)
+
+        # Repetition use stopwords
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text='Use stopwords', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_check_repetition_stopwords = tk.BooleanVar(self.root)
+        self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
+        tk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
+
         # Save
-        fbuttons = tk.Frame(f0, border=15)
+        fbuttons = tk.Frame(f0, border=10)
         fbuttons.pack(side=tk.BOTTOM, expand=True)
         Button(fbuttons, text='Save', command=self._save, relief=tk.GROOVE).pack()
 
-    def _close(self) -> None:
+    def close(self) -> None:
         """
         Close the window.
         """
@@ -158,13 +185,19 @@ class _SettingsWindow(object):
         """
         Save the settings.
         """
-        store = (
+        store: Tuple[Tuple[str, str, str], ...] = (
             (self._cfg.CFG_PIPELINE, self._var_pipeline.get(),
              'Invalid pipeline value'),
             (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
              'Invalid repetition value'),
+            (self._cfg.CFG_REPETITION_DISTANCE, self._var_repetition_distance.get(),
+             'Repetition distance be greater than one'),
             (self._cfg.CFG_REPETITION_MIN_CHAR, self._var_repetition_min_char.get(),
-             'Repetition min chars must be greater than zero')
+             'Repetition min chars must be greater than zero'),
+            (self._cfg.CFG_REPETITION_USE_STEMMING, self._var_check_repetition_stemming.get(),
+             'Invalid repetition stemming value'),
+            (self._cfg.CFG_REPETITION_USE_STOPWORDS, self._var_check_repetition_stopwords.get(),
+             'Invalid repetition stemming value')
         )
         for cfg in store:
             try:
@@ -172,7 +205,7 @@ class _SettingsWindow(object):
             except ValueError:
                 messagebox.showerror('Error', cfg[2])
         self._cfg.save()
-        self._close()
+        self.close()
 
 
 class _Settings(object):
@@ -198,17 +231,28 @@ class _Settings(object):
             except FileNotFoundError:
                 warn('Setting file could not be loaded or not exist. Creating new file')
 
-        # Defines settings
+        # General settings
         self.CFG_CHECK_REPETITION = 'CHECK_REPETITION'
         self.CFG_PIPELINE = 'PIPELINE'
+
+        # Words repetition
+        self.CFG_REPETITION_DISTANCE = 'REPETITION_DISTANCE'
         self.CFG_REPETITION_MIN_CHAR = 'REPETITION_MIN_CHAR'
+        self.CFG_REPETITION_USE_STEMMING = 'REPETITION_USE_STEMMING'
+        self.CFG_REPETITION_USE_STOPWORDS = 'REPETITION_USE_STOPWORDS'
+
+        # Stats
         self.CFG_TOTAL_PROCESSED_WORDS = 'TOTAL_PROCESSED_WORDS'
 
         # Stores default settings and the valid values
+        pipelines = list(_PIPELINES.keys())
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
-            self.CFG_PIPELINE: ('simple_pipeline', str, list(_PIPELINES.keys())),
+            self.CFG_PIPELINE: (pipelines[0], str, pipelines),
+            self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 0),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
+            self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
+            self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
         }
 
@@ -364,7 +408,7 @@ class PyDetexGUI(object):
         # Configure window
         self._root.title('PyDetex v{}'.format(pydetex.version.ver))
         if platform.system() == 'Darwin':
-            self._root.iconbitmap(_respath + 'icon.gif')
+            # self._root.iconbitmap(_respath + 'icon.gif')
             img = tk.Image('photo', file=_respath + 'icon.gif')
             # noinspection PyProtectedMember
             self._root.tk.call('wm', 'iconphoto', self._root._w, img)
@@ -375,6 +419,7 @@ class PyDetexGUI(object):
         self._root.geometry('%dx%d+%d+%d' % (PROGRAMSIZE[0], PROGRAMSIZE[1],
                                              (self._root.winfo_screenwidth() - PROGRAMSIZE[0]) / 2,
                                              (self._root.winfo_screenheight() - PROGRAMSIZE[1]) / 2))
+        self._root.protocol('WM_DELETE_WINDOW', self._close)
 
         # Settings button and detected language
         f0 = tk.Frame(self._root, border=10, width=700, height=45)
@@ -461,7 +506,7 @@ class PyDetexGUI(object):
         # Write results
         self._text_out.delete(0.0, tk.END)
         self._text_out.insert(0.0, out)
-        self._label_lang['text'] = 'Detected language: {0}, Words: {1}'.format(lang, words)
+        self._label_lang['text'] = 'Detected language: {0}. Words: {1}'.format(lang, words)
         self._ready = True
 
     def _process_clip(self) -> None:
@@ -495,7 +540,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = _SettingsWindow((325, 150), self._cfg)
+        self._settings_window = _SettingsWindow((325, 240), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         self._settings_window.root.mainloop(1)
 
@@ -504,6 +549,14 @@ class PyDetexGUI(object):
         Close settings.
         """
         self._settings_window = None
+
+    def _close(self) -> None:
+        """
+        Close the window.
+        """
+        if self._settings_window:
+            self._settings_window.close()
+        self._root.destroy()
 
 
 if __name__ == '__main__':

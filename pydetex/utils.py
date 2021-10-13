@@ -7,11 +7,21 @@ Several text utils.
 """
 
 __all__ = [
+    'check_repeated_words',
     'detect_language',
     'get_language_tag'
 ]
 
 from langdetect import detect as _detect
+
+import nltk
+from nltk.corpus import stopwords
+
+# Check if stopwods exists
+try:
+    stopwords.words('english')
+except LookupError:
+    nltk.download('stopwords')
 
 _ISO_639_LANGS = {
     'aa': 'Afar',
@@ -222,3 +232,19 @@ def get_language_tag(s: str) -> str:
         return 'Unknown'
     else:
         return _ISO_639_LANGS[s]
+
+
+def check_repeated_words(s: str, lang: str, min_chars: int, window: int) -> str:
+    """
+    Check repeated words.
+
+    :param s: Text
+    :param lang: Language
+    :param min_chars: Min chars to accept
+    :param window:
+    :return: Text with repeated words marked
+    """
+    if lang == 'en':
+        pass
+    else:
+        return s
