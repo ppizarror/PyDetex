@@ -19,7 +19,6 @@ from typing import Callable, Tuple, Optional, Dict
 
 import pydetex.utils as ut
 from pydetex._gui_settings import Settings as _Settings
-from pydetex.utils import IS_OSX
 
 
 class SettingsWindow(object):
@@ -52,7 +51,7 @@ class SettingsWindow(object):
                                             (self.root.winfo_screenwidth() - window_size[0]) / 2,
                                             (self.root.winfo_screenheight() - window_size[1]) / 2))
         self.root.protocol('WM_DELETE_WINDOW', self.close)
-        if not IS_OSX:
+        if not ut.IS_OSX:
             self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
 
         # Registers
@@ -103,7 +102,7 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_check'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 4))
+            padx=(5 if ut.IS_OSX else 4, 4))
         self._var_check_repetition = tk.BooleanVar(self.root)
         self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
         tk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
@@ -113,7 +112,7 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
         self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_min_char.pack(side=tk.LEFT)
@@ -124,7 +123,7 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
         self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_distance.pack(side=tk.LEFT)
@@ -135,7 +134,7 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 4)
+            padx=(5 if ut.IS_OSX else 4, 4)
         )
         self._var_check_repetition_stemming = tk.BooleanVar(self.root)
         self._var_check_repetition_stemming.set(cfg.get(cfg.CFG_REPETITION_USE_STEMMING))
@@ -146,7 +145,7 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 4)
+            padx=(5 if ut.IS_OSX else 4, 4)
         )
         self._var_check_repetition_stopwords = tk.BooleanVar(self.root)
         self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
@@ -157,15 +156,15 @@ class SettingsWindow(object):
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_w, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if IS_OSX else 4, 5 if IS_OSX else 9)
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4, highlightthickness=3 if IS_OSX else 0,
+        self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4, highlightthickness=3 if ut.IS_OSX else 0,
                                                     highlightcolor='#426392')
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
         self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS))
 
         # End repetition
-        f = tk.Frame(f_repetition, border=0, height=3 if IS_OSX else 5)
+        f = tk.Frame(f_repetition, border=0, height=3 if ut.IS_OSX else 5)
         f.pack()
         f.pack_propagate(0)
 
@@ -181,7 +180,7 @@ class SettingsWindow(object):
         fbuttons = tk.Frame(f0)
         fbuttons.pack(side=tk.BOTTOM, expand=True)
         ut.Button(fbuttons, text=ut.button_text(self._cfg.lang('cfg_save')), command=self._save,
-                  relief=tk.GROOVE).pack(pady=(12 if IS_OSX else 8, 0))
+                  relief=tk.GROOVE).pack(pady=(12 if ut.IS_OSX else 8, 0))
 
         # Update
         self.root.update()

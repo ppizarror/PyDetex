@@ -28,9 +28,8 @@ import pydetex.utils as ut
 from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
-from pydetex.utils import IS_OSX
 
-if IS_OSX:
+if ut.IS_OSX:
     PROGRAMSIZE = 700, 410
 else:
     PROGRAMSIZE = 700, 475
@@ -78,8 +77,8 @@ class PyDetexGUI(object):
         self._cfg = Settings()
 
         # Configure window
-        self._root.title(f'PyDetex v{pydetex.version.ver}')
-        if IS_OSX:
+        self._root.title('PyDetex')
+        if ut.IS_OSX:
             img = tk.Image('photo', file=ut.RESOURCES_PATH + 'icon.gif')
             # noinspection PyProtectedMember
             self._root.tk.call('wm', 'iconphoto', self._root._w, img)
@@ -97,13 +96,13 @@ class PyDetexGUI(object):
         f0.pack()
         f0.pack_propagate(0)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
-                  relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, 10))
+                  relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, 7 if ut.IS_OSX else 10))
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
                   relief=tk.GROOVE).pack(side=tk.LEFT)
-        self._label_lang = tk.Label(f0, fg='#999999' if IS_OSX else '#666666')
+        self._label_lang = tk.Label(f0, fg='#999999' if ut.IS_OSX else '#666666')
         self._label_lang.pack(side=tk.RIGHT)
 
-        hthick, hcolor = 3 if IS_OSX else 1, '#426392' if IS_OSX else '#475aff'
+        hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
 
         f1 = tk.Frame(self._root, border=0)
         f1.pack(fill='both', padx=10)
@@ -120,10 +119,10 @@ class PyDetexGUI(object):
         self._text_out.pack(fill='both')
 
         f3 = tk.Frame(self._root, border=2)
-        f3.pack(pady=(5 if IS_OSX else 10, 0))
+        f3.pack(pady=(5 if ut.IS_OSX else 10, 0))
 
         ut.Button(f3, text=ut.button_text(self._cfg.lang('process')), command=self._process, relief=tk.GROOVE,
-                  bg='#475aff' if IS_OSX else '#6388ff').pack(side=tk.LEFT)
+                  bg='#475aff' if ut.IS_OSX else '#6388ff').pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
         tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')), command=self._process_clip,
@@ -190,6 +189,10 @@ class PyDetexGUI(object):
         """
         Process and call the pipeline.
         """
+        text = self._text_in.get(0.0, tk.END)
+        if text.strip() == '':
+            return
+
         self._text_out['state'] = tk.NORMAL
         self._copy_clip['state'] = tk.NORMAL
 
@@ -202,7 +205,6 @@ class PyDetexGUI(object):
         PARSER_FONT_FORMAT['ref'] = _FONT_TAGS['bold'] if font_format else ''
 
         # Process the text and get the language
-        text = self._text_in.get(0.0, tk.END)
         out = self.pipeline(text)
         lang_code = ut.detect_language(out)
         lang = ut.get_language_tag(lang_code)
@@ -270,7 +272,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((360, 360 if IS_OSX else 365), self._cfg)
+        self._settings_window = SettingsWindow((360, 360 if ut.IS_OSX else 365), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             self._settings_window.root.mainloop(1)
@@ -283,7 +285,8 @@ class PyDetexGUI(object):
         Close settings.
         """
         self._settings_window = None
-        self._process()
+        if self._ready:
+            self._process()
 
     def _close(self) -> None:
         """
