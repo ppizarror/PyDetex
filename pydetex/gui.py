@@ -531,7 +531,7 @@ class PyDetexGUI(object):
         self._text_out.pack(fill='both')
 
         f3 = tk.Frame(self._root, border=2)
-        f3.pack()
+        f3.pack(pady=5)
 
         Button(f3, text='Process', command=self._process, relief=tk.GROOVE, bg='#475aff').pack(side=tk.LEFT)
         tk.Label(f3, text='    ').pack(side=tk.LEFT)
