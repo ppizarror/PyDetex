@@ -1,2 +1,3 @@
 ignore:
+  - "pydetex/gui.py"
   - "test/*.py"
