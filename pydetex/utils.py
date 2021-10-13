@@ -7,9 +7,15 @@ Several text utils.
 """
 
 __all__ = [
+    'Button',
     'check_repeated_words',
     'detect_language',
-    'get_language_tag'
+    'get_language_tag',
+    'IS_OSX',
+    'RESOURCES_PATH',
+    'split_tags',
+    'validate_float',
+    'validate_int'
 ]
 
 from langdetect import detect as _detect
@@ -18,18 +24,47 @@ from langdetect import detect as _detect
 # hi, hr, hu, id, it, ja, kn, ko, lt, lv, mk, ml, mr, ne, nl, no, pa, pl,
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 
+import os
 import nltk
+import platform
+
 from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
+from warnings import warn
 
-from typing import List
+from typing import List, Tuple, Optional
+
+# Resources path
+# Set resouces path
+__actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
+RESOURCES_PATH = __actualpath + 'res/'
+
+# Check OS
+IS_OSX = platform.system() == 'Darwin'
+
+# Import Button widget
+if IS_OSX:
+    from tkmacosx import Button
+
+else:
+    from tkinter import Button
+
+_HAS_NLTK = False
 
 # Check if stopwods exists
 try:
     _stopwords.words('english')
+    _HAS_NLTK = True
 except LookupError:
     nltk.download('stopwords')
+
+# Re-try to download
+try:
+    _stopwords.words('english')
+    _HAS_NLTK = True
+except LookupError:
+    pass
 
 _ISO_639_LANGS = {
     'aa': 'Afar',
@@ -215,7 +250,7 @@ _ISO_639_LANGS = {
     'yo': 'Yoruba',
     'za': 'Zhuang, Chuang',
     'zh': 'Chinese',
-    'zu': 'Zulu',
+    'zu': 'Zulu'
 }
 
 
@@ -251,7 +286,12 @@ def check_repeated_words(
         window: int,
         stopwords: bool,
         stemming: bool,
-        ignore: List[str]
+        ignore: Optional[List[str]] = None,
+        remove_tokens: Optional[List[str]] = None,
+        font_tag_format: str = '',
+        font_param_format: str = '',
+        font_normal_format: str = '',
+        tag: str = 'repeated'
 ) -> str:
     """
     Check repeated words.
@@ -263,10 +303,20 @@ def check_repeated_words(
     :param stopwords: Use stopwords
     :param stemming: Use stemming
     :param ignore: Ignore a list of words
+    :param remove_tokens: Remove keys before verify repeat
+    :param font_tag_format: Tag's format
+    :param font_param_format: Param's format
+    :param font_normal_format. Normal's format
+    :param tag: Tag's name
     :return: Text with repeated words marked
     """
     assert isinstance(window, int) and window > 1
     assert isinstance(min_chars, int) and min_chars >= 1
+
+    if not ignore:
+        ignore = []
+    if not remove_tokens:
+        remove_tokens = []
 
     # Check languages
     available_langs = {
@@ -289,10 +339,12 @@ def check_repeated_words(
         'ru': 'russian',
         'sv': 'swedish'
     }
-    if lang in available_langs.keys():
+    if lang in available_langs.keys() and _HAS_NLTK:
         stop = _stopwords.words(available_langs[lang])
         stemmer = SnowballStemmer(available_langs[lang])
     else:
+        if not _HAS_NLTK:
+            warn('nltk library does not exist. Check for your internet connection in order to use this feature')
         return s
 
     tokenizer = RegexpTokenizer(r'\w+')
@@ -316,6 +368,15 @@ def check_repeated_words(
     for w in words:
         original_w = w
 
+        # Remove tokens
+        if len(remove_tokens) > 0:
+            for rt in remove_tokens:
+                w = w.replace(rt, '')
+
+        # If command in word
+        if '\\' in w:
+            w = ''
+
         # Apply filters
         if len(w) <= min_chars:
             w = ''
@@ -333,7 +394,9 @@ def check_repeated_words(
         # Check if the word exist on list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
-            original_w = '<repeated:{0}>{1}</repeated>'.format(ww, original_w)
+            original_w = f'{font_tag_format}<{tag}:{ww}>' \
+                         f'{font_param_format}{original_w}' \
+                         f'{font_tag_format}</{tag}>{font_normal_format}'
 
         # Push the new word
         wordswin.append(w)
@@ -345,3 +408,99 @@ def check_repeated_words(
 
     # Return string with repeated format
     return ' '.join(new_s)
+
+
+def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
+    """
+    Split a string based on tags, each line is then tagged.
+
+    String format:
+    [TAG1]new line[TAG2]this is[TAG1]very epic
+
+    Output:
+    [('TAG1', 'newline'), ('TAG', 'this is), ('TAG1', 'very epic')]
+
+    :param s: String
+    :param tags: Tag list
+    :return: Splitted tags
+    """
+    assert len(tags) > 0
+    tagged_lines: List[Tuple[str, str]] = []
+    r = 0
+    for tag in tags:
+        if r == 0:  # First occurence
+            new = s.split(tag)
+            for j in new:
+                if j == '':
+                    continue
+                tagged_lines.append((tag, j))
+        else:
+            new_tagged_lines: List[Tuple[str, str]] = []
+            for j in range(len(tagged_lines)):
+                if tag in tagged_lines[j][1]:  # If tag exists
+                    new = tagged_lines[j][1].split(tag)
+                    new_tagged_lines.append((tagged_lines[j][0], new[0]))
+                    for w in range(len(new) - 1):
+                        new_tagged_lines.append((tag, new[w + 1]))
+                else:
+                    new_tagged_lines.append(tagged_lines[j])
+            tagged_lines = new_tagged_lines
+
+        r += 1
+        # print(tagged_lines)
+
+    # Merge consecutive tags
+    merged_tags: List[Tuple[str, str]] = []
+    r = 0
+    for tagged in tagged_lines:
+        if len(merged_tags) == 0 or tagged[0] != merged_tags[r - 1][0]:
+            merged_tags.append(tagged)
+            r += 1
+        else:
+            merged_tags[r - 1] = (tagged[0], merged_tags[r - 1][1] + tagged[1])
+
+    return merged_tags
+
+
+def button_text(s: str) -> str:
+    """
+    Generates the button text.
+
+    :param s: Button's text
+    :return: Text
+    """
+    return s if IS_OSX else '  {0}  '.format(s)
+
+
+def validate_int(p: str) -> bool:
+    """
+    Validate an integer.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        p = float(p)
+        return int(p) == p
+    except ValueError:
+        pass
+    return False
+
+
+def validate_float(p: str) -> bool:
+    """
+    Validate a float.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        float(p)
+        return True
+    except ValueError:
+        pass
+    return False

@@ -1,4 +1,6 @@
-nltk >= 3
 langdetect
+nltk
+outdated
 pyperclip
+requests
 tkmacosx

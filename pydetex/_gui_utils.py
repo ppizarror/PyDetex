@@ -1,0 +1,281 @@
+"""
+PyDetex
+https://github.com/ppizarror/pydetex
+
+GUI UTILS
+Provides utils for the gui.
+"""
+
+__all__ = [
+    'SettingsWindow',
+    'RichText'
+]
+
+import tkinter as tk
+from tkinter import font as tkfont
+from tkinter import messagebox
+
+from typing import Callable, Tuple, Optional, Dict
+
+import pydetex.utils as ut
+from pydetex._gui_settings import Settings as _Settings
+
+
+class SettingsWindow(object):
+    """
+    Settings window.
+    """
+
+    _cfg: '_Settings'
+    _dict_langs: Dict[str, str]
+    _dict_pipelines: Dict[str, str]
+    on_destroy: Optional[Callable[[], None]]
+
+    # noinspection PyProtectedMember
+    def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
+        """
+        Constructor.
+
+        :param window_size: Window size (width, height)
+        :param cfg: Settings
+        """
+        self.root = tk.Tk()
+        self.on_destroy = None
+        self._cfg = cfg  # Store setting reference
+
+        # Configure window
+        self.root.title('Settings')
+        self.root.minsize(width=window_size[0], height=window_size[1])
+        self.root.resizable(width=False, height=False)
+        self.root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
+                                            (self.root.winfo_screenwidth() - window_size[0]) / 2,
+                                            (self.root.winfo_screenheight() - window_size[1]) / 2))
+        self.root.protocol('WM_DELETE_WINDOW', self.close)
+        if not ut.IS_OSX:
+            self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
+
+        # Registers
+        reg_int = self.root.register(ut.validate_int)
+
+        # Main frame
+        f0 = tk.Frame(self.root, border=5)
+        f0.pack(fill='both')
+
+        label_w = 17
+
+        # Set languages
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+
+        self._dict_langs = {}
+        for k in self._cfg._lang.get_available():
+            self._dict_langs[self._cfg._lang.get(k, 'lang')] = k
+
+        self._var_lang = tk.StringVar(self.root)
+        self._var_lang.set(self._cfg._lang.get(cfg.get(cfg.CFG_LANG), 'lang'))  # default value
+
+        pipe = tk.OptionMenu(f, self._var_lang, *list(self._dict_langs.keys()))
+        pipe.focus()
+        pipe.pack(side=tk.LEFT)
+
+        # Set pipelines
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+
+        self._dict_pipelines = {}
+        for k in self._cfg._available_pipelines:
+            self._dict_pipelines[self._cfg.lang(k)] = k
+
+        self._var_pipeline = tk.StringVar(self.root)
+        self._var_pipeline.set(self._cfg.lang(cfg.get(cfg.CFG_PIPELINE, update=False)))  # default value
+
+        pipe = tk.OptionMenu(f, self._var_pipeline, *list(self._dict_pipelines.keys()))
+        pipe.pack(side=tk.LEFT)
+
+        # Check repetition
+        f_repetition = tk.LabelFrame(f0, text=self._cfg.lang('cfg_words_repetition'), bd=1, relief=tk.GROOVE)
+        f_repetition.pack(fill='both')
+
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_check'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 4))
+        self._var_check_repetition = tk.BooleanVar(self.root)
+        self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
+        tk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
+
+        # Repetition min chars
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
+        )
+        self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
+        self._var_repetition_min_char.pack(side=tk.LEFT)
+        self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR))
+
+        # Repetition distance
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
+        )
+        self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
+        self._var_repetition_distance.pack(side=tk.LEFT)
+        self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE))
+
+        # Repetition use stemming
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 4)
+        )
+        self._var_check_repetition_stemming = tk.BooleanVar(self.root)
+        self._var_check_repetition_stemming.set(cfg.get(cfg.CFG_REPETITION_USE_STEMMING))
+        tk.Checkbutton(f, variable=self._var_check_repetition_stemming).pack(side=tk.LEFT)
+
+        # Repetition use stopwords
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 4)
+        )
+        self._var_check_repetition_stopwords = tk.BooleanVar(self.root)
+        self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
+        tk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
+
+        # Repetition ignore words
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_w, anchor='w').pack(
+            side=tk.LEFT,
+            padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
+        )
+        self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4, highlightthickness=3 if ut.IS_OSX else 0,
+                                                    highlightcolor='#426392')
+        self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
+        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS))
+
+        # End repetition
+        f = tk.Frame(f_repetition, border=0, height=3 if ut.IS_OSX else 5)
+        f.pack()
+        f.pack_propagate(0)
+
+        # Font format
+        f = tk.Frame(f0, border=0, relief=tk.GROOVE)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_output_font_format = tk.BooleanVar(self.root)
+        self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
+        tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
+
+        # Save
+        fbuttons = tk.Frame(f0)
+        fbuttons.pack(side=tk.BOTTOM, expand=True)
+        ut.Button(fbuttons, text=ut.button_text(self._cfg.lang('cfg_save')), command=self._save,
+                  relief=tk.GROOVE).pack(pady=(12 if ut.IS_OSX else 8, 0))
+
+        # Update
+        self.root.update()
+
+    def close(self) -> None:
+        """
+        Close the window.
+        """
+        if self.on_destroy:
+            self.on_destroy()
+        self.root.destroy()
+
+    def _save(self) -> None:
+        """
+        Save the settings.
+        """
+        lang_value = self._dict_langs[self._var_lang.get()]
+        current_lang = self._cfg.get(self._cfg.CFG_LANG)
+
+        store: Tuple[Tuple[str, str, str], ...] = (
+            (self._cfg.CFG_LANG, lang_value,
+             'Invalid lang value'),
+            (self._cfg.CFG_PIPELINE, self._dict_pipelines[self._var_pipeline.get()],
+             'Invalid pipeline value'),
+            (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
+             'Invalid repetition value'),
+            (self._cfg.CFG_REPETITION_DISTANCE, self._var_repetition_distance.get(),
+             'Repetition distance be greater than 2'),
+            (self._cfg.CFG_REPETITION_IGNORE_WORDS, self._var_repetition_ignore_words.get(0.0, tk.END),
+             'Invalid ignore words'),
+            (self._cfg.CFG_REPETITION_MIN_CHAR, self._var_repetition_min_char.get(),
+             'Repetition min chars must be greater than zero'),
+            (self._cfg.CFG_REPETITION_USE_STEMMING, self._var_check_repetition_stemming.get(),
+             'Invalid repetition stemming value'),
+            (self._cfg.CFG_REPETITION_USE_STOPWORDS, self._var_check_repetition_stopwords.get(),
+             'Invalid repetition stemming value'),
+            (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
+             'Invalid output font format value')
+        )
+
+        # Set values
+        do_close = True
+        for cfg in store:
+            try:
+                self._cfg.set(cfg[0], cfg[1])
+            except ValueError:
+                messagebox.showerror('Error', cfg[2])
+                do_close = False
+
+        # Check if lang has changed
+        if lang_value != current_lang:
+            messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
+                                message=self._cfg.lang('reload_message_message'))
+
+        # Save
+        self._cfg.save()
+        if do_close:
+            self.close()
+
+
+# noinspection PyShadowingNames,PyMissingOrEmptyDocstring
+class RichText(tk.Text):
+    """
+    Rich text.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        default_font = tkfont.nametofont(self.cget('font'))
+
+        em = default_font.measure('m')
+        default_size = default_font.cget('size')
+
+        bold_font = tkfont.Font(**default_font.configure())
+        bold_italic_font = tkfont.Font(**default_font.configure())
+        h1_font = tkfont.Font(**default_font.configure())
+        italic_font = tkfont.Font(**default_font.configure())
+        normal_font = tkfont.Font(**default_font.configure())
+        underlined_font = tkfont.Font(**default_font.configure())
+
+        bold_font.configure(weight='bold')
+        italic_font.configure(slant='italic')
+        bold_italic_font.configure(weight='bold', slant='italic')
+        h1_font.configure(size=int(default_size * 2), weight='bold')
+        underlined_font.configure(underline=True)
+
+        self.tag_configure('bold', font=bold_font)
+        self.tag_configure('bold_italic', font=bold_italic_font)
+        self.tag_configure('h1', font=h1_font, spacing3=default_size)
+        self.tag_configure('italic', font=italic_font)
+        self.tag_configure('normal', font=normal_font)
+        self.tag_configure('underlined', font=underlined_font, spacing3=default_size)
+
+        lmargin2 = em + default_font.measure("\u2022 ")
+        self.tag_configure('bullet', lmargin1=em, lmargin2=lmargin2)
+
+    def insert_bullet(self, index, text):
+        self.insert(index, f'\u2022 {text}', 'bullet')

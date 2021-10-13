@@ -50,7 +50,9 @@ PyDetex
 Introduction
 ------------
 
-A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things...
+A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things.
+Multiple language support (15+), detects repeated words, and many things more to come!
+
 
 
 Install Instructions

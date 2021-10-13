@@ -8,6 +8,7 @@ Defines parsers, which perform a single task for removal LaTex things.
 
 __all__ = [
     'find_str',
+    'FONT_FORMAT_SETTINGS',
     'process_cite',
     'process_inputs',
     'process_labels',
@@ -26,6 +27,12 @@ TAG_FILE_ERROR = '|FILEERROR|'
 
 NOT_FOUND_FILES = []
 PRINT_LOCATION = False
+
+FONT_FORMAT_SETTINGS = {
+    'cite': '',
+    'normal': '',
+    'ref': '',
+}
 
 
 def _find_str(s: str, char: str) -> int:
@@ -147,7 +154,8 @@ def process_cite(s: str) -> str:
                     if w not in cites.keys():
                         cites[w] = len(cites.keys()) + 1
                     c = c.replace(w, str(cites[w]))
-                s = s[:k] + '[' + c + ']' + s[k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + '[' + c + ']' + FONT_FORMAT_SETTINGS['normal'] + s[
+                                                                                                            k + j + 1:]
                 break
 
 
@@ -182,7 +190,7 @@ def process_ref(s) -> str:
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
-                s = s[:k] + str(r) + s[k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(r) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 r += 1
                 break
 
@@ -339,9 +347,9 @@ def process_inputs(s: str) -> str:
                     tex_file += '.tex'
                 if tex_file not in NOT_FOUND_FILES:
                     if not PRINT_LOCATION:
-                        print('Current path location: {0}'.format(os.getcwd()))
+                        print(f'Current path location: {os.getcwd()}')
                         PRINT_LOCATION = True
-                    print('Detected file {0}:'.format(tex_file))
+                    print(f'Detected file {tex_file}:')
 
                     # Get folder locations
                     folders = _os_listfolder()
@@ -350,7 +358,7 @@ def process_inputs(s: str) -> str:
                     for f in folders:
                         tx = _load_file(tex_file, f)
                         if tx == TAG_FILE_ERROR:
-                            print('\tFile not found in {0}'.format(f))
+                            print(f'\tFile not found in {f}')
                         else:
                             break
                     if tx == TAG_FILE_ERROR:

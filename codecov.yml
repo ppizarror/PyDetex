@@ -1,3 +1,4 @@
 ignore:
   - "pydetex/gui.py"
+  - "pydetex/_gui_utils.py"
   - "test/*.py"
