@@ -13,13 +13,19 @@ __all__ = [
 ]
 
 from langdetect import detect as _detect
+# langdetect supports:
+# af, ar, bg, bn, ca, cs, cy, da, de, el, en, es, et, fa, fi, fr, gu, he,
+# hi, hr, hu, id, it, ja, kn, ko, lt, lv, mk, ml, mr, ne, nl, no, pa, pl,
+# pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 
 import nltk
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords as _stopwords
+from nltk.stem import SnowballStemmer
+from nltk.tokenize import RegexpTokenizer
 
 # Check if stopwods exists
 try:
-    stopwords.words('english')
+    _stopwords.words('english')
 except LookupError:
     nltk.download('stopwords')
 
@@ -234,17 +240,86 @@ def get_language_tag(s: str) -> str:
         return _ISO_639_LANGS[s]
 
 
-def check_repeated_words(s: str, lang: str, min_chars: int, window: int) -> str:
+def check_repeated_words(
+        s: str,
+        lang: str,
+        min_chars: int,
+        window: int,
+        stopwords: bool,
+        stemming: bool
+) -> str:
     """
     Check repeated words.
 
     :param s: Text
-    :param lang: Language
+    :param lang: Language code
     :param min_chars: Min chars to accept
-    :param window:
+    :param window: Window words span to check
+    :param stopwords: Use stopwords
+    :param stemming: Use stemming
     :return: Text with repeated words marked
     """
-    if lang == 'en':
-        pass
+    assert isinstance(window, int) and window > 1
+    assert isinstance(min_chars, int) and min_chars >= 1
+
+    # Check languages
+    available_langs = {
+        'ar': 'arabic',
+        'da': 'danish',
+        'de': 'german',
+        'en': 'english',
+        'es': 'spanish',
+        'fi': 'finnish',
+        'fr': 'french',
+        'hu': 'hungarian',
+        'it': 'italian',
+        'nb': 'norwegian',
+        'nd': 'norwegian',
+        'nl': 'dutch',
+        'nn': 'norwegian',
+        'no': 'norwegian',
+        'pt': 'portuguese',
+        'ro': 'romanian',
+        'ru': 'russian',
+        'sv': 'swedish'
+    }
+    if lang in available_langs.keys():
+        stop = _stopwords.words(available_langs[lang])
+        stemmer = SnowballStemmer(available_langs[lang])
     else:
         return s
+
+    tokenizer = RegexpTokenizer(r'\w+')
+
+    # Separeate words
+    wordswin = []  # Stores the words
+    words = s.split(' ')
+    new_s = []
+    for w in words:
+        original_w = w
+
+        # Apply filters
+        if len(w) <= min_chars:
+            w = ''
+        if w != '':
+            w = tokenizer.tokenize(w)[0]
+        if stemming:
+            w = stemmer.stem(w)
+        if stopwords and w in stop:
+            w = ''
+
+        # Check if the word exist on list
+        if w in wordswin and w != '':
+            ww = wordswin[::-1].index(w) + 1
+            original_w = '<repeated:{0}>{1}</repeated>'.format(ww, original_w)
+
+        # Push the new word
+        wordswin.append(w)
+        if len(wordswin) > window:
+            wordswin.pop(0)
+
+        # Append word
+        new_s.append(original_w)
+
+    # Return string with repeated format
+    return ' '.join(new_s)

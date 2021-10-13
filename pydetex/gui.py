@@ -113,7 +113,7 @@ class _SettingsWindow(object):
         f0 = tk.Frame(self.root, border=5)
         f0.pack(fill='both')
 
-        label_w = 15
+        label_w = 17
 
         # Set pipelines
         f = tk.Frame(f0, border=0)
@@ -168,6 +168,14 @@ class _SettingsWindow(object):
         self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
         tk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
 
+        # Repetition ignore words
+        f = tk.Frame(f_repetition, border=0)
+        f.pack(fill='both')
+        tk.Label(f, text='Repetition ignore words', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4)
+        self._var_repetition_ignore_words.pack(side=tk.LEFT)
+        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS))
+
         # Save
         fbuttons = tk.Frame(f0, border=10)
         fbuttons.pack(side=tk.BOTTOM, expand=True)
@@ -191,7 +199,9 @@ class _SettingsWindow(object):
             (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
              'Invalid repetition value'),
             (self._cfg.CFG_REPETITION_DISTANCE, self._var_repetition_distance.get(),
-             'Repetition distance be greater than one'),
+             'Repetition distance be greater than 2'),
+            (self._cfg.CFG_REPETITION_IGNORE_WORDS, self._var_repetition_ignore_words.get(0.0, tk.END),
+             'Invalid ignore words'),
             (self._cfg.CFG_REPETITION_MIN_CHAR, self._var_repetition_min_char.get(),
              'Repetition min chars must be greater than zero'),
             (self._cfg.CFG_REPETITION_USE_STEMMING, self._var_check_repetition_stemming.get(),
@@ -199,13 +209,16 @@ class _SettingsWindow(object):
             (self._cfg.CFG_REPETITION_USE_STOPWORDS, self._var_check_repetition_stopwords.get(),
              'Invalid repetition stemming value')
         )
+        do_close = True
         for cfg in store:
             try:
                 self._cfg.set(cfg[0], cfg[1])
             except ValueError:
                 messagebox.showerror('Error', cfg[2])
+                do_close = False
         self._cfg.save()
-        self.close()
+        if do_close:
+            self.close()
 
 
 class _Settings(object):
@@ -237,6 +250,7 @@ class _Settings(object):
 
         # Words repetition
         self.CFG_REPETITION_DISTANCE = 'REPETITION_DISTANCE'
+        self.CFG_REPETITION_IGNORE_WORDS = 'REPETITION_IGNORE_WORDS'
         self.CFG_REPETITION_MIN_CHAR = 'REPETITION_MIN_CHAR'
         self.CFG_REPETITION_USE_STEMMING = 'REPETITION_USE_STEMMING'
         self.CFG_REPETITION_USE_STOPWORDS = 'REPETITION_USE_STOPWORDS'
@@ -249,7 +263,8 @@ class _Settings(object):
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
             self.CFG_PIPELINE: (pipelines[0], str, pipelines),
-            self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 0),
+            self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 1),
+            self.CFG_REPETITION_IGNORE_WORDS: ('', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
@@ -324,6 +339,8 @@ class _Settings(object):
                 else:
                     warn('Setting {0} value should have these values: {1}'
                          .format(key, ','.join(val_valids)))
+            elif val_valids is None:
+                return True
             else:  # Is a function
                 if not val_valids(value):
                     warn('Setting {0} do not pass valid test'.format(key))
@@ -431,7 +448,7 @@ class PyDetexGUI(object):
 
         f1 = tk.Frame(self._root, border=0)
         f1.pack()
-        self._text_in = tk.Text(f1, wrap='word', height=11)
+        self._text_in = tk.Text(f1, wrap='word', height=11, undo=True)
         self._text_in.pack()
         self._text_in.focus_force()
         self._text_in.focus()
@@ -499,14 +516,26 @@ class PyDetexGUI(object):
         # Process the text and get the language
         text = self._text_in.get(0.0, tk.END)
         out = self.pipeline(text)
-        lang = ut.get_language_tag(ut.detect_language(out))
+        lang_code = ut.detect_language(out)
+        lang = ut.get_language_tag(lang_code)
         words = len(out)
         self._cfg.add_words(words)
+
+        # Check repeated words
+        if self._cfg.get(self._cfg.CFG_CHECK_REPETITION):
+            out = ut.check_repeated_words(
+                s=out,
+                lang=lang_code,
+                min_chars=self._cfg.get(self._cfg.CFG_REPETITION_MIN_CHAR),
+                window=self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE),
+                stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
+                stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING)
+            )
 
         # Write results
         self._text_out.delete(0.0, tk.END)
         self._text_out.insert(0.0, out)
-        self._label_lang['text'] = 'Detected language: {0}. Words: {1}'.format(lang, words)
+        self._label_lang['text'] = 'Detected language: {0} ({1}). Words: {2}'.format(lang, lang_code, words)
         self._ready = True
 
     def _process_clip(self) -> None:
@@ -540,7 +569,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = _SettingsWindow((325, 240), self._cfg)
+        self._settings_window = _SettingsWindow((340, 300), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         self._settings_window.root.mainloop(1)
 
