@@ -59,6 +59,13 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
+# Re-try to download
+try:
+    _stopwords.words('english')
+    _HAS_NLTK = True
+except LookupError:
+    pass
+
 _ISO_639_LANGS = {
     'aa': 'Afar',
     'ab': 'Abkhaz',
