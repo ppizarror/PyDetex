@@ -9,6 +9,7 @@ Basic gui that convers and executes a given pipeline.
 __all__ = ['PyDetexGUI']
 
 import tkinter as tk
+from tkinter import font as tkfont
 from tkinter import messagebox
 
 import platform
@@ -22,6 +23,7 @@ from warnings import warn
 import pydetex.version
 import pydetex.pipelines as pip
 import pydetex.utils as ut
+from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
 # Check OS
 IS_OSX = platform.system() == 'Darwin'
@@ -43,6 +45,18 @@ _respath = __actualpath + 'res/'
 _PIPELINES = {
     'Simple': pip.simple_pipeline
 }
+
+# Configure fonts
+_FONT_TAGS = {
+    'bold': '[PYDETEX_FONT:BOLD]',
+    'bold_italic': '[PYDETEX_FONT:BOLD_ITALIC]',
+    'italic': '[PYDETEX_FONT:ITALIC]',
+    'normal': '[PYDETEX_FONT:NORMAL]',
+    'underlined': '[PYDETEX_FONT:UNDERLINED]',
+}
+_TAGS_FONT = {}
+for _tag in _FONT_TAGS.keys():
+    _TAGS_FONT[_FONT_TAGS[_tag]] = _tag
 
 
 def _validate_int(p: str) -> bool:
@@ -177,6 +191,14 @@ class _SettingsWindow(object):
         self._var_repetition_ignore_words.pack(side=tk.LEFT)
         self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS))
 
+        # Font format
+        f = tk.Frame(f0, border=0, relief=tk.GROOVE)
+        f.pack(fill='both')
+        tk.Label(f, text='Output font format', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        self._var_output_font_format = tk.BooleanVar(self.root)
+        self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
+        tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
+
         # Save
         fbuttons = tk.Frame(f0, border=10)
         fbuttons.pack(side=tk.BOTTOM, expand=True)
@@ -208,7 +230,9 @@ class _SettingsWindow(object):
             (self._cfg.CFG_REPETITION_USE_STEMMING, self._var_check_repetition_stemming.get(),
              'Invalid repetition stemming value'),
             (self._cfg.CFG_REPETITION_USE_STOPWORDS, self._var_check_repetition_stopwords.get(),
-             'Invalid repetition stemming value')
+             'Invalid repetition stemming value'),
+            (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
+             'Invalid output font format value')
         )
         do_close = True
         for cfg in store:
@@ -247,6 +271,7 @@ class _Settings(object):
 
         # General settings
         self.CFG_CHECK_REPETITION = 'CHECK_REPETITION'
+        self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
 
         # Words repetition
@@ -263,13 +288,14 @@ class _Settings(object):
         pipelines = list(_PIPELINES.keys())
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
+            self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (pipelines[0], str, pipelines),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 1),
             self.CFG_REPETITION_IGNORE_WORDS: ('', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
-            self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
+            self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0)
         }
 
         # The valid settings
@@ -396,8 +422,48 @@ class _Settings(object):
         keys = list(self._settings.keys())
         keys.sort()
         for k in keys:
-            f.write('{0} = {1}\n'.format(k, str(self._settings[k])))
+            f.write('{0} = {1}\n'.format(k, str(self._settings[k]).strip()))
         f.close()
+
+
+# noinspection PyShadowingNames,PyMissingOrEmptyDocstring
+class RichText(tk.Text):
+    """
+    Rich text.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        default_font = tkfont.nametofont(self.cget('font'))
+
+        em = default_font.measure('m')
+        default_size = default_font.cget('size')
+
+        bold_font = tkfont.Font(**default_font.configure())
+        bold_italic_font = tkfont.Font(**default_font.configure())
+        h1_font = tkfont.Font(**default_font.configure())
+        italic_font = tkfont.Font(**default_font.configure())
+        normal_font = tkfont.Font(**default_font.configure())
+        underlined_font = tkfont.Font(**default_font.configure())
+
+        bold_font.configure(weight='bold')
+        italic_font.configure(slant='italic')
+        bold_italic_font.configure(weight='bold', slant='italic')
+        h1_font.configure(size=int(default_size * 2), weight='bold')
+        underlined_font.configure(underline=True)
+
+        self.tag_configure('bold', font=bold_font)
+        self.tag_configure('bold_italic', font=bold_italic_font)
+        self.tag_configure('h1', font=h1_font, spacing3=default_size)
+        self.tag_configure('italic', font=italic_font)
+        self.tag_configure('normal', font=normal_font)
+        self.tag_configure('underlined', font=underlined_font, spacing3=default_size)
+
+        lmargin2 = em + default_font.measure("\u2022 ")
+        self.tag_configure('bullet', lmargin1=em, lmargin2=lmargin2)
+
+    def insert_bullet(self, index, text):
+        self.insert(index, f'\u2022 {text}', 'bullet')
 
 
 class PyDetexGUI(object):
@@ -457,7 +523,7 @@ class PyDetexGUI(object):
 
         f2 = tk.Frame(self._root, border=5)
         f2.pack()
-        self._text_out = tk.Text(f2, wrap='word', height=11)
+        self._text_out = RichText(f2, wrap='word', height=11)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack()
 
@@ -481,8 +547,8 @@ class PyDetexGUI(object):
 
         # Write basic text
         self._clear()  # This also changes states
-        self._text_in.insert(0.0,
-                             'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, and returns a nice plain text!')
+        self._text_in.insert(0.0, 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, '
+                                  'and returns a nice plain text!')
         self._ready = False
         self._tokenizer = RegexpTokenizer(r'\w+')
 
@@ -530,6 +596,14 @@ class PyDetexGUI(object):
         self._text_out['state'] = tk.NORMAL
         self._copy_clip['state'] = tk.NORMAL
 
+        # Font format
+        font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
+
+        # Configure text
+        PARSER_FONT_FORMAT['cite'] = _FONT_TAGS['bold'] if font_format else ''
+        PARSER_FONT_FORMAT['normal'] = _FONT_TAGS['normal'] if font_format else ''
+        PARSER_FONT_FORMAT['ref'] = _FONT_TAGS['bold'] if font_format else ''
+
         # Process the text and get the language
         text = self._text_in.get(0.0, tk.END)
         out = self.pipeline(text)
@@ -537,6 +611,10 @@ class PyDetexGUI(object):
         lang = ut.get_language_tag(lang_code)
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
+
+        # Add formats
+        out = _FONT_TAGS['normal'] + out
+        tags = list(_FONT_TAGS.values())
 
         # Check repeated words
         if self._cfg.get(self._cfg.CFG_CHECK_REPETITION):
@@ -547,12 +625,19 @@ class PyDetexGUI(object):
                 window=self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE),
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
                 stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
-                ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS))
+                ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS)),
+                font_tag_format=_FONT_TAGS['italic'] if font_format else '',
+                font_param_format=_FONT_TAGS['bold'] if font_format else '',
+                font_normal_format=_FONT_TAGS['normal'] if font_format else '',
+                remove_tokens=tags
             )
 
         # Write results
         self._text_out.delete(0.0, tk.END)
-        self._text_out.insert(0.0, out)
+        for t in ut.split_tags(out, tags):
+            tag, text = t
+            self._text_out.insert('end', text, _TAGS_FONT[tag])
+
         self._label_lang['text'] = 'Detected language: {0} ({1}). Words: {2}'.format(lang, lang_code, words)
         self._ready = True
 
@@ -587,7 +672,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = _SettingsWindow((360, 300), self._cfg)
+        self._settings_window = _SettingsWindow((360, 325), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         self._settings_window.root.mainloop(1)
 
@@ -596,6 +681,7 @@ class PyDetexGUI(object):
         Close settings.
         """
         self._settings_window = None
+        self._process()
 
     def _close(self) -> None:
         """

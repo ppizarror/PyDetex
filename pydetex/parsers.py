@@ -8,6 +8,7 @@ Defines parsers, which perform a single task for removal LaTex things.
 
 __all__ = [
     'find_str',
+    'FONT_FORMAT_SETTINGS',
     'process_cite',
     'process_inputs',
     'process_labels',
@@ -26,6 +27,12 @@ TAG_FILE_ERROR = '|FILEERROR|'
 
 NOT_FOUND_FILES = []
 PRINT_LOCATION = False
+
+FONT_FORMAT_SETTINGS = {
+    'cite': '',
+    'normal': '',
+    'ref': '',
+}
 
 
 def _find_str(s: str, char: str) -> int:
@@ -147,7 +154,7 @@ def process_cite(s: str) -> str:
                     if w not in cites.keys():
                         cites[w] = len(cites.keys()) + 1
                     c = c.replace(w, str(cites[w]))
-                s = s[:k] + '[' + c + ']' + s[k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + '[' + c + ']' + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
 
 
@@ -182,7 +189,7 @@ def process_ref(s) -> str:
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
-                s = s[:k] + str(r) + s[k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(r) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 r += 1
                 break
 
