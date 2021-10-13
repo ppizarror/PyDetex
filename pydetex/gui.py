@@ -204,6 +204,9 @@ class _SettingsWindow(object):
         fbuttons.pack(side=tk.BOTTOM, expand=True)
         Button(fbuttons, text='Save', command=self._save, relief=tk.GROOVE).pack()
 
+        # Update
+        self.root.update()
+
     def close(self) -> None:
         """
         Close the window.
@@ -291,7 +294,7 @@ class _Settings(object):
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (pipelines[0], str, pipelines),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 1),
-            self.CFG_REPETITION_IGNORE_WORDS: ('', str, None),
+            self.CFG_REPETITION_IGNORE_WORDS: ('ignored_word_1, ignored_word_2', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
@@ -551,6 +554,8 @@ class PyDetexGUI(object):
                                   'and returns a nice plain text!')
         self._ready = False
         self._tokenizer = RegexpTokenizer(r'\w+')
+
+        self._root.update()
 
     # noinspection PyUnresolvedReferences
     @staticmethod
