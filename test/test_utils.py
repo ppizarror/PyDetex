@@ -95,3 +95,22 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.split_tags(s, ['<A>', '<B>', '<C>']),
                          [('<A>', 'This is a complex'), ('<B>', 'example'), ('<A>', 'but however we should focus on'),
                           ('<C>', 'these'), ('<B>', 'ideas'), ('<A>', 'and'), ('<B>', 'core concepts'), ('<A>', 'yes')])
+
+    def test_validate(self) -> None:
+        """
+        Test validate.
+        """
+        self.assertTrue(ut.validate_int('1'))
+        self.assertTrue(ut.validate_int('-1'))
+        self.assertTrue(ut.validate_int('-1.0000000000'))
+        self.assertFalse(ut.validate_int('-1.01'))
+        self.assertTrue(ut.validate_float('1'))
+        self.assertTrue(ut.validate_float('1.324'))
+        self.assertTrue(ut.validate_float('-0.000123'))
+        self.assertFalse(ut.validate_float('-0.123e'))
+
+    def test_button_text(self) -> None:
+        """
+        Test button text.
+        """
+        self.assertEqual(ut.button_text('test'), 'test' if ut.IS_OSX else '  test  ')

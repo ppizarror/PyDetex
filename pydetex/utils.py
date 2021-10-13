@@ -7,10 +7,15 @@ Several text utils.
 """
 
 __all__ = [
+    'Button',
     'check_repeated_words',
     'detect_language',
     'get_language_tag',
-    'split_tags'
+    'IS_OSX',
+    'RESOURCES_PATH',
+    'split_tags',
+    'validate_float',
+    'validate_int'
 ]
 
 from langdetect import detect as _detect
@@ -19,16 +24,38 @@ from langdetect import detect as _detect
 # hi, hr, hu, id, it, ja, kn, ko, lt, lv, mk, ml, mr, ne, nl, no, pa, pl,
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 
+import os
 import nltk
+import platform
+
 from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
+from warnings import warn
 
 from typing import List, Tuple, Optional
+
+# Resources path
+# Set resouces path
+__actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
+RESOURCES_PATH = __actualpath + 'res/'
+
+# Check OS
+IS_OSX = platform.system() == 'Darwin'
+
+# Import Button widget
+if IS_OSX:
+    from tkmacosx import Button
+
+else:
+    from tkinter import Button
+
+_HAS_NLTK = False
 
 # Check if stopwods exists
 try:
     _stopwords.words('english')
+    _HAS_NLTK = True
 except LookupError:
     nltk.download('stopwords')
 
@@ -303,10 +330,12 @@ def check_repeated_words(
         'ru': 'russian',
         'sv': 'swedish'
     }
-    if lang in available_langs.keys():
+    if lang in available_langs.keys() and _HAS_NLTK:
         stop = _stopwords.words(available_langs[lang])
         stemmer = SnowballStemmer(available_langs[lang])
     else:
+        if not _HAS_NLTK:
+            warn('nltk library does not exist. Check for your internet connection in order to use this feature')
         return s
 
     tokenizer = RegexpTokenizer(r'\w+')
@@ -418,3 +447,47 @@ def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
             merged_tags[r - 1] = (tagged[0], merged_tags[r - 1][1] + tagged[1])
 
     return merged_tags
+
+
+def button_text(s: str) -> str:
+    """
+    Generates the button text.
+
+    :param s: Button's text
+    :return: Text
+    """
+    return s if IS_OSX else '  {0}  '.format(s)
+
+
+def validate_int(p: str) -> bool:
+    """
+    Validate an integer.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        p = float(p)
+        return int(p) == p
+    except ValueError:
+        pass
+    return False
+
+
+def validate_float(p: str) -> bool:
+    """
+    Validate a float.
+
+    :param p: Value
+    :return: True if integer
+    """
+    if p == '' or p == '-':
+        return True
+    try:
+        float(p)
+        return True
+    except ValueError:
+        pass
+    return False

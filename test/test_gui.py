@@ -9,7 +9,7 @@ Test guis.
 from test._base import BaseTest
 
 # noinspection PyProtectedMember
-from pydetex.gui import PyDetexGUI, _Settings, _validate_int, _validate_float
+from pydetex.gui import PyDetexGUI, Settings, _validate_int, _validate_float
 import pydetex.pipelines as pip
 import os
 
@@ -45,7 +45,7 @@ class GuiTest(BaseTest):
         """
         Test the app settings.
         """
-        cfg = _Settings(ignore_file=True)
+        cfg = Settings(ignore_file=True)
         self.assertEqual(cfg.get(cfg.CFG_PIPELINE), pip.simple_pipeline)
         self.assertFalse(cfg.get(cfg.CFG_CHECK_REPETITION))
         cfg.save()
@@ -69,7 +69,7 @@ class GuiTest(BaseTest):
         self.assertEqual(cfg.get(cfg.CFG_REPETITION_MIN_CHAR), 3)
 
         # Test without ignore
-        _Settings()
+        Settings()
 
     def test_validate(self) -> None:
         """
