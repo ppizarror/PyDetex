@@ -15,6 +15,7 @@ import platform
 import os
 import pyperclip
 
+from nltk.tokenize import RegexpTokenizer
 from typing import Callable, Tuple, Dict, Any, List, Type, Union, Optional
 from warnings import warn
 
@@ -140,7 +141,7 @@ class _SettingsWindow(object):
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
         tk.Label(f, text='Repetition min chars', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
-        self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'))
+        self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_min_char.pack(side=tk.LEFT)
         self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR))
 
@@ -148,7 +149,7 @@ class _SettingsWindow(object):
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
         tk.Label(f, text='Repetition distance', width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
-        self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'))
+        self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_distance.pack(side=tk.LEFT)
         self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE))
 
@@ -412,6 +413,7 @@ class PyDetexGUI(object):
     _settings_window: Optional['_SettingsWindow']
     _text_in: 'tk.Text'
     _text_out: 'tk.Text'
+    _tokenizer: 'RegexpTokenizer'
 
     def __init__(self) -> None:
         """
@@ -456,6 +458,7 @@ class PyDetexGUI(object):
         f2 = tk.Frame(self._root, border=5)
         f2.pack()
         self._text_out = tk.Text(f2, wrap='word', height=11)
+        self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack()
 
         f3 = tk.Frame(self._root, border=2)
@@ -478,8 +481,22 @@ class PyDetexGUI(object):
 
         # Write basic text
         self._clear()  # This also changes states
-        self._text_in.insert(0.0, 'Write or paste here your LaTeX code')
+        self._text_in.insert(0.0,
+                             'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, and returns a nice plain text!')
         self._ready = False
+        self._tokenizer = RegexpTokenizer(r'\w+')
+
+    # noinspection PyUnresolvedReferences
+    @staticmethod
+    def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
+        """
+        Process out keys.
+
+        :param event: Event
+        :return: Event
+        """
+        if event.char == '':
+            return event
 
     def start(self) -> None:
         """
@@ -518,7 +535,7 @@ class PyDetexGUI(object):
         out = self.pipeline(text)
         lang_code = ut.detect_language(out)
         lang = ut.get_language_tag(lang_code)
-        words = len(out)
+        words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
         # Check repeated words
@@ -530,7 +547,7 @@ class PyDetexGUI(object):
                 window=self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE),
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
                 stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
-                ignore=self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS).split(',')
+                ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS))
             )
 
         # Write results
@@ -570,7 +587,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = _SettingsWindow((340, 300), self._cfg)
+        self._settings_window = _SettingsWindow((360, 300), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         self._settings_window.root.mainloop(1)
 

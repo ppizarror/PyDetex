@@ -226,6 +226,8 @@ def detect_language(s: str) -> str:
     :param s: String
     :return: Detected language
     """
+    if s == '':
+        return '–'
     return _detect(s)
 
 

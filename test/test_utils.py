@@ -24,6 +24,7 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.get_language_tag('en'), 'English')
         s = """El modelo propuesto contiene diferentes métricas para coordenar las tareas de segmentación"""
         self.assertEqual(ut.detect_language(s), 'es')
+        self.assertEqual(ut.detect_language(''), '–')
 
     def test_repeat_words(self) -> None:
         """
