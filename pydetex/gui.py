@@ -270,7 +270,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((360, 360), self._cfg)
+        self._settings_window = SettingsWindow((360, 360 if IS_OSX else 365), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             self._settings_window.root.mainloop(1)
