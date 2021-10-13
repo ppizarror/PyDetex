@@ -529,7 +529,8 @@ class PyDetexGUI(object):
                 min_chars=self._cfg.get(self._cfg.CFG_REPETITION_MIN_CHAR),
                 window=self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE),
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
-                stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING)
+                stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
+                ignore=self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS).split(',')
             )
 
         # Write results

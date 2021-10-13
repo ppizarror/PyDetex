@@ -23,6 +23,8 @@ from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
 
+from typing import List
+
 # Check if stopwods exists
 try:
     _stopwords.words('english')
@@ -246,7 +248,8 @@ def check_repeated_words(
         min_chars: int,
         window: int,
         stopwords: bool,
-        stemming: bool
+        stemming: bool,
+        ignore: List[str]
 ) -> str:
     """
     Check repeated words.
@@ -257,6 +260,7 @@ def check_repeated_words(
     :param window: Window words span to check
     :param stopwords: Use stopwords
     :param stemming: Use stemming
+    :param ignore: Ignore a list of words
     :return: Text with repeated words marked
     """
     assert isinstance(window, int) and window > 1
@@ -291,10 +295,22 @@ def check_repeated_words(
 
     tokenizer = RegexpTokenizer(r'\w+')
 
+    ignored_words = []
+    # Apply filters to ignored words
+    for w in ignore:
+        if stemming:
+            w = stemmer.stem(w)
+        if stopwords and w in stop:
+            w = ''
+        if w == '':
+            continue
+        ignored_words.append(w)
+
     # Separeate words
     wordswin = []  # Stores the words
     words = s.split(' ')
     new_s = []
+
     for w in words:
         original_w = w
 
@@ -306,6 +322,10 @@ def check_repeated_words(
         if stemming:
             w = stemmer.stem(w)
         if stopwords and w in stop:
+            w = ''
+
+        # Check if word is ignored
+        if w in ignored_words:
             w = ''
 
         # Check if the word exist on list
