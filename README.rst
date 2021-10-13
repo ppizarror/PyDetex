@@ -72,7 +72,7 @@ Simply run this command anywhere to execute the application, or just import pyde
 
     $> python3 -m pydetex.gui
 
-.. figure:: docs/_static/example_basic.png
+.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_basic.png
     :scale: 40%
     :align: center
 
