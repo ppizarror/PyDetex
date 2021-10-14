@@ -98,6 +98,9 @@ class PyDetexGUI(object):
                     window_size[1] -= 10
                 elif fsize == 10:
                     window_size[1] -= 20
+            elif window_size[3] >= 1:  # medium
+                if fsize == 13:
+                    window_size[1] -= 5
 
         # Configure window
         self._root.title('PyDetex')
@@ -329,14 +332,13 @@ class PyDetexGUI(object):
         """
         Show about window.
         """
-        # Get current package version
-        ver = ''
-
         # noinspection PyBroadException
         try:
             is_outdated, latest_version = check_outdated('pydetex', str(pydetex.version.ver))
             if is_outdated:
                 ver = self._cfg.lang('about_ver_upgrade').format(latest_version)
+            else:
+                ver = self._cfg.lang('about_ver_latest')
         except ValueError:
             ver = self._cfg.lang('about_ver_dev')
         except requests.exceptions.ConnectionError:
@@ -347,7 +349,8 @@ class PyDetexGUI(object):
         msg = f'PyDetex v{pydetex.version.ver}\n' \
               f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
               f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
-              f'{ver}'
+              f'{ver}\n' \
+              f'{pydetex.__copyright__}'
         messagebox.showinfo(title='About', message=msg)
 
 
