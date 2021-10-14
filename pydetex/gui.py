@@ -33,12 +33,6 @@ from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
-# Configure fonts
-PARSER_FONT_FORMAT = PARSER_FONT_FORMAT.copy()
-PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link']
-PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal']
-PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link']
-
 # Store the pipelines
 _PIPELINES = {
     'Simple': pip.simple_pipeline
@@ -204,6 +198,9 @@ class PyDetexGUI(object):
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
+        PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
+        PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
+        PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
 
         # Process the text and get the language
         out = self.pipeline(text)

@@ -208,7 +208,7 @@ class Settings(object):
                 _load = _f.readlines()
                 _f.close()
             except FileNotFoundError:
-                warn('Setting file could not be loaded or not exist. Creating new file')
+                warn(f'Setting file {_SETTINGS_FILE[0]} could not be loaded or not exist. Creating new file')
             return _load
 
         if not ignore_file:
