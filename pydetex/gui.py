@@ -349,7 +349,8 @@ class PyDetexGUI(object):
         msg = f'PyDetex v{pydetex.version.ver}\n' \
               f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
               f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
-              f'{ver}'
+              f'{ver}\n' \
+              f'{pydetex.__copyright__}'
         messagebox.showinfo(title='About', message=msg)
 
 
