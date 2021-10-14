@@ -157,25 +157,28 @@ class UtilsTest(BaseTest):
         Test find tex commands.
         """
 
-        def _test(_s: str, _query: Tuple[str, ...] = (), par=('{', '}')) -> None:
-            _k = ut.find_tex_commands(_s, par)
+        def _test(_s: str, _query: Tuple[str, ...] = ()) -> None:
+            _k = ut.find_tex_commands(_s)
             self.assertEqual(len(_k), len(_query))
             if len(_query) == 0:
                 self.assertEqual(_k, ())
             else:
                 for _j in range(len(_query)):
-                    self.assertEqual(_s[_k[_j][1] + 2:_k[_j][2] + 1], _query[_j])
+                    self.assertEqual(_s[_k[_j][2]:_k[_j][3] + 1], _query[_j])
 
         # Test empty
         _test('This is \\a0Command{nice}')
         _test('This is \\ {nice}')
-        _test('This is \\aComm\nand{nice}')
+        _test('This is \\aComm\n    and  {nice}')
         _test('This is \\aCommand\{nice}')
         _test('This is \\aCommand{nice invalid!')
         _test('This is \\aCommand{nice invalid! \\anothercommand{yes}!')
 
         # Test simple
+        _test('This is \\aComm\n {nice}', ('nice',))
         _test('This is \\aCommand{nice}', ('nice',))
+        _test('This is \\aCommand{nice}}}}}}', ('nice',))
+        _test('This is \\aCommand{ni[c]e}}}}}', ('ni[c]e',))
         _test('This is \\aCommand \\aCommand{nice2}', ('nice2',))
         _test('This is \\aCommand\\{ \\aCommand{nice2}', ('nice2',))
         _test('This is \\aCommand{ \\aCommand{nice2}}', (' \\aCommand{nice2}',))
@@ -193,13 +196,50 @@ class UtilsTest(BaseTest):
 
         # Test multiple
         _test('\\a{b} \\c{d}', ('b', 'd'))
+        _test('\\a{b}\\c{d}', ('b', 'd'))
         _test('\\a{\\c{d}} \\e{f}', ('\\c{d}', 'f'))
         _test('\\a{\\c{d}} \\e{{f}}', ('\\c{d}', '{f}'))
         _test('\\a{\\c{d}}\\e{{f}}', ('\\c{d}', '{f}'))
         _test('\\a{\\c{d}\\}\\{} \\e{{f}}', ('\\c{d}\\}\\{', '{f}'))
 
         # Other parenthesis
-        _test('\\a[b] \\c[d]', ('b', 'd'), par=('[', ']'))
+        _test('\\a[b] \\c[d]', ('b', 'd'))
+
+        # Test with spaces
+        _test('This is \\aCommand    {nice}', ('nice',))
+        _test('This is \\aCommand  }  \\aCommand{nice}', ('nice',))
+
+        _test('This is \\aCommand                  {  nice}', ('  nice',))
+        _test('This is \\aCommand                  [  nice]', ('  nice',))
+        _test('This is \\aCommand        X         {{ nice} \\command    {nice2}', ('nice2',))
+
+        # Invalids with spaces
+        _test('This is \\aCommand        X         {{ nice}')
+
+        # Test with spaces but an invalid letter
+        _test('This is \\aCommand        X          {  nice}')
+        _test('This is \\aCommand        X          {{ nice}')
+
+        # Test with two parethesis format
+        _test('This is \\aCommand   [  nice} ')
+        _test('This is \\aCommand   {  nice]  This is \\aCommand[nice2]', ('nice2',))
+
+        # Test multi-command
+        _test('This is \\aCommand{nice}{nice2}', ('nice', 'nice2'))
+        _test('This is \\aCommand{nice}[nice2]', ('nice', 'nice2'))
+        _test('This is \\aCommand{nice\}\[nice2] nice')
+        _test('This is \\aCommand{nice\}\[nice2} nice', ('nice\}\[nice2',))
+        _test('This is \\aCommand[{nice}]{nice!!} nice', ('{nice}', 'nice!!'))
+        _test('This is \\aCommand[{{{{{{nice}}}}}}]{nice!!} nice', ('{{{{{{nice}}}}}}', 'nice!!'))
+        _test('This is \\aCommand[1]{2} nice', ('1', '2'))
+        _test('This is \\aCommand [1] {2} nice', ('1', '2'))
+        _test('This is \\aCommand [1]\n {2} nice', ('1', '2'))
+        s = 'This is \\f[1]{2} \\g{3} \\h[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
+        _test(s, ('1', '2', '3', '6', '7', '9', '10', '11'))
+
+        # Check continues
+        t = [k[4] for k in ut.find_tex_commands(s)]
+        self.assertEqual(t, [True, False, False, True, False, True, True, False])
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
@@ -218,7 +258,8 @@ class UtilsTest(BaseTest):
         _test('This is \\acommand', ('\\acommand',))
         _test('This is \\acommand ', ('\\acommand',))
         _test('This is \\acommand{no} epic')
-        _test('This is \\acommand[', ('\\acommand',))
+        _test('This is \\acommand   {no} epic')
+        _test('This is \\acommand   k', ('\\acommand',))
         _test('This is \\acommand\\', ('\\acommand',))
         _test('This is \\a\\b', ('\\a', '\\b'))
         _test('This is \\\\\\\\\\\\\\\\\\a', ('\\a',))
@@ -241,6 +282,12 @@ class UtilsTest(BaseTest):
         _test('\\c', ('\\c',))
         _test('\\\\')
         _test('This is a \\formula', ('\\formula',))
+        _test('\\f \\g{1} \\h', ('\\f', '\\h'))
+        _test('\\f \\g{1}[\\z] \\h', ('\\f', '\\z', '\\h'))
+        _test('\\f \\g{1}[\\z     ] \\h', ('\\f', '\\z', '\\h'))
+        _test('\\f \\g{1}[\\z    {} ] \\h', ('\\f', '\\h'))
+        _test('\\f \\g{1}[\\z]{} \\h', ('\\f', '\\z', '\\h'))
+        _test('\insertimage[]{pix2pix_compressed}{width=\linewidth}', ('\linewidth',))
 
     def test_apply_tag_tex_commands(self) -> None:
         """
@@ -248,10 +295,11 @@ class UtilsTest(BaseTest):
         """
         s = 'This does not contain any command'
         self.assertEqual(ut.apply_tag_tex_commands(s, ''), s)
+        nums = ('1', '2', '3', '4', '5')
 
         s = 'This is a \\formula{epic} and this is not'
         b = 'This is a 1\\formula2{3epic4}5 and this is not'
-        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
 
         s = 'This is a \\formula{epic} and this is not'
         b = 'This is a |\\formula|{|epic|}| and this is not'
@@ -259,19 +307,28 @@ class UtilsTest(BaseTest):
 
         s = 'This is a \\formula{epic} and this \\i{s} not'
         b = 'This is a 1\\formula2{3epic4}5 and this 1\\i2{3s4}5 not'
-        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
 
         s = 'This is a \\formula{\\epic{nice}} and this is not'
         b = 'This is a 1\\formula2{3\\epic{nice}4}5 and this is not'
-        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
 
         s = 'This is a \\formula{nice}'
         b = 'This is a 1\\formula2{3nice4}5'
-        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
 
         s = 'This is a \\formula{\\formula{nice}}'
         b = 'This is a 1\\formula2{3\\formula{nice}4}5'
-        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
+
+        # Multiple commands
+        s = 'This is a \\f{A}[B]'
+        b = 'This is a 1\\f2{3A4}52[3B4]5'
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
+
+        s = 'This is a \\f{A} \\f \\g[B][C][D]'
+        b = 'This is a 1\\f2{3A4}5 \\f 1\\g2[3B4]52[3C4]52[3D4]5'
+        self.assertEqual(ut.apply_tag_tex_commands(s, nums), b)
 
     def test_apply_tag_tex_commands_noargv(self) -> None:
         """
@@ -281,7 +338,10 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ''), s)
 
         s = 'This does not contain any \\command{command!}'
-        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ''), s)
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), s)
+
+        s = 'This does not contain any \\command  {command!}'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), s)
 
         s = 'This is a \\formula and this is not'
         b = 'This is a 1\\formula2 and this is not'
@@ -308,6 +368,14 @@ class UtilsTest(BaseTest):
         Test synthax.
         """
         self.assertEqual(ut.syntax_highlight('nice'),
-                         '[PYDETEX_FONT:NORMAL]nice')
+                         '⇱PYDETEX_FONT:NORMAL⇲nice')
         self.assertEqual(ut.syntax_highlight('nice \\epic'),
-                         '[PYDETEX_FONT:NORMAL]nice [PYDETEX_FONT:TEX_COMMAND]\epic[PYDETEX_FONT:NORMAL]')
+                         '⇱PYDETEX_FONT:NORMAL⇲nice ⇱PYDETEX_FONT:TEX_COMMAND⇲\epic⇱PYDETEX_FONT:NORMAL⇲')
+
+        s = '\insertimage[]{pix2pix_compressed}{width=\linewidth}{Pix2Pix model}'
+        t = '⇱PYDETEX_FONT:NORMAL⇲⇱PYDETEX_FONT:TEX_COMMAND⇲\insertimage⇱PYDETEX_FONT:NORMAL⇲' \
+            '[⇱PYDETEX_FONT:NORMAL⇲]⇱PYDETEX_FONT:NORMAL⇲{⇱PYDETEX_FONT:TEX_ARGUMENT⇲' \
+            'pix2pix_compressed⇱PYDETEX_FONT:NORMAL⇲}⇱PYDETEX_FONT:NORMAL⇲{⇱PYDETEX_FONT:TEX_ARGUMENT⇲' \
+            'width=⇱PYDETEX_FONT:TEX_COMMAND⇲\linewidth⇱PYDETEX_FONT:NORMAL⇲⇱PYDETEX_FONT:NORMAL⇲}' \
+            '⇱PYDETEX_FONT:NORMAL⇲{⇱PYDETEX_FONT:TEX_ARGUMENT⇲Pix2Pix model⇱PYDETEX_FONT:NORMAL⇲}'
+        self.assertEqual(ut.syntax_highlight(s), t)

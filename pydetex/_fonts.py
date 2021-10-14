@@ -50,5 +50,5 @@ FONT_PROPERTIES: Dict[str, Optional[Dict[str, Union[str, int]]]] = {
 FONT_TAGS: Dict[str, str] = {}
 TAGS_FONT: Dict[str, str] = {}
 for k in FONT_PROPERTIES.keys():
-    FONT_TAGS[k] = f'[PYDETEX_FONT:{k.upper()}]'
+    FONT_TAGS[k] = f'⇱PYDETEX_FONT:{k.upper()}⇲'
     TAGS_FONT[FONT_TAGS[k]] = k

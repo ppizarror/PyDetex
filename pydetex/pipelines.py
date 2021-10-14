@@ -24,6 +24,7 @@ def simple_pipeline(s: str) -> str:
     :param s: String latex
     :return: String with no latex!
     """
+    s = '\n'.join(s.splitlines())
     s = par.simple_replace(s)
     s = par.remove_common_tags(s)
     s = par.process_cite(s)

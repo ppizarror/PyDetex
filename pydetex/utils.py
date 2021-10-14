@@ -384,7 +384,7 @@ def apply_tag_between_inside(
     return new_s
 
 
-def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int], ...]:
+def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     """
     Find all tex commands within a code.
 
@@ -403,61 +403,78 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int], ...]:
     a, b, c0, c1, d = 0, -1, 0, 0, 0
     depth_0 = 0  # {}
     depth_1 = 0  # []
+    cont_chars = ('{', '[', ' ', '\n')
+    cmd_idx = 0  # index
+
     for i in range(len(s) - 1):
-        print(i, s[i], depth_0, depth_1, is_cmd, is_argv)
+        # print(i, s[i], depth_0, depth_1, is_cmd, is_argv)
+
+        # Start a command
         if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
-            a = i
-            b = -1
-            is_cmd = True
-            is_argv = False
-        elif is_cmd and not is_argv and s[i] not in ('{', '[', ' ') and s[i] not in VALID_TEX_COMMAND_CHARS:
+            a, b, is_cmd, is_argv = i, -1, True, False
+            cmd_idx += 1
+
+        # If command before args encounter an invalid chad, disables the command
+        elif is_cmd and not is_argv and s[i] not in cont_chars and s[i] not in VALID_TEX_COMMAND_CHARS:
             is_cmd = False
             if s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
-                a = i
-                b = -1
-                is_cmd = True
-                is_argv = False
-        elif is_cmd and not is_argv and s[i - 1] == ' ' and s[i] not in ('{', '[', ' '):
+                a, b, is_cmd, is_argv = i, -1, True, False
+                cmd_idx += 1
+
+        # If command has a new line, but following chars are not space
+        elif is_cmd and not is_argv and s[i] == '\n' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
             is_cmd = False
-        elif is_cmd and s[i] == '{' and s[i - 1] != '\\':
+
+        # If command, not arg, but an invalid char follows the space, disables the command
+        elif is_cmd and not is_argv and s[i - 1] == ' ' and s[i] not in cont_chars:
+            is_cmd = False
+
+        # Inits a new arg
+        elif is_cmd and s[i] in ('{', '[') and s[i - 1] != '\\':
             is_argv = True
             if b == -1:
                 b = i - 1
                 depth_0, depth_1 = 0, 0
-            if depth_0 == 0:
-                c0 = i + 1
-            depth_0 += 1
-        elif is_cmd and s[i] == '[' and s[i - 1] != '\\':
-            is_argv = True
-            if b == -1:
-                b = i - 1
-                depth_0, depth_1 = 0, 0
-            if depth_1 == 0:
-                c1 = i + 1
-            depth_1 += 1
-        elif is_cmd and is_argv and s[i] == '}' and s[i - 1] != '\\':
-            depth_0 -= 1
+            if s[i] == '{':
+                if depth_0 == 0:
+                    c0 = i + 1
+                depth_0 += 1
+            else:
+                if depth_1 == 0:
+                    c1 = i + 1
+                depth_1 += 1
+
+        # Ends the argument, only if depth condition satisfies
+        elif is_cmd and is_argv and s[i] in ('}', ']') and s[i - 1] != '\\':
+            if s[i] == '}':
+                depth_0 -= 1
+            else:
+                depth_1 -= 1
             if depth_0 == 0 and depth_1 == 0:  # Finished
                 d = i - 1
-                found.append((a, b, c0, d))
-                if s[i + 1] not in ('[', '{', ' '):
+                found.append([a, b, c0 if s[i] == '}' else c1, d, cmd_idx])
+                if s[i + 1] not in cont_chars:
                     is_cmd = False
                 is_argv = False
-            elif depth_0 < 0:  # Invalid
+            elif depth_0 < 0 or depth_1 < 0:  # Invalid argument (parenthesis imbalance)
                 is_cmd = False
                 is_argv = False
 
-        elif is_cmd and is_argv and s[i] == ']' and s[i - 1] != '\\':
-            depth_1 -= 1
-            if depth_1 == 0 and depth_1 == 0:  # Finished
-                d = i - 1
-                found.append((a, b, c1, d))
-                if s[i + 1] not in ('[', '{', ' '):
-                    is_cmd = False
-                is_argv = False
-            elif depth_1 < 0:  # Invalid
-                is_cmd = False
-                is_argv = False
+    # Check if command continues
+    if len(found) == 0:
+        return ()
+    elif len(found) == 1:
+        found[0][4] = False
+    else:
+        for k in range(1, len(found)):
+            if found[k][4] == found[k - 1][4]:
+                found[k - 1][4] = True
+            else:
+                found[k - 1][4] = False
+            if k == len(found) - 1:
+                found[k][4] = False
+    for k in range(len(found)):
+        found[k] = tuple(found[k])
 
     return tuple(found)
 
@@ -477,25 +494,52 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
     found = []
     is_cmd = False
     s += '_'
-    a, b = 0, 0
+    a = 0
+    cont_chars = ('{', '[', ' ', '\n')
+
     for i in range(len(s) - 1):
+
         if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+            if i > 0 and s[i - 1] == '⇲':
+                continue
             a = i
             is_cmd = True
+
         elif is_cmd and s[i] == '\\':
-            b = i - 1
-            if b - a > 0:
-                found.append((a, b))
+            if i - 1 - a > 0:
+                found.append([a, i - 1])
             a = i
-        elif is_cmd and s[i] == '{':
+
+        elif is_cmd and s[i] in ('{', '['):
             is_cmd = False
-        elif is_cmd and s[i] not in VALID_TEX_COMMAND_CHARS and s[i] != '{':
-            b = i - 1
+
+        # If command has a new line, but following chars are not space
+        elif is_cmd and s[i] == '\n' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
             is_cmd = False
-            found.append((a, b))
+
+        # If command, not arg, but an invalid char follows the space, disables the command
+        elif is_cmd and s[i - 1] == ' ' and s[i] not in cont_chars:
+            is_cmd = False
+            found.append([a, i - 1])
+
+        elif is_cmd and s[i] not in VALID_TEX_COMMAND_CHARS and s[i] not in cont_chars:
+            is_cmd = False
+            found.append([a, i - 1])
+
+        # print(i, s[i], is_cmd, found)
 
     if is_cmd and a != len(s) - 2:
-        found.append((a, len(s) - 2))
+        found.append([a, len(s) - 2])
+
+    # Strip chars
+    for k in range(len(found)):
+        ch = found[k][1]
+        for j in range(ch):
+            if s[found[k][1]] == ' ':
+                found[k][1] -= 1
+            else:
+                break
+        found[k] = tuple(found[k])
 
     return tuple(found)
 
@@ -531,15 +575,21 @@ def apply_tag_tex_commands(
         i += 1
         if i == len(s):
             break
-        if k < len(tex_tags) and i in tex_tags[k]:
+        if k < len(tex_tags) and i in tex_tags[k][0:4]:
             if i == tex_tags[k][0]:
                 new_s += a + s[i]
             elif i == tex_tags[k][1]:
-                new_s += s[i] + b + s[i + 1] + c
-                i += 1
-            elif i == tex_tags[k][2]:
+                new_s += s[i] + b
+            elif i == tex_tags[k][2] and i != tex_tags[k][3]:
+                new_s += c + s[i]
+            elif i == tex_tags[k][3]:
+                if i == tex_tags[k][2]:
+                    new_s += c
                 new_s += s[i] + d + s[i + 1] + e
                 i += 1
+                # if continues
+                if tex_tags[k][4]:
+                    new_s += b
                 k += 1
         else:
             new_s += s[i]
@@ -610,8 +660,11 @@ def syntax_highlight(s: str) -> str:
     # Format commands with {arguments}
     s = apply_tag_tex_commands(
         s=s,
-        tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'], _FONT_TAGS['tex_argument'], _FONT_TAGS['normal'],
-              _FONT_TAGS['normal'])
+        tags=(_FONT_TAGS['tex_command'],
+              _FONT_TAGS['normal'],
+              _FONT_TAGS['tex_argument'],
+              _FONT_TAGS['normal'],
+              '')
     )
 
     # Format commands without arguments
