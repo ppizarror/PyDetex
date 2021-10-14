@@ -109,10 +109,9 @@ class PyDetexGUI(object):
 
         # In text
         f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
-        f1.pack()
+        f1.pack(fill='both', padx=10)
         f1.pack_propagate(0)
 
-        f1.pack(fill='both', padx=10)
         self._text_in = RichText(f1, wrap='word', undo=True, highlightthickness=hthick,
                                  highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
@@ -253,6 +252,9 @@ class PyDetexGUI(object):
         self._label_lang['text'] = self._cfg.lang('detected_lang').format(lang, lang_code, words)
         self._ready = True
 
+        # Lock output
+        self._text_out['state'] = tk.DISABLED
+
     def _process_clip(self) -> None:
         """
         Process from clipboard. Tries with pooling.
@@ -275,10 +277,12 @@ class PyDetexGUI(object):
                 warn(f'Paste process failed after {_MAX_PASTE_RETRY} attempts')
             return
 
+        self._paste_timeout_error = 0
+        if text.strip() == '':
+            return
         self._text_in.delete(0.0, tk.END)
         self._text_in.insert(0.0, text)
         self._process()
-        self._paste_timeout_error = 0
 
     def _get_pipeline_results(self) -> str:
         """
@@ -305,7 +309,7 @@ class PyDetexGUI(object):
         self._settings_window = SettingsWindow((365, 427 if ut.IS_OSX else 448), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
-            self._settings_window.root.mainloop(1)
+            # self._settings_window.root.mainloop(1)
             self._settings_window.root.update()
         except AttributeError:
             pass
