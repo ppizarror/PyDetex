@@ -57,8 +57,9 @@ class ParserTest(BaseTest):
         self.assertEqual(par.process_cite('this is \\cite{number1} epic \\cite{number2} and \\cite{number1}'),
                          'this is [1] epic [2] and [1]')
         self.assertEqual(
-            par.process_cite('This is another example, \\cite*{Downson} et al. suggests that yes, but \\cite{Epic} not')
-            , 'This is another example, [1] et al. suggests that yes, but [2] not')
+            par.process_cite(
+                'This is another example, \\cite*{Downson} et al. suggests that yes, but \\cite{Epic} not'),
+            'This is another example, [1] et al. suggests that yes, but [2] not')
 
     def test_process_ref(self) -> None:
         """
@@ -104,6 +105,8 @@ class ParserTest(BaseTest):
         Test simple replace format.
         """
         self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
+        self.assertEqual(par.simple_replace('This is a example formula $\\alpha\longrightarrow\\beta+1$'),
+                         'This is a example formula $α⟶β+1$')
 
     def test_remove_common_tags(self) -> None:
         """

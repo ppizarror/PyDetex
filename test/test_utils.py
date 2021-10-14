@@ -123,3 +123,26 @@ class UtilsTest(BaseTest):
         Test button text.
         """
         self.assertEqual(ut.button_text('test'), 'test' if ut.IS_OSX else '  test  ')
+
+    def test_apply_tag_between(self) -> None:
+        """
+        Test apply tags between.
+        """
+        self.assertEqual(
+            ut.apply_tag_between_inside('This is a $formula$ and this is not', ('$', '$'), ('a', 'b', 'c', 'd')),
+            'This is a a$bformulac$d and this is not')
+        self.assertEqual(
+            ut.apply_tag_between_inside('$formula$', ('$', '$'), ('X', '', '', 'X')),
+            'X$formula$X')
+        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), ''), '$formula$')
+        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
+        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), 'a'), 'a$aformulaa$a jaja a$axa$a')
+        self.assertEqual(
+            ut.apply_tag_between_inside('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
+            'X$form\\$ula$X')
+        self.assertEqual(
+            ut.apply_tag_between_inside('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
+            '\\$formula\\$')
+
+        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'),  ('a', '', '', 'b')),
+                         'a$formula$b jaja a$x$b')

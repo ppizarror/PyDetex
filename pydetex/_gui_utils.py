@@ -189,7 +189,7 @@ class SettingsWindow(object):
         self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4, highlightthickness=3 if ut.IS_OSX else 0,
                                                     highlightcolor='#426392')
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
-        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS))
+        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS).strip())
 
         # End repetition
         f = tk.Frame(f_repetition, border=0, height=3 if ut.IS_OSX else 5)

@@ -243,7 +243,16 @@ class PyDetexGUI(object):
                 tag=self._cfg.lang('tag_repeated')
             )
 
-        # Write results
+        # Change equation chars
+        out = ut.apply_tag_between_inside(
+            s=out,
+            symbols_char=('$', '$'),
+            tags=(_FONT_TAGS['bold'], _FONT_TAGS['italic'],
+                  _FONT_TAGS['bold'], _FONT_TAGS['normal']) if font_format else '',
+            ignore_escape=True
+        )
+
+        # Write results and split tags
         self._text_out.delete(0.0, tk.END)
         for t in ut.split_tags(out, tags):
             tag, text = t

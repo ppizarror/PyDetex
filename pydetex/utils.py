@@ -7,6 +7,7 @@ Several text utils.
 """
 
 __all__ = [
+    'apply_tag_between_inside',
     'Button',
     'check_repeated_words',
     'detect_language',
@@ -33,7 +34,7 @@ from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
 from warnings import warn
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 # Resources path
 # Set resouces path
@@ -507,3 +508,47 @@ def validate_float(p: str) -> bool:
     except ValueError:
         pass
     return False
+
+
+def apply_tag_between_inside(
+        s: str,
+        symbols_char: Tuple[str, str],
+        tags: Union[Tuple[str, str, str, str], str],
+        ignore_escape: bool = False
+) -> str:
+    """
+    Apply tag between symbols. For example, if symbols are ($, $) and tag is [a,b,c,d]:
+
+    Input: This is a $formula$ and this is not.
+    Output: This is a a$bformulac$d and this is not
+
+    :param s: String
+    :param symbols_char: Symbols to check
+    :param tags: Tags to replace
+    :param ignore_escape: Ignores \\char
+    :return: String with tags
+    """
+    assert len(symbols_char) == 2
+    assert len(symbols_char[0]) == 1 and len(symbols_char[1]) == 1
+    if isinstance(tags, str):
+        if tags == '':
+            return s
+        tags = (tags, tags, tags, tags)
+
+    assert len(tags) == 4
+    a, b, c, d = tags
+
+    s = '_' + s
+    new_s = ''
+    r = False  # Inside tag
+    for i in range(1, len(s)):
+        # Open tag
+        if not r and s[i] == symbols_char[0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+            new_s += a + s[i] + b
+            r = True
+        elif r and s[i] == symbols_char[1] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+            new_s += c + s[i] + d
+            r = False
+        else:
+            new_s += s[i]
+    return new_s
