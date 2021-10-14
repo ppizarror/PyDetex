@@ -38,6 +38,7 @@ import platform
 from iso639 import Lang
 # noinspection PyPackageRequirements
 from iso639.exceptions import InvalidLanguageValue
+
 from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
