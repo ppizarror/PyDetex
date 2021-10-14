@@ -191,7 +191,7 @@ class PyDetexGUI(object):
         """
         text = self._text_in.get(0.0, tk.END)
         if text.strip() == '':
-            return
+            return self._clear()
 
         self._text_out['state'] = tk.NORMAL
         self._copy_clip['state'] = tk.NORMAL
