@@ -73,7 +73,6 @@ class GuiTest(BaseTest):
         self.assertFalse(cfg.check_setting(cfg.CFG_FONT_SIZE, 55))
         self.assertTrue(cfg.check_setting(cfg.CFG_FONT_SIZE, 11))
 
-
         self.assertFalse(cfg.check_setting(cfg.CFG_PIPELINE, ''))
 
         # Get

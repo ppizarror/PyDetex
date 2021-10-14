@@ -8,4 +8,4 @@ dist/
 **.egg-info
 
 # Settings
-pydetex/res/settings.cfg
+pydetex/res/.pydetex.cfg

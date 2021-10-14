@@ -17,7 +17,10 @@ from warnings import warn
 
 import datetime
 import pydetex.pipelines as pip
+import pydetex.utils as ut
 import pydetex.version as ver
+
+from pydetex import __author__
 
 _SETTINGS_FILE = [os.path.expanduser('~/') + '.pydetex.cfg']
 
@@ -212,8 +215,8 @@ class Settings(object):
                 load = _load_file()
             except PermissionError:
                 warn(f'Settings file {_SETTINGS_FILE[0]} could not be opened (PermissionError)')
-                # _SETTINGS_FILE[0] = ut.RESOURCES_PATH + '.pydetex.cfg'
-                # load = _load_file()
+        else:
+            _SETTINGS_FILE[0] = ut.RESOURCES_PATH + '.pydetex.cfg'
 
         # Creates the lang manager
         self._lang = _LangManager()
@@ -400,7 +403,7 @@ class Settings(object):
             f = open(_SETTINGS_FILE[0], 'w')
             keys = list(self._settings.keys())
             keys.sort()
-            f.write(f'# PyDetex v{ver.vernum}\n')
+            f.write(f'# PyDetex v{ver.vernum} @ {__author__}\n')
             f.write(f'# Settings stored on {datetime.datetime.today().ctime()}\n')
             for k in keys:
                 f.write(f'{k} = {str(self._settings[k]).strip()}\n')
