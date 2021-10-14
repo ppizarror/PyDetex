@@ -62,7 +62,7 @@ PyDetex can be installed via pip, for both MacOS, Windows & Linux. Simply run:
 
 .. code-block:: bash
 
-    $> python3 pip install pydetex
+    $> python3 pip install --upgrade pydetex
 
 
 Launch the GUI, or use the library
