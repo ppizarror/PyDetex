@@ -384,44 +384,80 @@ def apply_tag_between_inside(
     return new_s
 
 
-def find_tex_commands(s: str, par: Tuple[str, str] = ('{', '}')) -> Tuple[Tuple[int, int, int], ...]:
+def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int], ...]:
     """
     Find all tex commands within a code.
 
              00000000001111111111222
              01234567890123456789012
-                     x       x    x
-    Example: This is \aCommand{nice}... => ((8,16,21), ...)
+                     x       x x  x
+    Example: This is \aCommand{nice}... => ((8,16,18,21), ...)
 
     :param s: Latex code
-    :param par: Parenthesis format
     :return: Tuple if found codes
     """
     found = []
     is_cmd = False
     is_argv = False
     s += '_'
-    a, b, c = 0, 0, 0
-    depth = 0
+    a, b, c0, c1, d = 0, -1, 0, 0, 0
+    depth_0 = 0  # {}
+    depth_1 = 0  # []
     for i in range(len(s) - 1):
+        print(i, s[i], depth_0, depth_1, is_cmd, is_argv)
         if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
             a = i
+            b = -1
             is_cmd = True
-        elif is_cmd and not is_argv and s[i] != par[0] and s[i] not in VALID_TEX_COMMAND_CHARS:
+            is_argv = False
+        elif is_cmd and not is_argv and s[i] not in ('{', '[', ' ') and s[i] not in VALID_TEX_COMMAND_CHARS:
             is_cmd = False
-        elif is_cmd and not is_argv and s[i] == par[0]:
-            b = i - 1
+            if s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+                a = i
+                b = -1
+                is_cmd = True
+                is_argv = False
+        elif is_cmd and not is_argv and s[i - 1] == ' ' and s[i] not in ('{', '[', ' '):
+            is_cmd = False
+        elif is_cmd and s[i] == '{' and s[i - 1] != '\\':
             is_argv = True
-            depth = 0
-        elif is_cmd and is_argv and s[i] == par[0] and s[i - 1] != '\\':
-            depth += 1
-        elif is_cmd and is_argv and s[i] == par[1] and s[i - 1] != '\\':
-            if depth == 0:  # Finished
-                c = i - 1
-                found.append((a, b, c))
+            if b == -1:
+                b = i - 1
+                depth_0, depth_1 = 0, 0
+            if depth_0 == 0:
+                c0 = i + 1
+            depth_0 += 1
+        elif is_cmd and s[i] == '[' and s[i - 1] != '\\':
+            is_argv = True
+            if b == -1:
+                b = i - 1
+                depth_0, depth_1 = 0, 0
+            if depth_1 == 0:
+                c1 = i + 1
+            depth_1 += 1
+        elif is_cmd and is_argv and s[i] == '}' and s[i - 1] != '\\':
+            depth_0 -= 1
+            if depth_0 == 0 and depth_1 == 0:  # Finished
+                d = i - 1
+                found.append((a, b, c0, d))
+                if s[i + 1] not in ('[', '{', ' '):
+                    is_cmd = False
+                is_argv = False
+            elif depth_0 < 0:  # Invalid
                 is_cmd = False
                 is_argv = False
-            depth -= 1
+
+        elif is_cmd and is_argv and s[i] == ']' and s[i - 1] != '\\':
+            depth_1 -= 1
+            if depth_1 == 0 and depth_1 == 0:  # Finished
+                d = i - 1
+                found.append((a, b, c1, d))
+                if s[i + 1] not in ('[', '{', ' '):
+                    is_cmd = False
+                is_argv = False
+            elif depth_1 < 0:  # Invalid
+                is_cmd = False
+                is_argv = False
 
     return tuple(found)
 
@@ -466,8 +502,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
 
 def apply_tag_tex_commands(
         s: str,
-        tags: Union[Tuple[str, str, str, str, str], str],
-        par: Tuple[str, str] = ('{', '}')
+        tags: Union[Tuple[str, str, str, str, str], str]
 ) -> str:
     """
     Apply tag to tex command. For example, if tag is [1,2,3,4,5]:
@@ -477,7 +512,6 @@ def apply_tag_tex_commands(
 
     :param s: Code
     :param tags: Tags (length 5)
-    :param par: Parenthesis format
     :return: Code with tags
     """
     if isinstance(tags, str):
@@ -487,7 +521,7 @@ def apply_tag_tex_commands(
     assert len(tags) == 5
     a, b, c, d, e = tags  # Unpack
 
-    tex_tags = find_tex_commands(s, par)
+    tex_tags = find_tex_commands(s)
     if len(tex_tags) == 0:
         return s
     new_s = ''
@@ -578,14 +612,6 @@ def syntax_highlight(s: str) -> str:
         s=s,
         tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'], _FONT_TAGS['tex_argument'], _FONT_TAGS['normal'],
               _FONT_TAGS['normal'])
-    )
-
-    # Format commands with [arguments]
-    s = apply_tag_tex_commands(
-        s=s,
-        tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'], _FONT_TAGS['tex_argument'], _FONT_TAGS['normal'],
-              _FONT_TAGS['normal']),
-        par=('[', ']')
     )
 
     # Format commands without arguments
