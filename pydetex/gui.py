@@ -16,7 +16,6 @@ import pyperclip
 import requests
 import sys
 
-from concurrent.futures import ThreadPoolExecutor
 from outdated import check_outdated
 from nltk.tokenize import RegexpTokenizer
 from typing import Optional
@@ -252,7 +251,7 @@ class PyDetexGUI(object):
         def _paste():
             return pyperclip.paste()
 
-        executor = ThreadPoolExecutor(1)
+        executor = concurrent.futures.ThreadPoolExecutor(1)
         future = executor.submit(_paste)
         try:
             text = future.result(timeout=1)
