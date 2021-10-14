@@ -8,6 +8,7 @@ Basic gui that convers and executes a given pipeline.
 
 __all__ = ['PyDetexGUI']
 
+import concurrent.futures
 import tkinter as tk
 from tkinter import messagebox
 
@@ -15,9 +16,11 @@ import pyperclip
 import requests
 import sys
 
+from concurrent.futures import ThreadPoolExecutor
 from outdated import check_outdated
 from nltk.tokenize import RegexpTokenizer
 from typing import Optional
+from warnings import warn
 
 sys.path.append('../')
 
@@ -46,6 +49,8 @@ _TAGS_FONT = {}
 for _tag in _FONT_TAGS.keys():
     _TAGS_FONT[_FONT_TAGS[_tag]] = _tag
 
+_MAX_PASTE_RETRY: int = 3
+
 
 class PyDetexGUI(object):
     """
@@ -55,6 +60,7 @@ class PyDetexGUI(object):
     _cfg: 'Settings'
     _copy_clip: 'tk.Button'
     _label_lang: 'tk.Label'
+    _paste_timeout_error: int
     _ready: bool
     _root: 'tk.Tk'
     _settings_window: Optional['SettingsWindow']
@@ -71,36 +77,6 @@ class PyDetexGUI(object):
         # Load settings
         self._cfg = Settings()
         window_size = self._cfg.get(self._cfg.CFG_WINDOW_SIZE).copy()
-
-        # Fine-tune height based on font size
-        fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
-        if not ut.IS_OSX:
-            if window_size[3] == 0:  # small
-                if fsize == 9 or fsize == 13:
-                    window_size[1] += 5
-                elif fsize == 11:
-                    window_size[1] -= 10
-            elif window_size[3] >= 1:  # medium
-                if fsize == 15:
-                    window_size[1] += 5
-                elif fsize == 11:
-                    window_size[1] -= 30
-                elif fsize == 10:
-                    window_size[1] -= 20
-
-        else:
-            if window_size[3] == 2:  # large
-                if fsize == 15:
-                    window_size[1] += 10
-                elif fsize == 13:
-                    window_size[1] -= 5
-                elif fsize == 11:
-                    window_size[1] -= 10
-                elif fsize == 10:
-                    window_size[1] -= 20
-            elif window_size[3] >= 1:  # medium
-                if fsize == 13:
-                    window_size[1] -= 5
 
         # Configure window
         self._root.title('PyDetex')
@@ -129,23 +105,26 @@ class PyDetexGUI(object):
         self._label_lang.pack(side=tk.RIGHT)
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
+        fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
 
-        f1 = tk.Frame(self._root, border=0)
-        hfactor = 0.6
-        defaultfz = 11 if ut.IS_OSX else 10
+        # In text
+        f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
+        f1.pack()
+        f1.pack_propagate(0)
 
         f1.pack(fill='both', padx=10)
-        self._text_in = RichText(f1, wrap='word', height=window_size[2] - (fsize - defaultfz) * hfactor, undo=True,
-                                 highlightthickness=hthick, highlightcolor=hcolor,
-                                 font_size=fsize)
+        self._text_in = RichText(f1, wrap='word', undo=True, highlightthickness=hthick,
+                                 highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
         self._text_in.focus_force()
         self._text_in.focus()
 
-        f2 = tk.Frame(self._root, border=0)
+        # Out text
+        f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f2.pack(fill='both', padx=10, pady=5)
-        self._text_out = RichText(f2, wrap='word', height=window_size[2] - (fsize - defaultfz) * hfactor,
-                                  highlightthickness=hthick,
+        f2.pack_propagate(0)
+
+        self._text_out = RichText(f2, wrap='word', highlightthickness=hthick,
                                   highlightcolor=hcolor, font_size=fsize)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
@@ -174,6 +153,7 @@ class PyDetexGUI(object):
 
         # Write basic text
         self._clear()  # This also changes states
+        self._paste_timeout_error = 0
         self._text_in.insert(0.0, self._cfg.lang('placeholder'))
         self._ready = False
         self._tokenizer = RegexpTokenizer(r'\w+')
@@ -275,12 +255,30 @@ class PyDetexGUI(object):
 
     def _process_clip(self) -> None:
         """
-        Process from clipboard.
+        Process from clipboard. Tries with pooling.
         """
-        text = pyperclip.paste()
+
+        def _paste():
+            return pyperclip.paste()
+
+        executor = ThreadPoolExecutor(1)
+        future = executor.submit(_paste)
+        try:
+            text = future.result(timeout=1)
+        except concurrent.futures.TimeoutError:
+            self._paste_timeout_error += 1
+            if self._paste_timeout_error <= _MAX_PASTE_RETRY:
+                # print(f'Paste process failed (TimeoutError), retrying {self._paste_timeout_error}/{_MAX_PASTE_RETRY}')
+                self._root.after(100, self._process_clip)
+            else:
+                self._paste_timeout_error = 0
+                warn(f'Paste process failed after {_MAX_PASTE_RETRY} attempts')
+            return
+
         self._text_in.delete(0.0, tk.END)
         self._text_in.insert(0.0, text)
         self._process()
+        self._paste_timeout_error = 0
 
     def _get_pipeline_results(self) -> str:
         """
@@ -304,7 +302,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((365, 425 if ut.IS_OSX else 445), self._cfg)
+        self._settings_window = SettingsWindow((365, 427 if ut.IS_OSX else 448), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             self._settings_window.root.mainloop(1)
@@ -348,6 +346,7 @@ class PyDetexGUI(object):
 
         msg = f'PyDetex v{pydetex.version.ver}\n' \
               f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
+              f'{self._cfg.lang("about_opened")}: {self._cfg.get(self._cfg.CFG_TOTAL_OPENED_APP)}\n' \
               f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
               f'{ver}\n' \
               f'{pydetex.__copyright__}'

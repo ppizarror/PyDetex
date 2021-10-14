@@ -18,7 +18,6 @@ __all__ = [
     'validate_int'
 ]
 
-from langdetect import detect as _detect
 # langdetect supports:
 # af, ar, bg, bn, ca, cs, cy, da, de, el, en, es, et, fa, fi, fr, gu, he,
 # hi, hr, hu, id, it, ja, kn, ko, lt, lv, mk, ml, mr, ne, nl, no, pa, pl,
@@ -27,6 +26,7 @@ from langdetect import detect as _detect
 import os
 import nltk
 import platform
+import langdetect
 
 from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
@@ -263,7 +263,10 @@ def detect_language(s: str) -> str:
     """
     if s == '':
         return '–'
-    return _detect(s)
+    try:
+        return langdetect.detect(s)
+    except langdetect.lang_detect_exception.LangDetectException:  # No features in text
+        return '-'
 
 
 def get_language_tag(s: str) -> str:
