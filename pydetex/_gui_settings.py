@@ -78,7 +78,7 @@ class _LangManager(object):
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
-                'cfg_words_repetition_ignorew': 'Repetition ignored words',
+                'cfg_words_repetition_ignorew': 'Ignored words',
                 'cfg_words_repetition_minchars': 'Repetition min chars',
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
