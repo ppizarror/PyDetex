@@ -84,6 +84,10 @@ def remove_tag(s: str, tagname: str) -> str:
     :return: String without tags
     """
     tagname = '\\' + tagname
+    tagadd = 1
+    if '{' not in tagname:
+        tagname += '{'
+        tagadd = 0
     while True:
         k = find_str(s, tagname)
         if k == -1:  # No more tags, return
@@ -99,7 +103,7 @@ def remove_tag(s: str, tagname: str) -> str:
                 deep -= 1
             if deep == 0 and f:
                 # update s
-                s = s[:k] + s[k + len(tagname) + 1:k + j] + s[k + j + 1:]
+                s = s[:k] + s[k + len(tagname) + tagadd:k + j] + s[k + j + 1:]
                 break
 
 
