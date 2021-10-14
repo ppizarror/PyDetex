@@ -10,11 +10,17 @@ __all__ = [
     'Settings'
 ]
 
+import os
+
 from typing import Callable, Tuple, Dict, Any, List, Type, Union
 from warnings import warn
 
+import datetime
 import pydetex.pipelines as pip
 import pydetex.utils as ut
+import pydetex.version as ver
+
+_SETTINGS_FILE: str = os.path.expanduser('~/') + '.pydetex.cfg'
 
 # Store the pipelines
 _PIPELINES = {
@@ -25,7 +31,7 @@ _PIPELINES = {
 _WINDOW_SIZE = {
     'window_size_small': [700, 415, 11, 0],
     'window_size_medium': [900, 500, 14 if ut.IS_OSX else 13, 1],
-    'window_size_large': [1200, 610 if ut.IS_OSX else 500, 18 if ut.IS_OSX else 13 , 2]
+    'window_size_large': [1200, 610 if ut.IS_OSX else 500, 18 if ut.IS_OSX else 13, 2]
 }
 
 # If not OSX, add margin
@@ -51,6 +57,7 @@ class _LangManager(object):
                 'about_ver_dev': 'Development version',
                 'about_ver_err_conn': 'Cannot check for new versions (Connection Error)',
                 'about_ver_err_unkn': 'Cannot check for new versions (Unknown Error)',
+                'about_ver_latest': 'Software version up-to-date',
                 'about_ver_upgrade': 'Note: You are using an outdated version, consider upgrading to v{0}',
                 'cfg_check': 'Check',
                 'cfg_error_font_size': 'Invalid font size value',
@@ -99,6 +106,7 @@ class _LangManager(object):
                 'about_ver_dev': 'Versión de desarrollo',
                 'about_ver_err_conn': 'No se pudo verificar nuevas versiones (Error de Conexión)',
                 'about_ver_err_unkn': 'No se pudo verificar nuevas versiones (Error desconocido)',
+                'about_ver_latest': 'Software actualizado a la última versión',
                 'about_ver_upgrade': 'Nota: Estás usando una versión desactualizada, considera actualizar a la v{0}',
                 'cfg_check': 'Activar',
                 'cfg_error_font_size': 'Tamaño fuente incorrecta',
@@ -191,7 +199,7 @@ class Settings(object):
         load = []
         if not ignore_file:
             try:
-                f = open(ut.RESOURCES_PATH + 'settings.cfg', 'r')
+                f = open(_SETTINGS_FILE, 'r')
                 load = f.readlines()
                 f.close()
             except FileNotFoundError:
@@ -245,6 +253,8 @@ class Settings(object):
 
         # Load the user settings
         for f in load:
+            if '#' in f:
+                continue
             if '=' in f:  # If string has control character
                 sp = f.split('=')
                 if len(sp) != 2:
@@ -371,9 +381,11 @@ class Settings(object):
         """
         Save the settings to the file.
         """
-        f = open(ut.RESOURCES_PATH + 'settings.cfg', 'w')
+        f = open(_SETTINGS_FILE, 'w')
         keys = list(self._settings.keys())
         keys.sort()
+        f.write(f'# PyDetex v{ver.vernum}\n')
+        f.write(f'# Settings stored on {datetime.datetime.today().ctime()}\n')
         for k in keys:
             f.write(f'{k} = {str(self._settings[k]).strip()}\n')
         f.close()

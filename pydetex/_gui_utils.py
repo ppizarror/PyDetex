@@ -241,7 +241,7 @@ class SettingsWindow(object):
         lang_value, current_lang = (self._dict_langs[self._var_lang.get()],
                                     self._cfg.get(self._cfg.CFG_LANG))
         windowsz_value, current_windowsz = (self._dict_window_sizes[self._var_window_size.get()],
-                                            self._cfg.get(self._cfg.CFG_WINDOW_SIZE))
+                                            self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
         fontsize_value, current_fontsize = (self._var_font_size.get(),
                                             self._cfg.get(self._cfg.CFG_FONT_SIZE))
 

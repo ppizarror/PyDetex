@@ -98,6 +98,9 @@ class PyDetexGUI(object):
                     window_size[1] -= 10
                 elif fsize == 10:
                     window_size[1] -= 20
+            elif window_size[3] >= 1:  # medium
+                if fsize == 13:
+                    window_size[1] -= 5
 
         # Configure window
         self._root.title('PyDetex')
@@ -329,14 +332,13 @@ class PyDetexGUI(object):
         """
         Show about window.
         """
-        # Get current package version
-        ver = ''
-
         # noinspection PyBroadException
         try:
             is_outdated, latest_version = check_outdated('pydetex', str(pydetex.version.ver))
             if is_outdated:
                 ver = self._cfg.lang('about_ver_upgrade').format(latest_version)
+            else:
+                ver = self._cfg.lang('about_ver_latest')
         except ValueError:
             ver = self._cfg.lang('about_ver_dev')
         except requests.exceptions.ConnectionError:
