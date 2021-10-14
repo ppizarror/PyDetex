@@ -111,6 +111,7 @@ def remove_common_tags(s: str) -> str:
     :return: Text without tags
     """
     for tag in [
+        'bigp',
         'emph',
         'textbf',
         'textit',
@@ -120,8 +121,10 @@ def remove_common_tags(s: str) -> str:
         'chapter',
         'subsubsection',
         'subsubsubsection',
-        'end{itemize}',
-        'begin{itemize}'
+
+        # Enviroments
+        'begin{itemize}',
+        'end{itemize}'
     ]:
         s = remove_tag(s, tag)
     return s
@@ -277,16 +280,64 @@ def simple_replace(s: str) -> str:
     :param s: String
     :return: String with replaced items
     """
-    library = [
+    library: List[Tuple[str, str]] = [
+        # Common
         ('\\item', '-'),
         ('--', '–'),
-        ('\\alpha', 'α'),
-        ('\\beta', 'β'),
-        ('\\gamma', 'γ'),
-        ('\\delta', 'δ'),
-        ('\\epsilon', 'ε'),
         ('\\\\', '\n'),
         ('\\ ', ' '),
+
+        # Greek
+        ('\\alpha', 'α'),
+        ('\\beta', 'β'),
+        ('\\chi', 'χ'),
+        ('\\delta', 'δ'),
+        ('\\Delta', 'Δ'),
+        ('\\epsilon', 'ϵ'),
+        ('\\eta', 'η'),
+        ('\\gamma', 'γ'),
+        ('\\Gamma', 'Γ'),
+        ('\\iota', 'ι'),
+        ('\\kappa', 'κ'),
+        ('\\lambda', 'λ'),
+        ('\\Lambda', 'Λ'),
+        ('\\mu', 'μ'),
+        ('\\nu', 'ν'),
+        ('\\omega', 'ω'),
+        ('\\Omega', 'Ω'),
+        ('\\phi', 'φ'),
+        ('\\Phi', 'Φ'),
+        ('\\pi', 'π'),
+        ('\\Pi', 'Π'),
+        ('\\psi', 'ψ'),
+        ('\\Psi', 'Ψ'),
+        ('\\rho', 'ρ'),
+        ('\\sigma', 'σ'),
+        ('\\Sigma', 'Σ'),
+        ('\\tau', 'τ'),
+        ('\\theta', 'θ'),
+        ('\\Theta', 'Θ'),
+        ('\\upsilon', 'υ'),
+        ('\\varepsilon', 'ε'),
+        ('\\varphi', 'φ'),
+        ('\\varrho', 'ϱ'),
+        ('\\vartheta', '𝜗'),
+        ('\\xi', 'ξ'),
+        ('\\Xi', 'Ξ'),
+        ('\\zeta', 'ζ'),
+
+        # Arrows
+        ('\\leftarrow', '←'),
+        ('\\rightarrow', '→'),
+        ('\\Leftarrow', '⇐'),
+        ('\\Rightarrow', '⇒'),
+        ('\\uparrow', '↑'),
+        ('\\downarrow', '↓'),
+        ('\\Uparrow', '⇑'),
+        ('\\Downarrow', '⇓'),
+        ('\\leftrightarrow', '↔'),
+        ('\\longleftarrow', '⟵'),
+        ('\\longrightarrow', '⟶')
     ]
     for w in library:
         s = s.replace(w[0], w[1])
