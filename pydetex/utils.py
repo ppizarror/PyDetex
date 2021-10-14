@@ -13,6 +13,7 @@ __all__ = [
     'Button',
     'check_repeated_words',
     'detect_language',
+    'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
     'get_language_tag',
@@ -340,6 +341,45 @@ def validate_float(p: str) -> bool:
     return False
 
 
+def find_tex_command_char(
+        s: str,
+        symbols_char: Tuple[str, str],
+        ignore_escape: bool = False
+) -> Tuple[Tuple[int, int], ...]:
+    """
+    Find symbols command positions. Example:
+
+           00000000001111111111....
+           01234567890123456789....
+    Input: This is a $formula$ and this is not.
+    Output: ((10, 18), ...)
+
+    :param s: String
+    :param symbols_char: Symbols to check
+    :param ignore_escape: Ignores \\char
+    :return: Positions
+    """
+    assert len(symbols_char) == 2
+    assert len(symbols_char[0]) == 1 and len(symbols_char[1]) == 1
+
+    s = '_' + s
+    r = False  # Inside tag
+    a = 0
+    found = []
+
+    for i in range(1, len(s)):
+        # Open tag
+        if not r and s[i] == symbols_char[0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+            a = i
+            r = True
+        # Close
+        elif r and s[i] == symbols_char[1] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+            r = False
+            found.append((a - 1, i - 1))
+
+    return tuple(found)
+
+
 def apply_tag_between_inside(
         s: str,
         symbols_char: Tuple[str, str],
@@ -367,20 +407,23 @@ def apply_tag_between_inside(
 
     assert len(tags) == 4
     a, b, c, d = tags
+    tex_tags = find_tex_command_char(s, symbols_char, ignore_escape)
 
-    s = '_' + s
+    if len(tex_tags) == 0:
+        return s
     new_s = ''
-    r = False  # Inside tag
-    for i in range(1, len(s)):
-        # Open tag
-        if not r and s[i] == symbols_char[0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
-            new_s += a + s[i] + b
-            r = True
-        elif r and s[i] == symbols_char[1] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
-            new_s += c + s[i] + d
-            r = False
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags) and i in tex_tags[k]:
+            if i == tex_tags[k][0]:
+                new_s += a + s[i] + b
+            else:
+                new_s += c + s[i] + d
+                k += 1
         else:
             new_s += s[i]
+
     return new_s
 
 
@@ -495,7 +538,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
     is_cmd = False
     s += '_'
     a = 0
-    cont_chars = ('{', '[', ' ', '\n')
+    cont_chars = ('{', '[', ' ')
 
     for i in range(len(s) - 1):
 
@@ -511,10 +554,6 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
             a = i
 
         elif is_cmd and s[i] in ('{', '['):
-            is_cmd = False
-
-        # If command has a new line, but following chars are not space
-        elif is_cmd and s[i] == '\n' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
             is_cmd = False
 
         # If command, not arg, but an invalid char follows the space, disables the command

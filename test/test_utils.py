@@ -128,6 +128,19 @@ class UtilsTest(BaseTest):
         """
         self.assertEqual(ut.button_text('test'), 'test' if ut.IS_OSX else '  test  ')
 
+    def test_find_tex_command_char(self) -> None:
+        """
+        Test find tex command char.
+        """
+        s = '$aaa$'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((0, 4),))
+        s = 'This is a $formula$ and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 18),))
+        s = 'This is a $formula\$ and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ())
+        s = 'This is a $formula\$$ and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ((10, 20),))
+
     def test_apply_tag_between(self) -> None:
         """
         Test apply tags between.
@@ -170,6 +183,7 @@ class UtilsTest(BaseTest):
         _test('This is \\a0Command{nice}')
         _test('This is \\ {nice}')
         _test('This is \\aComm\n    and  {nice}')
+        _test('This is \\aComm\nand  {nice}')
         _test('This is \\aCommand\{nice}')
         _test('This is \\aCommand{nice invalid!')
         _test('This is \\aCommand{nice invalid! \\anothercommand{yes}!')
@@ -256,6 +270,8 @@ class UtilsTest(BaseTest):
                     self.assertEqual(_s[_k[_j][0]:_k[_j][1] + 1], _query[_j])
 
         _test('This is \\acommand', ('\\acommand',))
+        _test('This is \\acommand\n{}', ('\\acommand',))
+        _test('This is \\acomm\nand', ('\\acomm',))
         _test('This is \\acommand ', ('\\acommand',))
         _test('This is \\acommand{no} epic')
         _test('This is \\acommand   {no} epic')
