@@ -11,10 +11,13 @@ from test._base import BaseTest
 # noinspection PyProtectedMember
 from pydetex.gui import PyDetexGUI, SettingsWindow
 # noinspection PyProtectedMember
-from pydetex._gui_settings import Settings
+from pydetex._gui_settings import Settings, _SETTINGS_FILE, _SETTINGS_TEST
 import pydetex.pipelines as pip
 
 import os
+
+# Configure settings to default
+_SETTINGS_FILE[0] = _SETTINGS_TEST
 
 
 class GuiTest(BaseTest):

@@ -9,3 +9,6 @@ dist/
 
 # Settings
 pydetex/res/.pydetex.cfg
+
+# Image projects
+docs/_static/**.vectornator

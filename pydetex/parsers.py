@@ -23,15 +23,16 @@ __all__ = [
 import os
 from typing import List, Tuple, Union
 
-TAG_FILE_ERROR = '|FILEERROR|'
+# Files
+_NOT_FOUND_FILES = []
+_PRINT_LOCATION = False
+_TAG_FILE_ERROR = '|FILEERROR|'
 
-NOT_FOUND_FILES = []
-PRINT_LOCATION = False
-
+# Parser font format
 FONT_FORMAT_SETTINGS = {
     'cite': '',
     'normal': '',
-    'ref': '',
+    'ref': ''
 }
 
 
@@ -84,6 +85,10 @@ def remove_tag(s: str, tagname: str) -> str:
     :return: String without tags
     """
     tagname = '\\' + tagname
+    tagadd = 1
+    if '{' not in tagname:
+        tagname += '{'
+        tagadd = 0
     while True:
         k = find_str(s, tagname)
         if k == -1:  # No more tags, return
@@ -99,7 +104,7 @@ def remove_tag(s: str, tagname: str) -> str:
                 deep -= 1
             if deep == 0 and f:
                 # update s
-                s = s[:k] + s[k + len(tagname) + 1:k + j] + s[k + j + 1:]
+                s = s[:k] + s[k + len(tagname) + tagadd:k + j] + s[k + j + 1:]
                 break
 
 
@@ -111,6 +116,7 @@ def remove_common_tags(s: str) -> str:
     :return: Text without tags
     """
     for tag in [
+        'bigp',
         'emph',
         'textbf',
         'textit',
@@ -120,8 +126,10 @@ def remove_common_tags(s: str) -> str:
         'chapter',
         'subsubsection',
         'subsubsubsection',
-        'end{itemize}',
-        'begin{itemize}'
+
+        # Enviroments
+        'begin{itemize}',
+        'end{itemize}'
     ]:
         s = remove_tag(s, tag)
     return s
@@ -277,16 +285,64 @@ def simple_replace(s: str) -> str:
     :param s: String
     :return: String with replaced items
     """
-    library = [
+    library: List[Tuple[str, str]] = [
+        # Common
         ('\\item', '-'),
         ('--', '–'),
-        ('\\alpha', 'α'),
-        ('\\beta', 'β'),
-        ('\\gamma', 'γ'),
-        ('\\delta', 'δ'),
-        ('\\epsilon', 'ε'),
         ('\\\\', '\n'),
         ('\\ ', ' '),
+
+        # Greek
+        ('\\alpha', 'α'),
+        ('\\beta', 'β'),
+        ('\\chi', 'χ'),
+        ('\\delta', 'δ'),
+        ('\\Delta', 'Δ'),
+        ('\\epsilon', 'ϵ'),
+        ('\\eta', 'η'),
+        ('\\gamma', 'γ'),
+        ('\\Gamma', 'Γ'),
+        ('\\iota', 'ι'),
+        ('\\kappa', 'κ'),
+        ('\\lambda', 'λ'),
+        ('\\Lambda', 'Λ'),
+        ('\\mu', 'μ'),
+        ('\\nu', 'ν'),
+        ('\\omega', 'ω'),
+        ('\\Omega', 'Ω'),
+        ('\\phi', 'φ'),
+        ('\\Phi', 'Φ'),
+        ('\\pi', 'π'),
+        ('\\Pi', 'Π'),
+        ('\\psi', 'ψ'),
+        ('\\Psi', 'Ψ'),
+        ('\\rho', 'ρ'),
+        ('\\sigma', 'σ'),
+        ('\\Sigma', 'Σ'),
+        ('\\tau', 'τ'),
+        ('\\theta', 'θ'),
+        ('\\Theta', 'Θ'),
+        ('\\upsilon', 'υ'),
+        ('\\varepsilon', 'ε'),
+        ('\\varphi', 'φ'),
+        ('\\varrho', 'ϱ'),
+        ('\\vartheta', '𝜗'),
+        ('\\xi', 'ξ'),
+        ('\\Xi', 'Ξ'),
+        ('\\zeta', 'ζ'),
+
+        # Arrows
+        ('\\leftarrow', '←'),
+        ('\\rightarrow', '→'),
+        ('\\Leftarrow', '⇐'),
+        ('\\Rightarrow', '⇒'),
+        ('\\uparrow', '↑'),
+        ('\\downarrow', '↓'),
+        ('\\Uparrow', '⇑'),
+        ('\\Downarrow', '⇓'),
+        ('\\leftrightarrow', '↔'),
+        ('\\longleftarrow', '⟵'),
+        ('\\longrightarrow', '⟶')
     ]
     for w in library:
         s = s.replace(w[0], w[1])
@@ -307,7 +363,7 @@ def _load_file(f: str, path: str) -> str:
         fo.close()
         return s
     except FileNotFoundError:
-        return TAG_FILE_ERROR
+        return _TAG_FILE_ERROR
 
 
 def _os_listfolder() -> List[str]:
@@ -331,7 +387,7 @@ def process_inputs(s: str) -> str:
     :param s: Text with inputs
     :return: Text copied with data
     """
-    global PRINT_LOCATION, NOT_FOUND_FILES
+    global _PRINT_LOCATION, _NOT_FOUND_FILES
     tx = ''
     while True:
         k = find_str(s, '\\input{')
@@ -345,10 +401,10 @@ def process_inputs(s: str) -> str:
                 tex_file = s[k + m + 1:k + j]
                 if '.tex' not in tex_file:
                     tex_file += '.tex'
-                if tex_file not in NOT_FOUND_FILES:
-                    if not PRINT_LOCATION:
+                if tex_file not in _NOT_FOUND_FILES:
+                    if not _PRINT_LOCATION:
                         print(f'Current path location: {os.getcwd()}')
-                        PRINT_LOCATION = True
+                        _PRINT_LOCATION = True
                     print(f'Detected file {tex_file}:')
 
                     # Get folder locations
@@ -357,12 +413,12 @@ def process_inputs(s: str) -> str:
                     folders.insert(0, './')
                     for f in folders:
                         tx = _load_file(tex_file, f)
-                        if tx == TAG_FILE_ERROR:
+                        if tx == _TAG_FILE_ERROR:
                             print(f'\tFile not found in {f}')
                         else:
                             break
-                    if tx == TAG_FILE_ERROR:
-                        NOT_FOUND_FILES.append(tex_file)
+                    if tx == _TAG_FILE_ERROR:
+                        _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
                     else:
                         print('\tFile found and loaded')

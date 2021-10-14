@@ -28,6 +28,7 @@ import pydetex.version
 import pydetex.pipelines as pip
 import pydetex.utils as ut
 
+from pydetex._fonts import FONT_TAGS, TAGS_FONT
 from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
@@ -36,18 +37,6 @@ from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 _PIPELINES = {
     'Simple': pip.simple_pipeline
 }
-
-# Configure fonts
-_FONT_TAGS = {
-    'bold': '[PYDETEX_FONT:BOLD]',
-    'bold_italic': '[PYDETEX_FONT:BOLD_ITALIC]',
-    'italic': '[PYDETEX_FONT:ITALIC]',
-    'normal': '[PYDETEX_FONT:NORMAL]',
-    'underlined': '[PYDETEX_FONT:UNDERLINED]',
-}
-_TAGS_FONT = {}
-for _tag in _FONT_TAGS.keys():
-    _TAGS_FONT[_FONT_TAGS[_tag]] = _tag
 
 _MAX_PASTE_RETRY: int = 3
 
@@ -209,11 +198,9 @@ class PyDetexGUI(object):
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
-
-        # Configure text
-        PARSER_FONT_FORMAT['cite'] = _FONT_TAGS['bold'] if font_format else ''
-        PARSER_FONT_FORMAT['normal'] = _FONT_TAGS['normal'] if font_format else ''
-        PARSER_FONT_FORMAT['ref'] = _FONT_TAGS['bold'] if font_format else ''
+        PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
+        PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
+        PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
 
         # Process the text and get the language
         out = self.pipeline(text)
@@ -223,8 +210,7 @@ class PyDetexGUI(object):
         self._cfg.add_words(words)
 
         # Add formats
-        out = _FONT_TAGS['normal'] + out
-        tags = list(_FONT_TAGS.values())
+        tags = list(FONT_TAGS.values())
 
         # Check repeated words
         if self._cfg.get(self._cfg.CFG_CHECK_REPETITION):
@@ -236,18 +222,21 @@ class PyDetexGUI(object):
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
                 stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
                 ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS)),
-                font_tag_format=_FONT_TAGS['italic'] if font_format else '',
-                font_param_format=_FONT_TAGS['bold'] if font_format else '',
-                font_normal_format=_FONT_TAGS['normal'] if font_format else '',
+                font_tag_format=FONT_TAGS['repeated_tag'] if font_format else '',
+                font_param_format=FONT_TAGS['normal'] if font_format else '',
+                font_normal_format=FONT_TAGS['normal'] if font_format else '',
                 remove_tokens=tags,
                 tag=self._cfg.lang('tag_repeated')
             )
 
-        # Write results
+        # Apply syntax highlight
+        out = ut.syntax_highlight(out)
+
+        # Write results and split tags
         self._text_out.delete(0.0, tk.END)
         for t in ut.split_tags(out, tags):
             tag, text = t
-            self._text_out.insert('end', text, _TAGS_FONT[tag])
+            self._text_out.insert('end', text, TAGS_FONT[tag] if font_format else 'normal')
 
         self._label_lang['text'] = self._cfg.lang('detected_lang').format(lang, lang_code, words)
         self._ready = True

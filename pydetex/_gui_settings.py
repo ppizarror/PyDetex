@@ -23,6 +23,7 @@ import pydetex.version as ver
 from pydetex import __author__
 
 _SETTINGS_FILE = [os.path.expanduser('~/') + '.pydetex.cfg']
+_SETTINGS_TEST = ut.RESOURCES_PATH + '.pydetex.cfg'
 
 # Store the pipelines
 _PIPELINES = {
@@ -207,7 +208,7 @@ class Settings(object):
                 _load = _f.readlines()
                 _f.close()
             except FileNotFoundError:
-                warn('Setting file could not be loaded or not exist. Creating new file')
+                warn(f'Setting file {_SETTINGS_FILE[0]} could not be loaded or not exist. Creating new file')
             return _load
 
         if not ignore_file:
@@ -216,7 +217,7 @@ class Settings(object):
             except PermissionError:
                 warn(f'Settings file {_SETTINGS_FILE[0]} could not be opened (PermissionError)')
         else:
-            _SETTINGS_FILE[0] = ut.RESOURCES_PATH + '.pydetex.cfg'
+            _SETTINGS_FILE[0] = _SETTINGS_TEST
 
         # Creates the lang manager
         self._lang = _LangManager()
@@ -306,6 +307,8 @@ class Settings(object):
                         value = int(value)
                 except ValueError:
                     pass
+            else:
+                value = value.strip()
         return value
 
     def check_setting(self, key: str, value: Any) -> bool:
