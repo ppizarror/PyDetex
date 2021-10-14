@@ -17,7 +17,6 @@ from warnings import warn
 
 import datetime
 import pydetex.pipelines as pip
-import pydetex.utils as ut
 import pydetex.version as ver
 
 _SETTINGS_FILE = [os.path.expanduser('~/') + '.pydetex.cfg']
@@ -194,23 +193,27 @@ class Settings(object):
         :param ignore_file: If True, the settings file is ignored
         """
         load = []
-        settings_file = _SETTINGS_FILE[0]
-        if not ignore_file:
+
+        def _load_file() -> List[str]:
+            """
+            Loads the setting file.
+            """
+            _load = []
             try:
-                f = open(settings_file, 'r')
-                load = f.readlines()
-                f.close()
+                _f = open(_SETTINGS_FILE[0], 'r')
+                _load = _f.readlines()
+                _f.close()
             except FileNotFoundError:
                 warn('Setting file could not be loaded or not exist. Creating new file')
+            return _load
+
+        if not ignore_file:
+            try:
+                load = _load_file()
             except PermissionError:
-                _SETTINGS_FILE[0] = ut.RESOURCES_PATH + '.pydetex.cfg'
-                warn(f'Settings file {settings_file} could not be opened (PermissionError). Trying {_SETTINGS_FILE[0]}')
-                try:
-                    f = open(_SETTINGS_FILE[0], 'r')
-                    load = f.readlines()
-                    f.close()
-                except FileNotFoundError:
-                    warn('Setting file could not be loaded or not exist. Creating new file')
+                warn(f'Settings file {_SETTINGS_FILE[0]} could not be opened (PermissionError)')
+                # _SETTINGS_FILE[0] = ut.RESOURCES_PATH + '.pydetex.cfg'
+                # load = _load_file()
 
         # Creates the lang manager
         self._lang = _LangManager()
