@@ -8,13 +8,18 @@ Several text utils.
 
 __all__ = [
     'apply_tag_between_inside',
+    'apply_tag_tex_commands',
+    'apply_tag_tex_commands_no_argv',
     'Button',
     'check_repeated_words',
     'detect_language',
+    'find_tex_commands',
+    'find_tex_commands_noargv',
     'get_language_tag',
     'IS_OSX',
     'RESOURCES_PATH',
     'split_tags',
+    'syntax_highlight',
     'validate_float',
     'validate_int'
 ]
@@ -23,18 +28,23 @@ __all__ = [
 # af, ar, bg, bn, ca, cs, cy, da, de, el, en, es, et, fa, fi, fr, gu, he,
 # hi, hr, hu, id, it, ja, kn, ko, lt, lv, mk, ml, mr, ne, nl, no, pa, pl,
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
-
-import os
-import nltk
-import platform
 import langdetect
 
+import nltk
+import os
+import platform
+
+# noinspection PyPackageRequirements
+from iso639 import Lang
+# noinspection PyPackageRequirements
+from iso639.exceptions import InvalidLanguageValue
 from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
+from typing import List, Tuple, Optional, Union
 from warnings import warn
 
-from typing import List, Tuple, Optional, Union
+from pydetex._fonts import FONT_TAGS as _FONT_TAGS
 
 # Resources path
 # Set resouces path
@@ -67,192 +77,12 @@ try:
 except LookupError:
     pass
 
-_ISO_639_LANGS = {
-    'aa': 'Afar',
-    'ab': 'Abkhaz',
-    'ae': 'Avestan',
-    'af': 'Afrikaans',
-    'ak': 'Akan',
-    'am': 'Amharic',
-    'an': 'Aragonese',
-    'ar': 'Arabic',
-    'as': 'Assamese',
-    'av': 'Avaric',
-    'ay': 'Aymara',
-    'az': 'Azerbaijani',
-    'ba': 'Bashkir',
-    'be': 'Belarusian',
-    'bg': 'Bulgarian',
-    'bh': 'Bihari',
-    'bi': 'Bislama',
-    'bm': 'Bambara',
-    'bn': 'Bengali',
-    'bo': 'Tibetan',
-    'br': 'Breton',
-    'bs': 'Bosnian',
-    'ca': 'Catalan',
-    'ce': 'Chechen',
-    'ch': 'Chamorro',
-    'co': 'Corsican',
-    'cr': 'Cree',
-    'cs': 'Czech',
-    'cu': 'Old Church Slavonic',
-    'cv': 'Chuvash',
-    'cy': 'Welsh',
-    'da': 'Danish',
-    'de': 'German',
-    'dv': 'Divehi; Maldivian;',
-    'dz': 'Dzongkha',
-    'ee': 'Ewe',
-    'el': 'Greek, Modern',
-    'en': 'English',
-    'eo': 'Esperanto',
-    'es': 'Spanish',
-    'et': 'Estonian',
-    'eu': 'Basque',
-    'fa': 'Persian',
-    'ff': 'Fula',
-    'fi': 'Finnish',
-    'fj': 'Fijian',
-    'fo': 'Faroese',
-    'fr': 'French',
-    'fy': 'Western Frisian',
-    'ga': 'Irish',
-    'gd': 'Scottish Gaelic',
-    'gl': 'Galician',
-    'gn': 'Guaraní',
-    'gu': 'Gujarati',
-    'gv': 'Manx',
-    'ha': 'Hausa',
-    'he': 'Hebrew (modern)',
-    'hi': 'Hindi',
-    'ho': 'Hiri Motu',
-    'hr': 'Croatian',
-    'ht': 'Haitian',
-    'hu': 'Hungarian',
-    'hy': 'Armenian',
-    'hz': 'Herero',
-    'ia': 'Interlingua',
-    'id': 'Indonesian',
-    'ie': 'Interlingue',
-    'ig': 'Igbo',
-    'ii': 'Nuosu',
-    'ik': 'Inupiaq',
-    'io': 'Ido',
-    'is': 'Icelandic',
-    'it': 'Italian',
-    'iu': 'Inuktitut',
-    'ja': 'Japanese',
-    'jv': 'Javanese',
-    'ka': 'Georgian',
-    'kg': 'Kongo',
-    'ki': 'Kikuyu, Gikuyu',
-    'kj': 'Kwanyama, Kuanyama',
-    'kk': 'Kazakh',
-    'kl': 'Kalaallisut',
-    'km': 'Khmer',
-    'kn': 'Kannada',
-    'ko': 'Korean',
-    'kr': 'Kanuri',
-    'ks': 'Kashmiri',
-    'ku': 'Kurdish',
-    'kv': 'Komi',
-    'kw': 'Cornish',
-    'ky': 'Kirghiz, Kyrgyz',
-    'la': 'Latin',
-    'lb': 'Luxembourgish',
-    'lg': 'Luganda',
-    'li': 'Limburgish',
-    'ln': 'Lingala',
-    'lo': 'Lao',
-    'lt': 'Lithuanian',
-    'lu': 'Luba-Katanga',
-    'lv': 'Latvian',
-    'mg': 'Malagasy',
-    'mh': 'Marshallese',
-    'mi': 'Māori',
-    'mk': 'Macedonian',
-    'ml': 'Malayalam',
-    'mn': 'Mongolian',
-    'mr': 'Marathi',
-    'ms': 'Malay',
-    'mt': 'Maltese',
-    'my': 'Burmese',
-    'na': 'Nauru',
-    'nb': 'Norwegian Bokmål',
-    'nd': 'North Ndebele',
-    'ne': 'Nepali',
-    'ng': 'Ndonga',
-    'nl': 'Dutch',
-    'nn': 'Norwegian Nynorsk',
-    'no': 'Norwegian',
-    'nr': 'South Ndebele',
-    'nv': 'Navajo, Navaho',
-    'ny': 'Chichewa',
-    'oc': 'Occitan',
-    'oj': 'Ojibwe, Ojibwa',
-    'om': 'Oromo',
-    'or': 'Oriya',
-    'os': 'Ossetian, Ossetic',
-    'pa': 'Panjabi, Punjabi',
-    'pi': 'Pāli',
-    'pl': 'Polish',
-    'ps': 'Pashto, Pushto',
-    'pt': 'Portuguese',
-    'qu': 'Quechua',
-    'rm': 'Romansh',
-    'rn': 'Kirundi',
-    'ro': 'Romanian, Moldavan',
-    'ru': 'Russian',
-    'rw': 'Kinyarwanda',
-    'sa': 'Sanskrit',
-    'sc': 'Sardinian',
-    'sd': 'Sindhi',
-    'se': 'Northern Sami',
-    'sg': 'Sango',
-    'si': 'Sinhala, Sinhalese',
-    'sk': 'Slovak',
-    'sl': 'Slovene',
-    'sm': 'Samoan',
-    'sn': 'Shona',
-    'so': 'Somali',
-    'sq': 'Albanian',
-    'sr': 'Serbian',
-    'ss': 'Swati',
-    'st': 'Southern Sotho',
-    'su': 'Sundanese',
-    'sv': 'Swedish',
-    'sw': 'Swahili',
-    'ta': 'Tamil',
-    'te': 'Telugu',
-    'tg': 'Tajik',
-    'th': 'Thai',
-    'ti': 'Tigrinya',
-    'tk': 'Turkmen',
-    'tl': 'Tagalog',
-    'tn': 'Tswana',
-    'to': 'Tonga',
-    'tr': 'Turkish',
-    'ts': 'Tsonga',
-    'tt': 'Tatar',
-    'tw': 'Twi',
-    'ty': 'Tahitian',
-    'ug': 'Uighur, Uyghur',
-    'uk': 'Ukrainian',
-    'ur': 'Urdu',
-    'uz': 'Uzbek',
-    've': 'Venda',
-    'vi': 'Vietnamese',
-    'vo': 'Volapük',
-    'wa': 'Walloon',
-    'wo': 'Wolof',
-    'xh': 'Xhosa',
-    'yi': 'Yiddish',
-    'yo': 'Yoruba',
-    'za': 'Zhuang, Chuang',
-    'zh': 'Chinese',
-    'zu': 'Zulu'
-}
+# Valid command chars
+VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+                           'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+                           'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                           'W', 'X', 'Y', 'Z']
 
 
 def detect_language(s: str) -> str:
@@ -267,7 +97,7 @@ def detect_language(s: str) -> str:
     try:
         return langdetect.detect(s)
     except langdetect.lang_detect_exception.LangDetectException:  # No features in text
-        return '-'
+        return '–'
 
 
 def get_language_tag(s: str) -> str:
@@ -277,10 +107,10 @@ def get_language_tag(s: str) -> str:
     :param s: Language tag
     :return: Language name
     """
-    if s not in _ISO_639_LANGS.keys():
+    try:
+        return Lang(s).name
+    except InvalidLanguageValue:
         return 'Unknown'
-    else:
-        return _ISO_639_LANGS[s]
 
 
 def check_repeated_words(
@@ -451,7 +281,6 @@ def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
             tagged_lines = new_tagged_lines
 
         r += 1
-        # print(tagged_lines)
 
     # Merge consecutive tags
     merged_tags: List[Tuple[str, str]] = []
@@ -517,10 +346,10 @@ def apply_tag_between_inside(
         ignore_escape: bool = False
 ) -> str:
     """
-    Apply tag between symbols. For example, if symbols are ($, $) and tag is [a,b,c,d]:
+    Apply tag between symbols. For example, if symbols are ($, $) and tag is [1,2,3,4]:
 
     Input: This is a $formula$ and this is not.
-    Output: This is a a$bformulac$d and this is not
+    Output: This is a 1$2formula3$4 and this is not
 
     :param s: String
     :param symbols_char: Symbols to check
@@ -552,3 +381,217 @@ def apply_tag_between_inside(
         else:
             new_s += s[i]
     return new_s
+
+
+def find_tex_commands(s: str, par: Tuple[str, str] = ('{', '}')) -> Tuple[Tuple[int, int, int], ...]:
+    """
+    Find all tex commands within a code.
+
+             00000000001111111111222
+             01234567890123456789012
+                     x       x    x
+    Example: This is \aCommand{nice}... => ((8,16,21), ...)
+
+    :param s: Latex code
+    :param par: Parenthesis format
+    :return: Tuple if found codes
+    """
+    found = []
+    is_cmd = False
+    is_argv = False
+    s += '_'
+    a, b, c = 0, 0, 0
+    depth = 0
+    for i in range(len(s) - 1):
+        if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+            a = i
+            is_cmd = True
+        elif is_cmd and not is_argv and s[i] != par[0] and s[i] not in VALID_TEX_COMMAND_CHARS:
+            is_cmd = False
+        elif is_cmd and not is_argv and s[i] == par[0]:
+            b = i - 1
+            is_argv = True
+            depth = 0
+        elif is_cmd and is_argv and s[i] == par[0] and s[i - 1] != '\\':
+            depth += 1
+        elif is_cmd and is_argv and s[i] == par[1] and s[i - 1] != '\\':
+            if depth == 0:  # Finished
+                c = i - 1
+                found.append((a, b, c))
+                is_cmd = False
+                is_argv = False
+            depth -= 1
+
+    return tuple(found)
+
+
+def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
+    """
+    Find all tex commands with no arguments within a code.
+
+             00000000001111111111222
+             01234567890123456789012
+                     x       x
+    Example: This is \aCommand ... => ((8,16), ...)
+
+    :param s: Latex code
+    :return: Tuple if found codes
+    """
+    found = []
+    is_cmd = False
+    s += '_'
+    a, b = 0, 0
+    for i in range(len(s) - 1):
+        if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+            a = i
+            is_cmd = True
+        elif is_cmd and s[i] == '\\':
+            b = i - 1
+            if b - a > 0:
+                found.append((a, b))
+            a = i
+        elif is_cmd and s[i] == '{':
+            is_cmd = False
+        elif is_cmd and s[i] not in VALID_TEX_COMMAND_CHARS and s[i] != '{':
+            b = i - 1
+            is_cmd = False
+            found.append((a, b))
+
+    if is_cmd and a != len(s) - 2:
+        found.append((a, len(s) - 2))
+
+    return tuple(found)
+
+
+def apply_tag_tex_commands(
+        s: str,
+        tags: Union[Tuple[str, str, str, str, str], str],
+        par: Tuple[str, str] = ('{', '}')
+) -> str:
+    """
+    Apply tag to tex command. For example, if tag is [1,2,3,4,5]:
+
+    Input: This is a \formula{epic} and this is not.
+    Output: This is a 1\formula2{3epic4}5 and this is not
+
+    :param s: Code
+    :param tags: Tags (length 5)
+    :param par: Parenthesis format
+    :return: Code with tags
+    """
+    if isinstance(tags, str):
+        if tags == '':
+            return s
+        tags = (tags, tags, tags, tags, tags)
+    assert len(tags) == 5
+    a, b, c, d, e = tags  # Unpack
+
+    tex_tags = find_tex_commands(s, par)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+    i = -1
+    for _ in range(len(s)):
+        i += 1
+        if i == len(s):
+            break
+        if k < len(tex_tags) and i in tex_tags[k]:
+            if i == tex_tags[k][0]:
+                new_s += a + s[i]
+            elif i == tex_tags[k][1]:
+                new_s += s[i] + b + s[i + 1] + c
+                i += 1
+            elif i == tex_tags[k][2]:
+                new_s += s[i] + d + s[i + 1] + e
+                i += 1
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s[0:len(new_s)]
+
+
+def apply_tag_tex_commands_no_argv(
+        s: str,
+        tags: Union[Tuple[str, str], str]
+) -> str:
+    """
+    Apply tag to tex command. For example, if tag is [1,2]:
+
+    Input: This is a \formula and this is not.
+    Output: This is a 1\formula2 and this is not
+
+    :param s: Code
+    :param tags: Tags (length 5)
+    :return: Code with tags
+    """
+    if isinstance(tags, str):
+        if tags == '':
+            return s
+        tags = (tags, tags)
+    assert len(tags) == 2
+    a, b = tags  # Unpack
+
+    tex_tags = find_tex_commands_noargv(s)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+    i = -1
+    for _ in range(len(s)):
+        i += 1
+        if k < len(tex_tags) and i in tex_tags[k]:
+            if i == tex_tags[k][0]:
+                new_s += a + s[i]
+            elif i == tex_tags[k][1]:
+                new_s += s[i] + b
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def syntax_highlight(s: str) -> str:
+    """
+    Syntax highlighter.
+
+    :param s: Latex code
+    :return: Code with format
+    """
+    # Add initial normal
+    s = _FONT_TAGS['normal'] + s
+
+    # Format equations
+    s = apply_tag_between_inside(
+        s=s,
+        symbols_char=('$', '$'),
+        tags=(_FONT_TAGS['equation_char'], _FONT_TAGS['equation_inside'],
+              _FONT_TAGS['equation_char'], _FONT_TAGS['normal']),
+        ignore_escape=True
+    )
+
+    # Format commands with {arguments}
+    s = apply_tag_tex_commands(
+        s=s,
+        tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'], _FONT_TAGS['tex_argument'], _FONT_TAGS['normal'],
+              _FONT_TAGS['normal'])
+    )
+
+    # Format commands with [arguments]
+    s = apply_tag_tex_commands(
+        s=s,
+        tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'], _FONT_TAGS['tex_argument'], _FONT_TAGS['normal'],
+              _FONT_TAGS['normal']),
+        par=('[', ']')
+    )
+
+    # Format commands without arguments
+    s = apply_tag_tex_commands_no_argv(
+        s=s,
+        tags=(_FONT_TAGS['tex_command'], _FONT_TAGS['normal'])
+    )
+
+    # Return formatted string
+    return s

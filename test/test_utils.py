@@ -9,6 +9,7 @@ Test utils.
 from test._base import BaseTest
 
 import pydetex.utils as ut
+from typing import Tuple
 
 
 class UtilsTest(BaseTest):
@@ -22,9 +23,12 @@ class UtilsTest(BaseTest):
             and location. """
         self.assertEqual(ut.detect_language(s), 'en')
         self.assertEqual(ut.get_language_tag('en'), 'English')
+        self.assertEqual(ut.get_language_tag('es'), 'Spanish')
+        self.assertEqual(ut.get_language_tag('unknown'), 'Unknown')
         s = """El modelo propuesto contiene diferentes métricas para coordenar las tareas de segmentación"""
         self.assertEqual(ut.detect_language(s), 'es')
         self.assertEqual(ut.detect_language(''), '–')
+        self.assertEqual(ut.detect_language('https://epic.com'), '–')
 
     def test_repeat_words(self) -> None:
         """
@@ -136,7 +140,8 @@ class UtilsTest(BaseTest):
             'X$formula$X')
         self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), ''), '$formula$')
         self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), 'a'), 'a$aformulaa$a jaja a$axa$a')
+        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), 'a'),
+                         'a$aformulaa$a jaja a$axa$a')
         self.assertEqual(
             ut.apply_tag_between_inside('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
             'X$form\\$ula$X')
@@ -144,5 +149,165 @@ class UtilsTest(BaseTest):
             ut.apply_tag_between_inside('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
             '\\$formula\\$')
 
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'),  ('a', '', '', 'b')),
+        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), ('a', '', '', 'b')),
                          'a$formula$b jaja a$x$b')
+
+    def test_find_tex_commands(self) -> None:
+        """
+        Test find tex commands.
+        """
+
+        def _test(_s: str, _query: Tuple[str, ...] = (), par=('{', '}')) -> None:
+            _k = ut.find_tex_commands(_s, par)
+            self.assertEqual(len(_k), len(_query))
+            if len(_query) == 0:
+                self.assertEqual(_k, ())
+            else:
+                for _j in range(len(_query)):
+                    self.assertEqual(_s[_k[_j][1] + 2:_k[_j][2] + 1], _query[_j])
+
+        # Test empty
+        _test('This is \\a0Command{nice}')
+        _test('This is \\ {nice}')
+        _test('This is \\aComm\nand{nice}')
+        _test('This is \\aCommand\{nice}')
+        _test('This is \\aCommand{nice invalid!')
+        _test('This is \\aCommand{nice invalid! \\anothercommand{yes}!')
+
+        # Test simple
+        _test('This is \\aCommand{nice}', ('nice',))
+        _test('This is \\aCommand \\aCommand{nice2}', ('nice2',))
+        _test('This is \\aCommand\\{ \\aCommand{nice2}', ('nice2',))
+        _test('This is \\aCommand{ \\aCommand{nice2}}', (' \\aCommand{nice2}',))
+        _test('This is \\aCommand{not \\} close} nice', ('not \\} close',))
+        _test('This is \\aCommand{nice invalid! \\anothercommand{yes}}!',
+              ('nice invalid! \\anothercommand{yes}',))
+        _test('This is \\aCommand{\\command{inside}} nice',
+              ('\\command{inside}',))
+
+        # Test nested
+        _test('\\a{{{{{{b}}}}}} c', ('{{{{{b}}}}}',))
+        _test('\\a{{{{{{b}}}}} c}', ('{{{{{b}}}}} c',))
+        _test('\\a{\\b{D}\\c{E}}', ('\\b{D}\\c{E}',))
+        _test('\\a{\\b{D\\c{E}}}', ('\\b{D\\c{E}}',))
+
+        # Test multiple
+        _test('\\a{b} \\c{d}', ('b', 'd'))
+        _test('\\a{\\c{d}} \\e{f}', ('\\c{d}', 'f'))
+        _test('\\a{\\c{d}} \\e{{f}}', ('\\c{d}', '{f}'))
+        _test('\\a{\\c{d}}\\e{{f}}', ('\\c{d}', '{f}'))
+        _test('\\a{\\c{d}\\}\\{} \\e{{f}}', ('\\c{d}\\}\\{', '{f}'))
+
+        # Other parenthesis
+        _test('\\a[b] \\c[d]', ('b', 'd'), par=('[', ']'))
+
+    def test_find_tex_commands_no_argv(self) -> None:
+        """
+        Test find tex commands without arguments.
+        """
+
+        def _test(_s: str, _query: Tuple[str, ...] = ()) -> None:
+            _k = ut.find_tex_commands_noargv(_s)
+            self.assertEqual(len(_k), len(_query))
+            if len(_query) == 0:
+                self.assertEqual(_k, ())
+            else:
+                for _j in range(len(_query)):
+                    self.assertEqual(_s[_k[_j][0]:_k[_j][1] + 1], _query[_j])
+
+        _test('This is \\acommand', ('\\acommand',))
+        _test('This is \\acommand ', ('\\acommand',))
+        _test('This is \\acommand{no} epic')
+        _test('This is \\acommand[', ('\\acommand',))
+        _test('This is \\acommand\\', ('\\acommand',))
+        _test('This is \\a\\b', ('\\a', '\\b'))
+        _test('This is \\\\\\\\\\\\\\\\\\a', ('\\a',))
+        _test('This is \\a\\\\\\\\\\\\\\\\b', ('\\a', '\\b'))
+        _test('This is \\a \\\\\\\\\\\\\\\\b', ('\\a', '\\b'))
+        _test('This is \\0 \\\\\\\\\\\\\\\\b', ('\\b',))
+        _test('This is \\   \\\\\\\\\\\\\\\\b', ('\\b',))
+        _test('This is \\a{}\\\\\\\\\\\\\\\\b', ('\\b',))
+        _test('This is \\a{\\c}\\\\\\\\\\\\\\\\d', ('\\c', '\\d',))
+        _test('This is \\acommand{\\no} epic', ('\\no',))
+        _test('This is \\acommand{\\no{}\\no{}} epic')
+        _test('This is \\acommand{\\no{a}\\no{b}} epic')
+        _test('This is \\acommand{\\1} epic')
+        _test('This is \\ \\ \\1 \\2 \\_')
+        _test('This is \\acommand{\\no{\\a}\\no{b}} epic', ('\\a',))
+        _test('This is \\acommand{\\no{\\a{}}\\no{b}} epic')
+        _test('This is \\acommand{\\no{\\a{\\c}}\\no{b}} epic', ('\\c',))
+        _test('This is \\acommand{\\no{\\a{\\c1234}}\\no{b}} epic', ('\\c',))
+        _test('nice \\c', ('\\c',))
+        _test('\\c', ('\\c',))
+        _test('\\\\')
+        _test('This is a \\formula', ('\\formula',))
+
+    def test_apply_tag_tex_commands(self) -> None:
+        """
+        Test tag tex commands.
+        """
+        s = 'This does not contain any command'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ''), s)
+
+        s = 'This is a \\formula{epic} and this is not'
+        b = 'This is a 1\\formula2{3epic4}5 and this is not'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+
+        s = 'This is a \\formula{epic} and this is not'
+        b = 'This is a |\\formula|{|epic|}| and this is not'
+        self.assertEqual(ut.apply_tag_tex_commands(s, '|'), b)
+
+        s = 'This is a \\formula{epic} and this \\i{s} not'
+        b = 'This is a 1\\formula2{3epic4}5 and this 1\\i2{3s4}5 not'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+
+        s = 'This is a \\formula{\\epic{nice}} and this is not'
+        b = 'This is a 1\\formula2{3\\epic{nice}4}5 and this is not'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+
+        s = 'This is a \\formula{nice}'
+        b = 'This is a 1\\formula2{3nice4}5'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+
+        s = 'This is a \\formula{\\formula{nice}}'
+        b = 'This is a 1\\formula2{3\\formula{nice}4}5'
+        self.assertEqual(ut.apply_tag_tex_commands(s, ('1', '2', '3', '4', '5')), b)
+
+    def test_apply_tag_tex_commands_noargv(self) -> None:
+        """
+        Test tag tex commands no arguments.
+        """
+        s = 'This does not contain any command'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ''), s)
+
+        s = 'This does not contain any \\command{command!}'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ''), s)
+
+        s = 'This is a \\formula and this is not'
+        b = 'This is a 1\\formula2 and this is not'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), b)
+
+        s = 'This is a \\formula and this is not'
+        b = 'This is a |\\formula| and this is not'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, '|'), b)
+
+        s = 'This is a \\formula and this \\i not'
+        b = 'This is a 1\\formula2 and this 1\\i2 not'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), b)
+
+        s = 'This is a \\formula{\\a{} not \\b{\\c}} and this \\i not'
+        b = 'This is a \\formula{\\a{} not \\b{1\\c2}} and this 1\\i2 not'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), b)
+
+        s = 'This is a \\formula'
+        b = 'This is a 1\\formula2'
+        self.assertEqual(ut.apply_tag_tex_commands_no_argv(s, ('1', '2')), b)
+
+    def test_syntax_highlight(self) -> None:
+        """
+        Test synthax.
+        """
+        self.assertEqual(ut.syntax_highlight('nice'),
+                         '[PYDETEX_FONT:NORMAL]nice')
+        self.assertEqual(ut.syntax_highlight('nice \\epic'),
+                         '[PYDETEX_FONT:NORMAL]nice [PYDETEX_FONT:TEX_COMMAND]\epic[PYDETEX_FONT:NORMAL]')
