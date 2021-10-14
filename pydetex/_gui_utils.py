@@ -29,7 +29,19 @@ class SettingsWindow(object):
     _cfg: '_Settings'
     _dict_langs: Dict[str, str]
     _dict_pipelines: Dict[str, str]
+    _var_check_repetition: 'tk.BooleanVar'
+    _var_check_repetition_stemming: 'tk.BooleanVar'
+    _var_check_repetition_stopwords: 'tk.BooleanVar'
+    _var_font_size: 'tk.StringVar'
+    _var_lang: 'tk.StringVar'
+    _var_output_font_format: 'tk.BooleanVar'
+    _var_pipeline: 'tk.StringVar'
+    _var_repetition_distance: 'tk.Entry'
+    _var_repetition_ignore_words: 'tk.Text'
+    _var_repetition_min_char: 'tk.Entry'
+    _var_window_size: 'tk.StringVar'
     on_destroy: Optional[Callable[[], None]]
+    root: 'tk.Tk'
 
     # noinspection PyProtectedMember
     def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
@@ -66,7 +78,7 @@ class SettingsWindow(object):
         # Set languages
         f = tk.Frame(f0, border=0)
         f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        tk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
         self._dict_langs = {}
         for k in self._cfg._lang.get_available():
@@ -79,10 +91,26 @@ class SettingsWindow(object):
         pipe.focus()
         pipe.pack(side=tk.LEFT)
 
+        # Window size
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_window_size'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+
+        self._dict_window_sizes = {}
+        for k in self._cfg._valid_window_sizes:
+            self._dict_window_sizes[self._cfg.lang(k)] = k
+
+        self._var_window_size = tk.StringVar(self.root)
+        self._var_window_size.set(self._cfg.lang(cfg.get(cfg.CFG_WINDOW_SIZE, update=False)))  # default value
+
+        windowsize = tk.OptionMenu(f, self._var_window_size, *list(self._dict_window_sizes.keys()))
+        windowsize.pack(side=tk.LEFT)
+
         # Set pipelines
         f = tk.Frame(f0, border=0)
         f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        tk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=label_w,
+                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
 
         self._dict_pipelines = {}
         for k in self._cfg._available_pipelines:
@@ -171,10 +199,23 @@ class SettingsWindow(object):
         # Font format
         f = tk.Frame(f0, border=0, relief=tk.GROOVE)
         f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=5)
+        tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w,
+                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_output_font_format = tk.BooleanVar(self.root)
         self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
         tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
+
+        # Set font size
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_w,
+                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+
+        self._var_font_size = tk.StringVar(self.root)
+        self._var_font_size.set(cfg.get(cfg.CFG_FONT_SIZE))
+
+        fontsize = tk.OptionMenu(f, self._var_font_size, *cfg._valid_font_sizes)
+        fontsize.pack(side=tk.LEFT)
 
         # Save
         fbuttons = tk.Frame(f0)
@@ -197,28 +238,36 @@ class SettingsWindow(object):
         """
         Save the settings.
         """
-        lang_value = self._dict_langs[self._var_lang.get()]
-        current_lang = self._cfg.get(self._cfg.CFG_LANG)
+        lang_value, current_lang = (self._dict_langs[self._var_lang.get()],
+                                    self._cfg.get(self._cfg.CFG_LANG))
+        windowsz_value, current_windowsz = (self._dict_window_sizes[self._var_window_size.get()],
+                                            self._cfg.get(self._cfg.CFG_WINDOW_SIZE))
+        fontsize_value, current_fontsize = (self._var_font_size.get(),
+                                            self._cfg.get(self._cfg.CFG_FONT_SIZE))
 
         store: Tuple[Tuple[str, str, str], ...] = (
             (self._cfg.CFG_LANG, lang_value,
-             'Invalid lang value'),
+             self._cfg.lang('cfg_error_lang')),
+            (self._cfg.CFG_WINDOW_SIZE, windowsz_value,
+             self._cfg.lang('cfg_error_window_size')),
             (self._cfg.CFG_PIPELINE, self._dict_pipelines[self._var_pipeline.get()],
-             'Invalid pipeline value'),
+             self._cfg.lang('cfg_error_pipeline')),
             (self._cfg.CFG_CHECK_REPETITION, self._var_check_repetition.get(),
-             'Invalid repetition value'),
+             self._cfg.lang('cfg_error_repetition')),
             (self._cfg.CFG_REPETITION_DISTANCE, self._var_repetition_distance.get(),
-             'Repetition distance be greater than 2'),
+             self._cfg.lang('cfg_error_repetition_distance')),
             (self._cfg.CFG_REPETITION_IGNORE_WORDS, self._var_repetition_ignore_words.get(0.0, tk.END),
-             'Invalid ignore words'),
+             self._cfg.lang('cfg_error_repetition_words')),
             (self._cfg.CFG_REPETITION_MIN_CHAR, self._var_repetition_min_char.get(),
-             'Repetition min chars must be greater than zero'),
+             self._cfg.lang('cfg_error_repetition_chars')),
             (self._cfg.CFG_REPETITION_USE_STEMMING, self._var_check_repetition_stemming.get(),
-             'Invalid repetition stemming value'),
+             self._cfg.lang('cfg_error_stemming')),
             (self._cfg.CFG_REPETITION_USE_STOPWORDS, self._var_check_repetition_stopwords.get(),
-             'Invalid repetition stemming value'),
+             self._cfg.lang('cfg_error_stopwords')),
             (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
-             'Invalid output font format value')
+             self._cfg.lang('cfg_error_output_format')),
+            (self._cfg.CFG_FONT_SIZE, fontsize_value,
+             self._cfg.lang('cfg_error_font_size'))
         )
 
         # Set values
@@ -231,7 +280,8 @@ class SettingsWindow(object):
                 do_close = False
 
         # Check if lang has changed
-        if lang_value != current_lang:
+        if lang_value != current_lang or int(fontsize_value) != current_fontsize or \
+                windowsz_value != current_windowsz:
             messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
                                 message=self._cfg.lang('reload_message_message'))
 
@@ -248,8 +298,10 @@ class RichText(tk.Text):
     """
 
     def __init__(self, *args, **kwargs):
+        font_size = kwargs.pop('font_size', 11)
         super().__init__(*args, **kwargs)
         default_font = tkfont.nametofont(self.cget('font'))
+        default_font.configure(size=font_size)
 
         em = default_font.measure('m')
         default_size = default_font.cget('size')
@@ -261,11 +313,11 @@ class RichText(tk.Text):
         normal_font = tkfont.Font(**default_font.configure())
         underlined_font = tkfont.Font(**default_font.configure())
 
-        bold_font.configure(weight='bold')
-        italic_font.configure(slant='italic')
-        bold_italic_font.configure(weight='bold', slant='italic')
+        bold_font.configure(weight='bold', size=default_size)
+        italic_font.configure(slant='italic', size=default_size)
+        bold_italic_font.configure(weight='bold', slant='italic', size=default_size)
         h1_font.configure(size=int(default_size * 2), weight='bold')
-        underlined_font.configure(underline=True)
+        underlined_font.configure(underline=True, size=default_size)
 
         self.tag_configure('bold', font=bold_font)
         self.tag_configure('bold_italic', font=bold_italic_font)

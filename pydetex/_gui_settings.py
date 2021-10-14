@@ -21,6 +21,18 @@ _PIPELINES = {
     'pipeline_simple': pip.simple_pipeline
 }
 
+# Store the window sizes (w, h, height_richtext, type)
+_WINDOW_SIZE = {
+    'window_size_small': [700, 415, 11, 0],
+    'window_size_medium': [900, 500, 14 if ut.IS_OSX else 13, 1],
+    'window_size_large': [1200, 610 if ut.IS_OSX else 500, 18 if ut.IS_OSX else 13 , 2]
+}
+
+# If not OSX, add margin
+if not ut.IS_OSX:
+    for v in _WINDOW_SIZE.values():
+        v[1] += 65
+
 
 class _LangManager(object):
     """
@@ -41,10 +53,23 @@ class _LangManager(object):
                 'about_ver_err_unkn': 'Cannot check for new versions (Unknown Error)',
                 'about_ver_upgrade': 'Note: You are using an outdated version, consider upgrading to v{0}',
                 'cfg_check': 'Check',
+                'cfg_error_font_size': 'Invalid font size value',
+                'cfg_error_lang': 'Invalid lang value',
+                'cfg_error_output_format': 'Invalid output font format value',
+                'cfg_error_pipeline': 'Invalid pipeline value',
+                'cfg_error_repetition': 'Invalid repetition value',
+                'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
+                'cfg_error_repetition_distance': 'Repetition distance be greater than 2',
+                'cfg_error_repetition_words': 'Invalid ignore words',
+                'cfg_error_stemming': 'Invalid repetition stemming value',
+                'cfg_error_stopwords': 'Invalid repetition stopwords value',
+                'cfg_error_window_size': 'Invalid window size value',
                 'cfg_font_format': 'Output font format',
+                'cfg_font_size': 'Font size',
                 'cfg_lang': 'Language',
                 'cfg_pipeline': 'Pipeline',
                 'cfg_save': 'Save',
+                'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
                 'cfg_words_repetition_ignorew': 'Repetition ignored words',
@@ -62,7 +87,10 @@ class _LangManager(object):
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
-                'tag_repeated': 'repeated'
+                'tag_repeated': 'repeated',
+                'window_size_small': 'Small',
+                'window_size_medium': 'Medium',
+                'window_size_large': 'Large'
             },
             'es': {
                 'about': 'Acerca de',
@@ -73,16 +101,29 @@ class _LangManager(object):
                 'about_ver_err_unkn': 'No se pudo verificar nuevas versiones (Error desconocido)',
                 'about_ver_upgrade': 'Nota: Estás usando una versión desactualizada, considera actualizar a la v{0}',
                 'cfg_check': 'Activar',
+                'cfg_error_font_size': 'Tamaño fuente incorrecta',
+                'cfg_error_lang': 'Valor idioma incorrecto',
+                'cfg_error_output_format': 'Valor formato output incorrecto',
+                'cfg_error_pipeline': 'Valor pipeline incorrecto',
+                'cfg_error_repetition': 'Valor repetición incorrecto',
+                'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
+                'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2',
+                'cfg_error_repetition_words': 'Repetición palabras incorrectas',
+                'cfg_error_stemming': 'Valor stemming incorrecto',
+                'cfg_error_stopwords': 'Valor stopwords incorrecto',
                 'cfg_font_format': 'Formatear fuentes',
+                'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
                 'cfg_save': 'Guardar',
+                'cfg_window_size': 'Tamaño de ventana',
                 'cfg_words_repetition': 'Repetición de palabras',
                 'cfg_words_repetition_distance': 'Distancia de repetición',
                 'cfg_words_repetition_ignorew': 'Palabras ignoradas',
                 'cfg_words_repetition_minchars': 'Mínimo de carácteres',
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
+                'cfg_error_window_size': 'Tamaño ventana incorrecto',
                 'clear': 'Limpiar',
                 'detected_lang': 'Idioma detectado: {0} ({1}). Palabras: {2}',
                 'lang': 'Español',
@@ -94,7 +135,10 @@ class _LangManager(object):
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
-                'tag_repeated': 'repetido'
+                'tag_repeated': 'repetido',
+                'window_size_small': 'Pequeño',
+                'window_size_medium': 'Mediano',
+                'window_size_large': 'Grande'
             }
         }
 
@@ -135,6 +179,8 @@ class Settings(object):
     _default_settings: Dict[str, Tuple[Any, Type, Union[List[Any], Callable[[Any], bool]]]]
     _lang: '_LangManager'
     _settings: Dict[str, Any]
+    _valid_font_sizes: List[int]
+    _valid_window_sizes: List[str]
 
     def __init__(self, ignore_file: bool = False) -> None:
         """
@@ -156,9 +202,11 @@ class Settings(object):
 
         # General settings
         self.CFG_CHECK_REPETITION = 'CHECK_REPETITION'
+        self.CFG_FONT_SIZE = 'FONT_SIZE'
         self.CFG_LANG = 'LANG'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
         # Words repetition
         self.CFG_REPETITION_DISTANCE = 'REPETITION_DISTANCE'
@@ -172,8 +220,12 @@ class Settings(object):
 
         # Stores default settings and the valid values
         self._available_pipelines = list(_PIPELINES.keys())
+        self._valid_font_sizes = [10, 11, 13, 15]
+        self._valid_window_sizes = list(_WINDOW_SIZE.keys())
+
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
+            self.CFG_FONT_SIZE: (11, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
@@ -182,7 +234,8 @@ class Settings(object):
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
-            self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0)
+            self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
+            self.CFG_WINDOW_SIZE: (self._valid_window_sizes[0], str, self._valid_window_sizes)
         }
 
         # The valid settings
@@ -251,7 +304,10 @@ class Settings(object):
                 if value in val_valids:  # Setting is within valid ones
                     return True
                 else:
-                    warn(f'Setting {key} value should have these values: {",".join(val_valids)}')
+                    str_valids = []
+                    for t in val_valids:
+                        str_valids.append(str(t))
+                    warn(f'Setting {key} value should have these values: {",".join(str_valids)}')
             elif val_valids is None:
                 return True
             else:  # Is a function
@@ -277,6 +333,8 @@ class Settings(object):
         if update:
             if key == self.CFG_PIPELINE:
                 val = _PIPELINES[val]
+            elif key == self.CFG_WINDOW_SIZE:
+                val = _WINDOW_SIZE[val]
 
         return val
 

@@ -29,11 +29,6 @@ from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
-if ut.IS_OSX:
-    PROGRAMSIZE = 700, 410
-else:
-    PROGRAMSIZE = 700, 475
-
 # Store the pipelines
 _PIPELINES = {
     'Simple': pip.simple_pipeline
@@ -75,6 +70,34 @@ class PyDetexGUI(object):
 
         # Load settings
         self._cfg = Settings()
+        window_size = self._cfg.get(self._cfg.CFG_WINDOW_SIZE).copy()
+
+        # Fine-tune height based on font size
+        fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
+        if not ut.IS_OSX:
+            if window_size[3] == 0:  # small
+                if fsize == 9 or fsize == 13:
+                    window_size[1] += 5
+                elif fsize == 11:
+                    window_size[1] -= 10
+            elif window_size[3] >= 1:  # medium
+                if fsize == 15:
+                    window_size[1] += 5
+                elif fsize == 11:
+                    window_size[1] -= 30
+                elif fsize == 10:
+                    window_size[1] -= 20
+
+        else:
+            if window_size[3] == 2:  # large
+                if fsize == 15:
+                    window_size[1] += 10
+                elif fsize == 13:
+                    window_size[1] -= 5
+                elif fsize == 11:
+                    window_size[1] -= 10
+                elif fsize == 10:
+                    window_size[1] -= 20
 
         # Configure window
         self._root.title('PyDetex')
@@ -84,15 +107,15 @@ class PyDetexGUI(object):
             self._root.tk.call('wm', 'iconphoto', self._root._w, img)
         else:
             self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
-        self._root.minsize(width=PROGRAMSIZE[0], height=PROGRAMSIZE[1])
+        self._root.minsize(width=window_size[0], height=window_size[1])
         self._root.resizable(width=False, height=False)
-        self._root.geometry('%dx%d+%d+%d' % (PROGRAMSIZE[0], PROGRAMSIZE[1],
-                                             (self._root.winfo_screenwidth() - PROGRAMSIZE[0]) / 2,
-                                             (self._root.winfo_screenheight() - PROGRAMSIZE[1]) / 2))
+        self._root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
+                                             (self._root.winfo_screenwidth() - window_size[0]) / 2,
+                                             (self._root.winfo_screenheight() - window_size[1]) / 2))
         self._root.protocol('WM_DELETE_WINDOW', self._close)
 
         # Settings button and detected language
-        f0 = tk.Frame(self._root, border=10, width=700, height=50)
+        f0 = tk.Frame(self._root, border=10, width=window_size[0], height=50)
         f0.pack()
         f0.pack_propagate(0)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
@@ -105,16 +128,22 @@ class PyDetexGUI(object):
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
 
         f1 = tk.Frame(self._root, border=0)
+        hfactor = 0.6
+        defaultfz = 11 if ut.IS_OSX else 10
+
         f1.pack(fill='both', padx=10)
-        self._text_in = tk.Text(f1, wrap='word', height=11, undo=True,
-                                highlightthickness=hthick, highlightcolor=hcolor)
+        self._text_in = RichText(f1, wrap='word', height=window_size[2] - (fsize - defaultfz) * hfactor, undo=True,
+                                 highlightthickness=hthick, highlightcolor=hcolor,
+                                 font_size=fsize)
         self._text_in.pack(fill='both')
         self._text_in.focus_force()
         self._text_in.focus()
 
         f2 = tk.Frame(self._root, border=0)
         f2.pack(fill='both', padx=10, pady=5)
-        self._text_out = RichText(f2, wrap='word', height=11, highlightthickness=hthick, highlightcolor=hcolor)
+        self._text_out = RichText(f2, wrap='word', height=window_size[2] - (fsize - defaultfz) * hfactor,
+                                  highlightthickness=hthick,
+                                  highlightcolor=hcolor, font_size=fsize)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
@@ -272,7 +301,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((360, 360 if ut.IS_OSX else 365), self._cfg)
+        self._settings_window = SettingsWindow((365, 425 if ut.IS_OSX else 445), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             self._settings_window.root.mainloop(1)
