@@ -18,6 +18,7 @@ from tkinter import messagebox
 from typing import Callable, Tuple, Optional, Dict
 
 import pydetex.utils as ut
+from pydetex._fonts import FONT_PROPERTIES
 from pydetex._gui_settings import Settings as _Settings
 
 
@@ -315,16 +316,11 @@ class RichText(tk.Text):
                            lmargin2=self._em + self._default_font.measure('\u2022 '))
 
         # Add fonts
-        self._add_font('bold', weight='bold')
-        self._add_font('bold_italic', weight='bold', slant='italic')
-        self._add_font('equation_char', weight='bold', foreground='#53f500')
-        self._add_font('equation_inside', slant='italic', foreground='#ffa450')
-        self._add_font('h1', size=2, weight='bold', spacing3=1)
-        self._add_font('italic', slant='italic')
-        self._add_font('link', weight='bold', foreground='#18d0f6')
-        self._add_font('normal')
-        self._add_font('repeated_tag', slant='italic', foreground='red')
-        self._add_font('underlined', underline=True, spacing3=1)
+        for tag in FONT_PROPERTIES.keys():
+            style = FONT_PROPERTIES[tag]
+            if style is None:
+                continue
+            self._add_font(tag, **style)
 
     def _add_font(self, tag: str, **kwargs) -> None:
         font = tkfont.Font(**self._default_font.configure())
@@ -336,7 +332,10 @@ class RichText(tk.Text):
             kwargs['size'] = int(kwargs['size'] * self._default_size)
 
         # Move kwargs to tag
-        tag_kwargs = {'font': font}
+        if kwargs.pop('ignore_font', False):
+            tag_kwargs = {}
+        else:
+            tag_kwargs = {'font': font}
         for t in ['foreground', 'background', 'spacing3']:
             if t in kwargs.keys():
                 tag_kwargs[t] = kwargs.pop(t)
