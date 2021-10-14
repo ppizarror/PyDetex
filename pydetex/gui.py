@@ -41,9 +41,15 @@ _PIPELINES = {
 _FONT_TAGS = {
     'bold': '[PYDETEX_FONT:BOLD]',
     'bold_italic': '[PYDETEX_FONT:BOLD_ITALIC]',
+    'bullet': '[PYDETEX_FONT:BULLET]',
+    'equation_char': '[PYDETEX_FONT:EQUATION_CHAR]',
+    'equation_inside': '[PYDETEX_FONT:EQUATION_INSIDE]',
+    'h1': '[PYDETEX_FONT:H1]',
     'italic': '[PYDETEX_FONT:ITALIC]',
+    'link': '[PYDETEX_FONT:LINK]',
     'normal': '[PYDETEX_FONT:NORMAL]',
-    'underlined': '[PYDETEX_FONT:UNDERLINED]',
+    'repeated_tag': '[PYDETEX_FONT:REPEATED_TAG]',
+    'underlined': '[PYDETEX_FONT:UNDERLINED]'
 }
 _TAGS_FONT = {}
 for _tag in _FONT_TAGS.keys():
@@ -211,9 +217,9 @@ class PyDetexGUI(object):
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
 
         # Configure text
-        PARSER_FONT_FORMAT['cite'] = _FONT_TAGS['bold'] if font_format else ''
+        PARSER_FONT_FORMAT['cite'] = _FONT_TAGS['link'] if font_format else ''
         PARSER_FONT_FORMAT['normal'] = _FONT_TAGS['normal'] if font_format else ''
-        PARSER_FONT_FORMAT['ref'] = _FONT_TAGS['bold'] if font_format else ''
+        PARSER_FONT_FORMAT['ref'] = _FONT_TAGS['link'] if font_format else ''
 
         # Process the text and get the language
         out = self.pipeline(text)
@@ -236,7 +242,7 @@ class PyDetexGUI(object):
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
                 stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
                 ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS)),
-                font_tag_format=_FONT_TAGS['italic'] if font_format else '',
+                font_tag_format=_FONT_TAGS['repeated_tag'] if font_format else '',
                 font_param_format=_FONT_TAGS['bold'] if font_format else '',
                 font_normal_format=_FONT_TAGS['normal'] if font_format else '',
                 remove_tokens=tags,
@@ -247,8 +253,8 @@ class PyDetexGUI(object):
         out = ut.apply_tag_between_inside(
             s=out,
             symbols_char=('$', '$'),
-            tags=(_FONT_TAGS['bold'], _FONT_TAGS['italic'],
-                  _FONT_TAGS['bold'], _FONT_TAGS['normal']) if font_format else '',
+            tags=(_FONT_TAGS['equation_char'], _FONT_TAGS['equation_inside'],
+                  _FONT_TAGS['equation_char'], _FONT_TAGS['normal']) if font_format else '',
             ignore_escape=True
         )
 

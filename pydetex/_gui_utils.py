@@ -297,37 +297,54 @@ class RichText(tk.Text):
     Rich text.
     """
 
+    _default_font: 'tkfont.Font'
+    _default_size: int
+    _em: int
+
     def __init__(self, *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
         super().__init__(*args, **kwargs)
-        default_font = tkfont.nametofont(self.cget('font'))
-        default_font.configure(size=font_size)
+        self._default_font = tkfont.nametofont(self.cget('font'))
+        self._default_font.configure(size=font_size)
 
-        em = default_font.measure('m')
-        default_size = default_font.cget('size')
+        self._em = self._default_font.measure('m')
+        self._default_size = self._default_font.cget('size')
 
-        bold_font = tkfont.Font(**default_font.configure())
-        bold_italic_font = tkfont.Font(**default_font.configure())
-        h1_font = tkfont.Font(**default_font.configure())
-        italic_font = tkfont.Font(**default_font.configure())
-        normal_font = tkfont.Font(**default_font.configure())
-        underlined_font = tkfont.Font(**default_font.configure())
+        # Configure specials
+        self.tag_configure('bullet', lmargin1=self._em,
+                           lmargin2=self._em + self._default_font.measure('\u2022 '))
 
-        bold_font.configure(weight='bold', size=default_size)
-        italic_font.configure(slant='italic', size=default_size)
-        bold_italic_font.configure(weight='bold', slant='italic', size=default_size)
-        h1_font.configure(size=int(default_size * 2), weight='bold')
-        underlined_font.configure(underline=True, size=default_size)
+        # Add fonts
+        self._add_font('bold', weight='bold')
+        self._add_font('bold_italic', weight='bold', slant='italic')
+        self._add_font('equation_char', weight='bold', foreground='#53f500')
+        self._add_font('equation_inside', slant='italic', foreground='#ffa450')
+        self._add_font('h1', size=2, weight='bold', spacing3=1)
+        self._add_font('italic', slant='italic')
+        self._add_font('link', weight='bold', foreground='#18d0f6')
+        self._add_font('normal')
+        self._add_font('repeated_tag', slant='italic', foreground='red')
+        self._add_font('underlined', underline=True, spacing3=1)
 
-        self.tag_configure('bold', font=bold_font)
-        self.tag_configure('bold_italic', font=bold_italic_font)
-        self.tag_configure('h1', font=h1_font, spacing3=default_size)
-        self.tag_configure('italic', font=italic_font)
-        self.tag_configure('normal', font=normal_font)
-        self.tag_configure('underlined', font=underlined_font, spacing3=default_size)
+    def _add_font(self, tag: str, **kwargs) -> None:
+        font = tkfont.Font(**self._default_font.configure())
 
-        lmargin2 = em + default_font.measure("\u2022 ")
-        self.tag_configure('bullet', lmargin1=em, lmargin2=lmargin2)
+        # Update kwargs for font
+        if 'size' not in kwargs.keys():
+            kwargs['size'] = self._default_size
+        else:
+            kwargs['size'] = int(kwargs['size'] * self._default_size)
+
+        # Move kwargs to tag
+        tag_kwargs = {'font': font}
+        for t in ['foreground', 'background', 'spacing3']:
+            if t in kwargs.keys():
+                tag_kwargs[t] = kwargs.pop(t)
+        if 'spacing3' in tag_kwargs.keys():
+            tag_kwargs['spacing3'] *= self._default_size
+
+        font.configure(**kwargs)
+        self.tag_configure(tag, **tag_kwargs)
 
     def insert_bullet(self, index, text):
         self.insert(index, f'\u2022 {text}', 'bullet')

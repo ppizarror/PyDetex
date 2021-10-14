@@ -403,7 +403,6 @@ class Settings(object):
         Save the settings to the file.
         """
         try:
-            print('saving in ', _SETTINGS_FILE[0])
             f = open(_SETTINGS_FILE[0], 'w')
             keys = list(self._settings.keys())
             keys.sort()
