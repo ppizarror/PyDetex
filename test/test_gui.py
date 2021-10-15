@@ -33,7 +33,7 @@ class GuiTest(BaseTest):
         cfg.set(cfg.CFG_CHECK_REPETITION, False)
         cfg.set(cfg.CFG_OUTPUT_FONT_FORMAT, False)
         gui._clear()
-        self.assertEqual(gui.pipeline, pip.simple_pipeline)
+        self.assertEqual(gui.pipeline, pip.simple)
         self.assertFalse(gui._ready)
 
         # Process the pipeline
@@ -59,7 +59,7 @@ class GuiTest(BaseTest):
         Test the app settings.
         """
         cfg = Settings(ignore_file=True)
-        self.assertEqual(cfg.get(cfg.CFG_PIPELINE), pip.simple_pipeline)
+        self.assertEqual(cfg.get(cfg.CFG_PIPELINE), pip.simple)
         self.assertFalse(cfg.get(cfg.CFG_CHECK_REPETITION))
         cfg.save()
 

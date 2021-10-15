@@ -32,11 +32,6 @@ from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
-# Store the pipelines
-_PIPELINES = {
-    'Simple': pip.simple_pipeline
-}
-
 _MAX_PASTE_RETRY: int = 3
 
 
@@ -169,6 +164,7 @@ class PyDetexGUI(object):
         """
         Clear texts.
         """
+        self._text_out['state'] = tk.NORMAL
         self._text_in.delete(0.0, tk.END)
         self._text_out.delete(0.0, tk.END)
         self._text_out['state'] = tk.DISABLED
@@ -190,7 +186,7 @@ class PyDetexGUI(object):
         """
         text = self._text_in.get(0.0, tk.END)
         if text.strip() == '':
-            return
+            return self._clear()
 
         self._text_out['state'] = tk.NORMAL
         self._copy_clip['state'] = tk.NORMAL
@@ -222,7 +218,7 @@ class PyDetexGUI(object):
                 stemming=self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING),
                 ignore=self._tokenizer.tokenize(self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS)),
                 font_tag_format=FONT_TAGS['repeated_tag'] if font_format else '',
-                font_param_format=FONT_TAGS['normal'] if font_format else '',
+                font_param_format=FONT_TAGS['repeated_word'] if font_format else '',
                 font_normal_format=FONT_TAGS['normal'] if font_format else '',
                 remove_tokens=tags,
                 tag=self._cfg.lang('tag_repeated')
@@ -294,7 +290,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((365, 427 if ut.IS_OSX else 448), self._cfg)
+        self._settings_window = SettingsWindow((375, 427 if ut.IS_OSX else 448), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
@@ -336,12 +332,13 @@ class PyDetexGUI(object):
         except Exception:
             ver = self._cfg.lang('about_ver_err_unkn')
 
+        # f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
         msg = f'PyDetex v{pydetex.version.ver}\n' \
-              f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
+              f'{ver}\n\n' \
               f'{self._cfg.lang("about_opened")}: {self._cfg.get(self._cfg.CFG_TOTAL_OPENED_APP)}\n' \
               f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
-              f'{ver}\n' \
               f'{pydetex.__copyright__}'
+
         messagebox.showinfo(title='About', message=msg)
 
 
