@@ -14,6 +14,7 @@ __all__ = [
 ]
 
 import tkinter as tk
+from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
@@ -364,7 +365,7 @@ class BorderedFrame(tk.Frame):
         self.interior.pack(padx=(borderleft, borderright), pady=(bordertop, borderbottom))
 
 
-def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), **kwargs) -> 'tk.Label':
+def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **kwargs) -> 'tk.Label':
     """
     Makes a label with defined width/height.
 
@@ -374,6 +375,7 @@ def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), **kwargs) -> 'tk.Lab
     :param side: Packing side
     :param args: Label arguments
     :param pad: Padding (top, right, bottom, left)
+    :param separator: Add separator
     :param kwargs: Optional keyword-arguments
     :return: Label
     """
@@ -382,4 +384,6 @@ def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), **kwargs) -> 'tk.Lab
     f.pack(side=side)
     label = tk.Label(f, *args, **kwargs)
     label.pack(fill=tk.BOTH, expand=1, padx=(int(pad[3]), int(pad[1])), pady=(int(pad[0]), int(pad[2])))
+    if separator:
+        ttk.Separator(master, orient='vertical').pack(side=tk.LEFT, fill='y')
     return label

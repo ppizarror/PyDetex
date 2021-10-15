@@ -53,6 +53,7 @@ class PyDetexGUI(object):
     _status_bar_lang: 'tk.Label'
     _status_bar_status: 'tk.Label'
     _status_bar_words: 'tk.Label'
+    _status_clear_event_id: str
     _text_in: 'tk.Text'
     _text_out: 'tk.Text'
     _tokenizer: 'RegexpTokenizer'
@@ -161,13 +162,11 @@ class PyDetexGUI(object):
 
         # Detected language
         self._status_bar_lang = make_label(f4, w=window_size[0] * 0.5, h=20, side=tk.LEFT, fg=status_fg,
-                                           bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10))
-        ttk.Separator(f4, orient='vertical').pack(side=tk.LEFT, fill='y')
+                                           bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10), separator=True)
 
         # Status
         self._status_bar_status = make_label(f4, w=window_size[0] * 0.4, h=20, side=tk.LEFT, fg=status_fg,
-                                             bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
-        ttk.Separator(f4, orient='vertical').pack(side=tk.LEFT, fill='y')
+                                             bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5), separator=True)
 
         # Total processed words
         self._status_bar_words = make_label(f4, w=window_size[0] * 0.1, h=20, side=tk.LEFT, fg=status_fg,
@@ -176,6 +175,7 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         # Final settings
         # ----------------------------------------------------------------------
+        self._status_clear_event_id = ''
         self._clear()  # This also changes states
 
         # Set variables
@@ -183,14 +183,34 @@ class PyDetexGUI(object):
         self._detected_lang_tag = '–'
         self._paste_timeout_error = 0
         self._ready = False
-        self._tokenizer = RegexpTokenizer(r'\w+')
         self._settings_window = None
+        self._tokenizer = RegexpTokenizer(r'\w+')
 
         # Inserts the placeholder text
         self._text_in.insert(0.0, self._cfg.lang('placeholder'))
         self._detect_language()
 
         self._root.update()
+
+    def _status(self, text: str, clear: bool = False, clear_time: int = 500) -> None:
+        """
+        Set the app status.
+
+        :param text: Status text
+        :param clear: Clear after time
+        :param clear_time: Clear time in miliseconds
+        """
+        if self._status_clear_event_id != '':
+            self._root.after_cancel(self._status_clear_event_id)
+        self._status_bar_status['text'] = text
+        if clear:
+            self._status_clear_event_id = self._root.after(clear_time, self._status_clear)
+
+    def _status_clear(self) -> None:
+        """
+        Clear the status text.
+        """
+        self._status(self._cfg.lang('status_idle'))
 
     def _process_in_key(self, event: 'tk.Event') -> Optional['tk.Event']:
         """
@@ -202,7 +222,8 @@ class PyDetexGUI(object):
         if self._detect_language_event_id != '':
             self._root.after_cancel(self._detect_language_event_id)
 
-        self._detect_language_event_id = self._root.after(500, self._detect_language)
+        self._status(self._cfg.lang('status_writing'), True)
+        self._detect_language_event_id = self._root.after(100, self._detect_language)
         return event
 
     # noinspection PyUnresolvedReferences
@@ -248,6 +269,7 @@ class PyDetexGUI(object):
         self._ready = False
         self._detect_language()
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(0)
+        self._status_clear()
 
     @property
     def pipeline(self) -> pip.PipelineType:
@@ -314,6 +336,7 @@ class PyDetexGUI(object):
 
         # Lock output
         self._text_out['state'] = tk.DISABLED
+        self._detect_language()
 
     def _process_clip(self) -> None:
         """
