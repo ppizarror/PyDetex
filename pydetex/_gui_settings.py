@@ -27,7 +27,8 @@ _SETTINGS_TEST = ut.RESOURCES_PATH + '.pydetex.cfg'
 
 # Store the pipelines
 _PIPELINES = {
-    'pipeline_simple': pip.simple_pipeline
+    'pipeline_simple': pip.simple,
+    'pipeline_strict': pip.strict
 }
 
 # Store the window sizes (w, h, height_richtext, type)
@@ -86,6 +87,7 @@ class _LangManager(object):
                 'detected_lang': 'Detected language: {0} ({1}). Words: {2}',
                 'lang': 'English',
                 'pipeline_simple': 'Simple',
+                'pipeline_strict': 'Strict',
                 'placeholder': 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, and returns a nice plain text!',
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
@@ -136,6 +138,7 @@ class _LangManager(object):
                 'detected_lang': 'Idioma detectado: {0} ({1}). Palabras: {2}',
                 'lang': 'Español',
                 'pipeline_simple': 'Simple',
+                'pipeline_strict': 'Estricto',
                 'placeholder': 'Escribe o pega aquí tu código \\texttt{LaTeX}. El programa simplemente eliminará todo lo relacionado a tex y retornará un lindo texto plano!',
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',

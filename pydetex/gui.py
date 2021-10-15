@@ -32,11 +32,6 @@ from pydetex._gui_settings import Settings
 from pydetex._gui_utils import SettingsWindow, RichText
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
-# Store the pipelines
-_PIPELINES = {
-    'Simple': pip.simple_pipeline
-}
-
 _MAX_PASTE_RETRY: int = 3
 
 

@@ -14,6 +14,9 @@ __all__ = [
     'process_labels',
     'process_quotes',
     'process_ref',
+    'remove_commands_char',
+    'remove_commands_param',
+    'remove_commands_param_noargv',
     'remove_comments',
     'remove_common_tags',
     'remove_tag',
@@ -34,6 +37,8 @@ FONT_FORMAT_SETTINGS = {
     'normal': '',
     'ref': ''
 }
+
+import pydetex.utils as ut
 
 
 def _find_str(s: str, char: str) -> int:
@@ -117,15 +122,15 @@ def remove_common_tags(s: str) -> str:
     """
     for tag in [
         'bigp',
+        'chapter',
         'emph',
+        'section',
+        'subsection',
+        'subsubsection',
+        'subsubsubsection',
         'textbf',
         'textit',
         'texttt',
-        'section',
-        'subsection',
-        'chapter',
-        'subsubsection',
-        'subsubsubsection',
 
         # Enviroments
         'begin{itemize}',
@@ -426,3 +431,86 @@ def process_inputs(s: str) -> str:
                 else:
                     s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
                 break
+
+
+def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_escape: bool = True) -> str:
+    """
+    Remove all char commands.
+
+    :param s: String
+    :param chars: Chars (start, end)
+    :param ignore_escape: Ignores \char
+    :return: Code with removed chars
+    """
+    tex_tags = ut.find_tex_command_char(s, chars, ignore_escape)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i < tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][1]:
+                pass
+            else:  # advance to other tag
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def remove_commands_param(s: str) -> str:
+    """
+    Remove all commands with params.
+
+    :param s: String
+    :return: Code with removed chars
+    """
+    tex_tags = ut.find_tex_commands(s)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i < tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][3] + 1:
+                pass
+            else:  # advance to other tag
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def remove_commands_param_noargv(s: str) -> str:
+    """
+    Remove all commands without arguments.
+
+    :param s: String
+    :return: Code with removed chars
+    """
+    tex_tags = ut.find_tex_commands_noargv(s)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i < tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][1]:
+                pass
+            else:  # advance to other tag
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
