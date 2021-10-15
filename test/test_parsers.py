@@ -132,3 +132,57 @@ class ParserTest(BaseTest):
                          'This loads a \\input{latex} or \\input{} epic')
         self.assertEqual(par.process_inputs('This loads a \\input{tex/simple} epic'),
                          'This loads a this is a simple file epic')
+
+    def test_remove_commands_char(self) -> None:
+        """
+        Remove commands char.
+        """
+        s = 'This is a $command$!'
+        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a !')
+        s = 'This is a $command\$ but this does not delete$!'
+        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a !')
+        s = 'This is a $command!'
+        self.assertEqual(par.remove_commands_char(s, '$'), s)
+
+        s = 'This is a$$ command!'
+        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a command!')
+
+        s = 'This is a $comman$ and $this should be removed too$!'
+        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a  and !')
+
+    def test_remove_commands(self) -> None:
+        """
+        Remove commands.
+        """
+        s = 'This \\f{must be removed} yes!'
+        self.assertEqual(par.remove_commands_param(s), 'This  yes!')
+        self.assertEqual(par.remove_commands_param(''), '')
+        s = 'This \\texttt{\insertimage{nice}{1}}no'
+        self.assertEqual(par.remove_commands_param(s), 'This no')
+        s = '\\insertimage[\label{epic}]{delete this}'
+        self.assertEqual(par.remove_commands_param(s), '')
+        s = 'Very\\insertimage[\label{epic}]{delete this} Epic'
+        self.assertEqual(par.remove_commands_param(s), 'Very Epic')
+        s = 'Very\\insertimage[\label{epic}]{delete this} Epic \\not yes'
+        self.assertEqual(par.remove_commands_param(s), 'Very Epic \\not yes')
+        s = 'Ni\\f       {}ce'
+        self.assertEqual(par.remove_commands_param(s), 'Nice')
+        s = 'Ni\\f   \n    [][][]{}ce'
+        self.assertEqual(par.remove_commands_param(s), 'Nice')
+
+    def test_remove_commands_noargv(self) -> None:
+        """
+        Remove commands without arguments.
+        """
+        s = 'This\\image remove'
+        self.assertEqual(par.remove_commands_param_noargv(s), 'This remove')
+        s = 'This inserts an \\insertimage[width=1\linewidth]'
+        self.assertEqual(par.remove_commands_param_noargv(s), 'This inserts an \\insertimage[width=1]')
+        s = 'This \\delete'
+        self.assertEqual(par.remove_commands_param_noargv(s), 'This ')
+        s = 'This \\delete '
+        self.assertEqual(par.remove_commands_param_noargv(s), 'This  ')
+        s = '\\delete yes'
+        self.assertEqual(par.remove_commands_param_noargv(s), ' yes')
+        s = '\\delete'
+        self.assertEqual(par.remove_commands_param_noargv(s), '')

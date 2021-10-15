@@ -16,6 +16,7 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'get_diff_startend_word',
     'get_language_tag',
     'IS_OSX',
     'RESOURCES_PATH',
@@ -115,6 +116,24 @@ def get_language_tag(s: str) -> str:
         return 'Unknown'
 
 
+def get_diff_startend_word(original: str, new: str) -> Tuple[str, str]:
+    """
+    Return the difference of the word from start and end, for example:
+
+    original XXXwordYY
+    new         word
+    diff = (XXX, YY)
+
+    :param original: Original word
+    :param new: New word
+    :return: Diff word
+    """
+    pos: int = original.find(new)
+    if pos == -1:
+        return '', ''
+    return original[0:pos], original[pos + len(new):len(original)]
+
+
 def check_repeated_words(
         s: str,
         lang: str,
@@ -196,6 +215,10 @@ def check_repeated_words(
             continue
         ignored_words.append(w)
 
+    # Add space to newline
+    newline_format = '      \n'
+    s = s.replace('\n', newline_format)
+
     # Separeate words
     wordswin = []  # Stores the words
     words = s.split(' ')
@@ -230,9 +253,13 @@ def check_repeated_words(
         # Check if the word exist on list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
-            original_w = f'{font_tag_format}<{tag}:{ww}>' \
-                         f'{font_param_format}{original_w}' \
-                         f'{font_tag_format}</{tag}>{font_normal_format}'
+            stemmed_word = tokenizer.tokenize(original_w)[0]
+            diff_word = get_diff_startend_word(original_w, stemmed_word)
+            if diff_word == ('', ''):
+                stemmed_word = original_w
+            original_w = f'{diff_word[0]}{font_tag_format}<{tag}:{ww}>' \
+                         f'{font_param_format}{stemmed_word}' \
+                         f'{font_tag_format}</{tag}>{font_normal_format}{diff_word[1]}'
 
         # Push the new word
         wordswin.append(w)
@@ -243,7 +270,9 @@ def check_repeated_words(
         new_s.append(original_w)
 
     # Return string with repeated format
-    return ' '.join(new_s)
+    out_s = ' '.join(new_s)
+    out_s = out_s.replace(newline_format, '\n')
+    return out_s
 
 
 def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
@@ -343,7 +372,7 @@ def validate_float(p: str) -> bool:
 
 def find_tex_command_char(
         s: str,
-        symbols_char: Tuple[str, str],
+        symbols_char: Union[Tuple[str, str], str],
         ignore_escape: bool = False
 ) -> Tuple[Tuple[int, int], ...]:
     """
@@ -359,6 +388,8 @@ def find_tex_command_char(
     :param ignore_escape: Ignores \\char
     :return: Positions
     """
+    if isinstance(symbols_char, str):
+        symbols_char = (symbols_char, symbols_char)
     assert len(symbols_char) == 2
     assert len(symbols_char[0]) == 1 and len(symbols_char[1]) == 1
 
@@ -517,6 +548,7 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
             if k == len(found) - 1:
                 found[k][4] = False
     for k in range(len(found)):
+        # noinspection PyUnresolvedReferences
         found[k] = tuple(found[k])
 
     return tuple(found)
@@ -578,6 +610,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
                 found[k][1] -= 1
             else:
                 break
+        # noinspection PyUnresolvedReferences
         found[k] = tuple(found[k])
 
     return tuple(found)

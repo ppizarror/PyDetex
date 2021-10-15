@@ -68,7 +68,7 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.check_repeated_words(s, 'de', 3, 15, True, True), t)
 
         s = 'мнение о себе в мире, используется он всё меньше и меньше. В ООН Агентство Франкофонии используется'
-        t = 'мнение о себе в мире, используется он всё меньше и <repeated:2>меньше.</repeated> В ООН Агентство Франкофонии <repeated:10>используется</repeated>'
+        t = 'мнение о себе в мире, используется он всё меньше и <repeated:2>меньше</repeated>. В ООН Агентство Франкофонии <repeated:10>используется</repeated>'
         self.assertEqual(ut.check_repeated_words(s, 'ru', 3, 15, True, True), t)
 
         # Test with removed tokens
@@ -78,6 +78,25 @@ class UtilsTest(BaseTest):
         # Test with commands
         s = 'These commands \\texttt be removed \\texttt not \\texttt \\texttt \\texttt'
         self.assertEqual(ut.check_repeated_words(s, 'en', 3, 15, True, True), s)
+
+        # Split points
+        s = 'review objective. Finally, articles were selected and used for the present review.\nEach selected'
+        t = 'review objective. Finally, articles were selected and used for the present <repeated:11>review</repeated>.\nEach <repeated:13>selected</repeated>'
+        self.assertEqual(ut.check_repeated_words(s, 'en', 3, 15, True, True), t)
+
+        # Stemmed words
+        s = 'this review was made by several other ¿reviewers! but also this review.'
+        t = 'this review was made by several other ¿<repeated:6>reviewers</repeated>! but also this <repeated:4>review</repeated>.'
+        self.assertEqual(ut.check_repeated_words(s, 'en', 3, 15, True, True), t)
+
+    def test_get_diff_startend_word(self) -> None:
+        """
+        Test word diff.
+        """
+        self.assertEqual(ut.get_diff_startend_word('XXXwordYYY', 'word'), ('XXX', 'YYY'))
+        self.assertEqual(ut.get_diff_startend_word('word.', 'word'), ('', '.'))
+        self.assertEqual(ut.get_diff_startend_word('!!word---', 'word'), ('!!', '---'))
+        self.assertEqual(ut.get_diff_startend_word('wording', 'worg'), ('', ''))
 
     def test_split_tags(self) -> None:
         """
