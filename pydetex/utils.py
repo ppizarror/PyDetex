@@ -60,7 +60,6 @@ IS_OSX = platform.system() == 'Darwin'
 # Import Button widget
 if IS_OSX:
     from tkmacosx import Button
-
 else:
     from tkinter import Button
 

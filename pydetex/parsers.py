@@ -297,6 +297,9 @@ def simple_replace(s: str) -> str:
         ('\\\\', '\n'),
         ('\\ ', ' '),
 
+        # Letters
+        ('ﬁ', 'fi'),
+
         # Greek
         ('\\alpha', 'α'),
         ('\\beta', 'β'),
