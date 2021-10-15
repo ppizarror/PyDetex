@@ -10,6 +10,7 @@ __all__ = ['PyDetexGUI']
 
 import concurrent.futures
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 
 import pyperclip
@@ -29,9 +30,10 @@ import pydetex.utils as ut
 
 from pydetex._fonts import FONT_TAGS, TAGS_FONT
 from pydetex._gui_settings import Settings
-from pydetex._gui_utils import SettingsWindow, RichText
+from pydetex._gui_utils import SettingsWindow, RichText, make_label
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
+# Settings
 _MAX_PASTE_RETRY: int = 3
 
 
@@ -42,11 +44,15 @@ class PyDetexGUI(object):
 
     _cfg: 'Settings'
     _copy_clip: 'tk.Button'
-    _label_lang: 'tk.Label'
+    _detect_language_event_id: str
+    _detected_lang_tag: str
     _paste_timeout_error: int
     _ready: bool
     _root: 'tk.Tk'
     _settings_window: Optional['SettingsWindow']
+    _status_bar_lang: 'tk.Label'
+    _status_bar_status: 'tk.Label'
+    _status_bar_words: 'tk.Label'
     _text_in: 'tk.Text'
     _text_out: 'tk.Text'
     _tokenizer: 'RegexpTokenizer'
@@ -55,6 +61,10 @@ class PyDetexGUI(object):
         """
         Constructor.
         """
+
+        # ----------------------------------------------------------------------
+        # Creates the window
+        # ----------------------------------------------------------------------
         self._root = tk.Tk()
 
         # Load settings
@@ -76,7 +86,9 @@ class PyDetexGUI(object):
                                              (self._root.winfo_screenheight() - window_size[1]) / 2))
         self._root.protocol('WM_DELETE_WINDOW', self._close)
 
-        # Settings button and detected language
+        # ----------------------------------------------------------------------
+        # Settings button
+        # ----------------------------------------------------------------------
         f0 = tk.Frame(self._root, border=10, width=window_size[0], height=50)
         f0.pack()
         f0.pack_propagate(0)
@@ -84,12 +96,13 @@ class PyDetexGUI(object):
                   relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, 7 if ut.IS_OSX else 10))
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
                   relief=tk.GROOVE).pack(side=tk.LEFT)
-        self._label_lang = tk.Label(f0, fg='#999999' if ut.IS_OSX else '#666666')
-        self._label_lang.pack(side=tk.RIGHT)
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
         fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
 
+        # ----------------------------------------------------------------------
+        # Input texts
+        # ----------------------------------------------------------------------
         # In text
         f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f1.pack(fill='both', padx=10)
@@ -98,6 +111,7 @@ class PyDetexGUI(object):
         self._text_in = RichText(f1, wrap='word', undo=True, highlightthickness=hthick,
                                  highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
+        self._text_in.bind('<Key>', self._process_in_key)
         self._text_in.focus_force()
         self._text_in.focus()
 
@@ -111,36 +125,85 @@ class PyDetexGUI(object):
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
+        # ----------------------------------------------------------------------
+        # Commands buttons
+        # ----------------------------------------------------------------------
+        command_btn_packx = 15  # margin px
         f3 = tk.Frame(self._root, border=2)
-        f3.pack(pady=(5 if ut.IS_OSX else 10, 0))
+        f3.pack(pady=(9, 18))
 
+        # Process
         ut.Button(f3, text=ut.button_text(self._cfg.lang('process')), command=self._process, relief=tk.GROOVE,
-                  bg='#475aff' if ut.IS_OSX else '#6388ff').pack(side=tk.LEFT)
-        tk.Label(f3, text='    ').pack(side=tk.LEFT)
+                  bg='#475aff' if ut.IS_OSX else '#6388ff').pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
+        # Process clip
         tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')), command=self._process_clip,
-                  relief=tk.GROOVE).pack(side=tk.LEFT)
-        tk.Label(f3, text='    ').pack(side=tk.LEFT)
+                  relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
+        # Copy to clip
         self._copy_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')), command=self._copy_to_clip,
                                     relief=tk.GROOVE)
-        self._copy_clip.pack(side=tk.LEFT)
-        tk.Label(f3, text='    ').pack(side=tk.LEFT)
+        self._copy_clip.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
+        # Clear
         ut.Button(f3, text=ut.button_text(self._cfg.lang('clear')), command=self._clear,
                   relief=tk.GROOVE, bg='#ff7878').pack(side=tk.LEFT)
-        # tk.Label(f3, text='    ').pack(side=tk.LEFT)
 
-        self._settings_window = None
+        # ----------------------------------------------------------------------
+        # Status bar
+        # ----------------------------------------------------------------------
+        ttk.Separator(self._root, orient='horizontal').pack(side='top', fill='x')
+        status_fg = '#999999' if ut.IS_OSX else '#666666'
 
-        # Write basic text
+        f4 = tk.Frame(self._root, width=window_size[0], height=26)
+        f4.pack(fill='both')
+        f4.pack_propagate(0)
+
+        # Detected language
+        self._status_bar_lang = make_label(f4, w=window_size[0] * 0.5, h=20, side=tk.LEFT, fg=status_fg,
+                                           bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10))
+        ttk.Separator(f4, orient='vertical').pack(side=tk.LEFT, fill='y')
+
+        # Status
+        self._status_bar_status = make_label(f4, w=window_size[0] * 0.4, h=20, side=tk.LEFT, fg=status_fg,
+                                             bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+        ttk.Separator(f4, orient='vertical').pack(side=tk.LEFT, fill='y')
+
+        # Total processed words
+        self._status_bar_words = make_label(f4, w=window_size[0] * 0.1, h=20, side=tk.LEFT, fg=status_fg,
+                                            bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+
+        # ----------------------------------------------------------------------
+        # Final settings
+        # ----------------------------------------------------------------------
         self._clear()  # This also changes states
+
+        # Set variables
+        self._detect_language_event_id = ''
+        self._detected_lang_tag = '–'
         self._paste_timeout_error = 0
-        self._text_in.insert(0.0, self._cfg.lang('placeholder'))
         self._ready = False
         self._tokenizer = RegexpTokenizer(r'\w+')
+        self._settings_window = None
+
+        # Inserts the placeholder text
+        self._text_in.insert(0.0, self._cfg.lang('placeholder'))
+        self._detect_language()
 
         self._root.update()
+
+    def _process_in_key(self, event: 'tk.Event') -> Optional['tk.Event']:
+        """
+        Process in keys.
+
+        :param event: Event
+        :return: Event
+        """
+        if self._detect_language_event_id != '':
+            self._root.after_cancel(self._detect_language_event_id)
+
+        self._detect_language_event_id = self._root.after(500, self._detect_language)
+        return event
 
     # noinspection PyUnresolvedReferences
     @staticmethod
@@ -153,6 +216,19 @@ class PyDetexGUI(object):
         """
         if event.char == '':
             return event
+
+    def _detect_language(self) -> None:
+        """
+        Detects the input lang.
+        """
+        text = self._text_in.get(0.0, tk.END).strip()
+        self._detected_lang_tag = ut.detect_language(text)
+        lang = ut.get_language_tag(self._detected_lang_tag)
+        if text != '':
+            self._status_bar_lang['text'] = self._cfg.lang('detected_lang').format(lang, self._detected_lang_tag)
+        else:
+            self._status_bar_lang['text'] = self._cfg.lang('detected_lang_write')
+        self._detect_language_event_id = ''
 
     def start(self) -> None:
         """
@@ -170,6 +246,8 @@ class PyDetexGUI(object):
         self._text_out['state'] = tk.DISABLED
         self._copy_clip['state'] = tk.DISABLED
         self._ready = False
+        self._detect_language()
+        self._status_bar_words['text'] = self._cfg.lang('status_words').format(0)
 
     @property
     def pipeline(self) -> pip.PipelineType:
@@ -199,8 +277,6 @@ class PyDetexGUI(object):
 
         # Process the text and get the language
         out = self.pipeline(text)
-        lang_code = ut.detect_language(out)
-        lang = ut.get_language_tag(lang_code)
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
@@ -211,7 +287,7 @@ class PyDetexGUI(object):
         if self._cfg.get(self._cfg.CFG_CHECK_REPETITION):
             out = ut.check_repeated_words(
                 s=out,
-                lang=lang_code,
+                lang=self._detected_lang_tag,
                 min_chars=self._cfg.get(self._cfg.CFG_REPETITION_MIN_CHAR),
                 window=self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE),
                 stopwords=self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS),
@@ -233,7 +309,7 @@ class PyDetexGUI(object):
             tag, text = t
             self._text_out.insert('end', text, TAGS_FONT[tag] if font_format else 'normal')
 
-        self._label_lang['text'] = self._cfg.lang('detected_lang').format(lang, lang_code, words)
+        self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
         self._ready = True
 
         # Lock output
@@ -333,10 +409,12 @@ class PyDetexGUI(object):
             ver = self._cfg.lang('about_ver_err_unkn')
 
         # f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
+        n_app_opened = self._cfg.get(self._cfg.CFG_TOTAL_OPENED_APP)
+        n_word_processed = self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)
         msg = f'PyDetex v{pydetex.version.ver}\n' \
               f'{ver}\n\n' \
-              f'{self._cfg.lang("about_opened")}: {self._cfg.get(self._cfg.CFG_TOTAL_OPENED_APP)}\n' \
-              f'{self._cfg.lang("about_processed")}: {self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)}\n\n' \
+              f'{self._cfg.lang("about_opened")}: {ut.format_number_d(n_app_opened, self._cfg.lang("format_d"))}\n' \
+              f'{self._cfg.lang("about_processed")}: {ut.format_number_d(n_word_processed, self._cfg.lang("format_d"))}\n\n' \
               f'{pydetex.__copyright__}'
 
         messagebox.showinfo(title='About', message=msg)

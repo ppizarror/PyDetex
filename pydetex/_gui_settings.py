@@ -33,9 +33,9 @@ _PIPELINES = {
 
 # Store the window sizes (w, h, height_richtext, type)
 _WINDOW_SIZE = {
-    'window_size_small': [700, 415, 150],
-    'window_size_medium': [900, 500, 193],
-    'window_size_large': [1200, 600, 243]
+    'window_size_small': [700, 420, 140],
+    'window_size_medium': [900, 513, 183],
+    'window_size_large': [1200, 615, 233]
 }
 
 
@@ -66,7 +66,7 @@ class _LangManager(object):
                 'cfg_error_pipeline': 'Invalid pipeline value',
                 'cfg_error_repetition': 'Invalid repetition value',
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
-                'cfg_error_repetition_distance': 'Repetition distance be greater than 2',
+                'cfg_error_repetition_distance': 'Repetition distance must be greater than 2 and lower than 50',
                 'cfg_error_repetition_words': 'Invalid ignore words',
                 'cfg_error_stemming': 'Invalid repetition stemming value',
                 'cfg_error_stopwords': 'Invalid repetition stopwords value',
@@ -84,7 +84,9 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
                 'clear': 'Clear',
-                'detected_lang': 'Detected language: {0} ({1}). Words: {2}',
+                'detected_lang': 'Detected language: {0} ({1})',
+                'detected_lang_write': 'Write something to start recognizing the language',
+                'format_d': ',',
                 'lang': 'English',
                 'pipeline_simple': 'Simple',
                 'pipeline_strict': 'Strict',
@@ -95,10 +97,11 @@ class _LangManager(object):
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
+                'status_words': 'Words: {0}',
                 'tag_repeated': 'repeated',
-                'window_size_small': 'Small',
+                'window_size_large': 'Large',
                 'window_size_medium': 'Medium',
-                'window_size_large': 'Large'
+                'window_size_small': 'Small'
             },
             'es': {
                 'about': 'Acerca de',
@@ -117,10 +120,11 @@ class _LangManager(object):
                 'cfg_error_pipeline': 'Valor pipeline incorrecto',
                 'cfg_error_repetition': 'Valor repetición incorrecto',
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
-                'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2',
+                'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2, y menor que 50',
                 'cfg_error_repetition_words': 'Repetición palabras incorrectas',
                 'cfg_error_stemming': 'Valor stemming incorrecto',
                 'cfg_error_stopwords': 'Valor stopwords incorrecto',
+                'cfg_error_window_size': 'Tamaño ventana incorrecto',
                 'cfg_font_format': 'Formatear fuentes',
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
@@ -133,9 +137,10 @@ class _LangManager(object):
                 'cfg_words_repetition_minchars': 'Mínimo de carácteres',
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
-                'cfg_error_window_size': 'Tamaño ventana incorrecto',
                 'clear': 'Limpiar',
-                'detected_lang': 'Idioma detectado: {0} ({1}). Palabras: {2}',
+                'detected_lang': 'Idioma detectado: {0} ({1})',
+                'detected_lang_write': 'Escribe algo para iniciar detección idioma',
+                'format_d': '.',
                 'lang': 'Español',
                 'pipeline_simple': 'Simple',
                 'pipeline_strict': 'Estricto',
@@ -146,10 +151,11 @@ class _LangManager(object):
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
+                'status_words': 'Palabras: {0}',
                 'tag_repeated': 'repetido',
-                'window_size_small': 'Pequeño',
+                'window_size_large': 'Grande',
                 'window_size_medium': 'Mediano',
-                'window_size_large': 'Grande'
+                'window_size_small': 'Pequeño'
             }
         }
 
@@ -255,7 +261,7 @@ class Settings(object):
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
-            self.CFG_REPETITION_DISTANCE: (15, int, lambda x: x > 1),
+            self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
             self.CFG_REPETITION_IGNORE_WORDS: ('ignored_word_1, ignored_word_2', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),

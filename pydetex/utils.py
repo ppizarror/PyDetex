@@ -16,6 +16,7 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'format_number_d',
     'get_diff_startend_word',
     'get_language_tag',
     'IS_OSX',
@@ -746,3 +747,15 @@ def syntax_highlight(s: str) -> str:
 
     # Return formatted string
     return s
+
+
+def format_number_d(n: int, c: str) -> str:
+    """
+    Formats a number on thousands.
+
+    :param n: Number
+    :param c: Format char
+    :return: Formatted number
+    """
+    assert isinstance(n, int)
+    return format(n, ',').replace(',', c)

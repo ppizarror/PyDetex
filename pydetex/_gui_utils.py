@@ -7,8 +7,10 @@ Provides utils for the gui.
 """
 
 __all__ = [
-    'SettingsWindow',
-    'RichText'
+    'BorderedFrame',
+    'make_label',
+    'RichText',
+    'SettingsWindow'
 ]
 
 import tkinter as tk
@@ -347,3 +349,37 @@ class RichText(tk.Text):
 
     def insert_bullet(self, index, text):
         self.insert(index, f'\u2022 {text}', 'bullet')
+
+
+class BorderedFrame(tk.Frame):
+    """
+    Bordered frame widget.
+    """
+
+    def __init__(self, master, bordercolor=None, borderleft=0, bordertop=0, borderright=0, borderbottom=0,
+                 interiorwidget=tk.Frame, **kwargs):
+        tk.Frame.__init__(self, master, background=bordercolor, bd=0, highlightthickness=0)
+
+        self.interior = interiorwidget(self, **kwargs)
+        self.interior.pack(padx=(borderleft, borderright), pady=(bordertop, borderbottom))
+
+
+def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), **kwargs) -> 'tk.Label':
+    """
+    Makes a label with defined width/height.
+
+    :param master: Master object
+    :param h: Height in pixels
+    :param w: Width in pixels
+    :param side: Packing side
+    :param args: Label arguments
+    :param pad: Padding (top, right, bottom, left)
+    :param kwargs: Optional keyword-arguments
+    :return: Label
+    """
+    f = tk.Frame(master, height=int(h), width=int(w))
+    f.pack_propagate(0)  # don't shrink
+    f.pack(side=side)
+    label = tk.Label(f, *args, **kwargs)
+    label.pack(fill=tk.BOTH, expand=1, padx=(int(pad[3]), int(pad[1])), pady=(int(pad[0]), int(pad[2])))
+    return label
