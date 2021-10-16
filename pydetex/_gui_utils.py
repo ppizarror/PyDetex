@@ -8,6 +8,7 @@ Provides utils for the gui.
 
 __all__ = [
     'BorderedFrame',
+    'center_window',
     'CustomEntry',
     'make_label',
     'RichText',
@@ -19,7 +20,7 @@ from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
-from typing import Callable, Tuple, Optional, Dict, Union
+from typing import Callable, Tuple, Optional, Dict, Union, List
 
 import pydetex.utils as ut
 from pydetex._fonts import FONT_PROPERTIES
@@ -64,9 +65,7 @@ class SettingsWindow(object):
         self.root.title('Settings')
         self.root.minsize(width=window_size[0], height=window_size[1])
         self.root.resizable(width=False, height=False)
-        self.root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
-                                            (self.root.winfo_screenwidth() - window_size[0]) / 2,
-                                            (self.root.winfo_screenheight() - window_size[1]) / 2))
+        center_window(self.root, window_size)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if not ut.IS_OSX:
             self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
@@ -457,6 +456,18 @@ class BorderedFrame(tk.Frame):
 
         self.interior = interiorwidget(self, **kwargs)
         self.interior.pack(padx=(borderleft, borderright), pady=(bordertop, borderbottom))
+
+
+def center_window(root: 'tk.Tk', window_size: Union[Tuple[int, int], List[int]]) -> None:
+    """
+    Center window.
+
+    :param root: Window object
+    :param window_size: Window size
+    """
+    root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
+                                   (root.winfo_screenwidth() - window_size[0]) / 2,
+                                   (root.winfo_screenheight() - window_size[1]) / 2 - 25 if ut.IS_OSX else 0))
 
 
 def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **kwargs) -> 'tk.Label':

@@ -8,10 +8,11 @@ Test guis.
 
 from test._base import BaseTest
 
-# noinspection PyProtectedMember
-from pydetex.gui import PyDetexGUI, SettingsWindow
+from pydetex.gui import PyDetexGUI
 # noinspection PyProtectedMember
 from pydetex._gui_settings import Settings, _SETTINGS_FILE, _SETTINGS_TEST
+# noinspection PyProtectedMember
+from pydetex._gui_utils import SettingsWindow
 import pydetex.pipelines as pip
 
 import os

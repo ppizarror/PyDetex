@@ -24,13 +24,13 @@ from warnings import warn
 
 sys.path.append('../')
 
-import pydetex.version
+import pydetex._gui_utils as gui_ut
 import pydetex.pipelines as pip
 import pydetex.utils as ut
+import pydetex.version
 
 from pydetex._fonts import FONT_TAGS, TAGS_FONT
 from pydetex._gui_settings import Settings
-from pydetex._gui_utils import SettingsWindow, RichText, make_label
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
 # Settings
@@ -49,7 +49,7 @@ class PyDetexGUI(object):
     _paste_timeout_error: int
     _ready: bool
     _root: 'tk.Tk'
-    _settings_window: Optional['SettingsWindow']
+    _settings_window: Optional['gui_ut.SettingsWindow']
     _status_bar_lang: 'tk.Label'
     _status_bar_status: 'tk.Label'
     _status_bar_words: 'tk.Label'
@@ -82,9 +82,7 @@ class PyDetexGUI(object):
             self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
         self._root.minsize(width=window_size[0], height=window_size[1])
         self._root.resizable(width=False, height=False)
-        self._root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
-                                             (self._root.winfo_screenwidth() - window_size[0]) / 2,
-                                             (self._root.winfo_screenheight() - window_size[1]) / 2))
+        gui_ut.center_window(self._root, window_size)
         self._root.protocol('WM_DELETE_WINDOW', self._close)
 
         # ----------------------------------------------------------------------
@@ -93,10 +91,10 @@ class PyDetexGUI(object):
         f0 = tk.Frame(self._root, border=10, width=window_size[0], height=50)
         f0.pack()
         f0.pack_propagate(0)
-        tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
-                  relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, 7 if ut.IS_OSX else 10))
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
-                  relief=tk.GROOVE).pack(side=tk.LEFT)
+                  relief=tk.GROOVE).pack(side=tk.RIGHT)
+        tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
+                  relief=tk.GROOVE).pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 10))
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
         fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
@@ -109,8 +107,8 @@ class PyDetexGUI(object):
         f1.pack(fill='both', padx=10)
         f1.pack_propagate(0)
 
-        self._text_in = RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
-                                 highlightcolor=hcolor, font_size=fsize)
+        self._text_in = gui_ut.RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
+                                        highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
         self._text_in.bind('<Key>', self._process_in_key)
         self._text_in.focus_force()
@@ -121,8 +119,8 @@ class PyDetexGUI(object):
         f2.pack(fill='both', padx=10, pady=5)
         f2.pack_propagate(0)
 
-        self._text_out = RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
-                                  highlightcolor=hcolor, font_size=fsize, editable=False)
+        self._text_out = gui_ut.RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
+                                         highlightcolor=hcolor, font_size=fsize, editable=False)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
@@ -161,16 +159,18 @@ class PyDetexGUI(object):
         f4.pack_propagate(0)
 
         # Detected language
-        self._status_bar_lang = make_label(f4, w=window_size[0] * 0.5, h=20, side=tk.LEFT, fg=status_fg,
-                                           bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10), separator=True)
+        self._status_bar_lang = gui_ut.make_label(f4, w=window_size[0] * 0.5, h=20, side=tk.LEFT, fg=status_fg,
+                                                  bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10),
+                                                  separator=True)
 
         # Status
-        self._status_bar_status = make_label(f4, w=window_size[0] * 0.4, h=20, side=tk.LEFT, fg=status_fg,
-                                             bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5), separator=True)
+        self._status_bar_status = gui_ut.make_label(f4, w=window_size[0] * 0.4, h=20, side=tk.LEFT, fg=status_fg,
+                                                    bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
+                                                    separator=True)
 
         # Total processed words
-        self._status_bar_words = make_label(f4, w=window_size[0] * 0.1, h=20, side=tk.LEFT, fg=status_fg,
-                                            bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+        self._status_bar_words = gui_ut.make_label(f4, w=window_size[0] * 0.1, h=20, side=tk.LEFT, fg=status_fg,
+                                                   bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
 
         # ----------------------------------------------------------------------
         # Final settings
@@ -389,7 +389,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = SettingsWindow((375, 427 if ut.IS_OSX else 448), self._cfg)
+        self._settings_window = gui_ut.SettingsWindow((375, 427 if ut.IS_OSX else 448), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
