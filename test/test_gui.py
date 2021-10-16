@@ -73,6 +73,9 @@ class GuiTest(BaseTest):
         self.assertFalse(cfg.check_setting(cfg.CFG_REPETITION_MIN_CHAR, '1f'))
         self.assertTrue(cfg.check_setting(cfg.CFG_REPETITION_MIN_CHAR, 1))
 
+        # Test day diff
+        self.assertEqual(cfg._last_opened_day_diff, 0)
+
         # Test font size
         self.assertFalse(cfg.check_setting(cfg.CFG_FONT_SIZE, 55))
         self.assertTrue(cfg.check_setting(cfg.CFG_FONT_SIZE, 11))
