@@ -282,7 +282,10 @@ class PyDetexGUI(object):
         :param event: Event
         :return: Event
         """
-        self._status_bar_cursor['text'] = self._cfg.lang('status_cursor_input_focusout')
+        w = self._cfg.get(self._cfg.CFG_WINDOW_SIZE)[0] > 750
+        fout = self._cfg.lang('status_cursor_input_focusout') if w else self._cfg.lang(
+            'status_cursor_input_focusout_min')
+        self._status_bar_cursor['text'] = fout
         self._status_bar_cursor_sel['text'] = ''
         return event
 
@@ -367,6 +370,7 @@ class PyDetexGUI(object):
         self._detect_language()
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(0)
         self._status_clear()
+        self._process_cursor_event()
 
     @property
     def pipeline(self) -> pip.PipelineType:
