@@ -8,6 +8,7 @@ Provides utils for the gui.
 
 __all__ = [
     'BorderedFrame',
+    'CustomEntry',
     'make_label',
     'RichText',
     'SettingsWindow'
@@ -18,7 +19,7 @@ from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
-from typing import Callable, Tuple, Optional, Dict
+from typing import Callable, Tuple, Optional, Dict, Union
 
 import pydetex.utils as ut
 from pydetex._fonts import FONT_PROPERTIES
@@ -146,7 +147,8 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_min_char = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
+        self._var_repetition_min_char = CustomEntry(f, self._cfg, validate='all', validatecommand=(reg_int, '%P'),
+                                                    width=5)
         self._var_repetition_min_char.pack(side=tk.LEFT)
         self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR))
 
@@ -157,7 +159,8 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_distance = tk.Entry(f, validate='all', validatecommand=(reg_int, '%P'), width=5)
+        self._var_repetition_distance = CustomEntry(f, self._cfg, validate='all',
+                                                    validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_distance.pack(side=tk.LEFT)
         self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE))
 
@@ -190,8 +193,9 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_ignore_words = tk.Text(f, wrap='word', height=4, highlightthickness=3 if ut.IS_OSX else 0,
-                                                    highlightcolor='#426392')
+        self._var_repetition_ignore_words = RichText(cfg, f, wrap='word', height=4,
+                                                     highlightthickness=3 if ut.IS_OSX else 0,
+                                                     highlightcolor='#426392')
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
         self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS).strip())
 
@@ -305,14 +309,20 @@ class RichText(tk.Text):
     _default_size: int
     _em: int
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, cfg: '_Settings', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
+        editable = kwargs.pop('editable', True)
+
         super().__init__(*args, **kwargs)
         self._default_font = tkfont.nametofont(self.cget('font'))
         self._default_font.configure(size=font_size)
 
         self._em = self._default_font.measure('m')
         self._default_size = self._default_font.cget('size')
+
+        # Editable gui
+        if editable:
+            EditableTextGUI(self, cfg)
 
         # Configure specials
         self.tag_configure('bullet', lmargin1=self._em,
@@ -350,6 +360,90 @@ class RichText(tk.Text):
 
     def insert_bullet(self, index, text):
         self.insert(index, f'\u2022 {text}', 'bullet')
+
+
+# noinspection PyUnresolvedReferences,PyUnusedLocal
+class EditableTextGUI(object):
+    """
+    Editable gui text.
+    """
+
+    _w: Union['tk.Entry', 'tk.Text', 'RichText']
+
+    def __init__(self, widget: Union['tk.Entry', 'tk.Text', 'RichText'], cfg: '_Settings') -> None:
+        """
+        Constructor.
+
+        :param widget: Widget object
+        :param cfg: Settings
+        """
+        self._w = widget
+
+        self.changes = ['']
+        self.steps = int()
+
+        self.context_menu = tk.Menu(self._w, tearoff=0)
+        self.context_menu.add_command(label=cfg.lang('menu_cut'))
+        self.context_menu.add_command(label=cfg.lang('menu_copy'))
+        self.context_menu.add_command(label=cfg.lang('menu_paste'))
+
+        self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
+        self._w.bind('<Control-z>', self.undo)
+        self._w.bind('<Control-y>', self.redo)
+        self._w.bind('<Key>', self.add_changes)
+
+    def popup(self, event: 'tk.Event') -> None:
+        """
+        Raise popup.
+
+        :param event: Event
+        """
+        self.context_menu.post(event.x_root, event.y_root)
+        self.context_menu.entryconfigure('Cut', command=lambda: self._w.event_generate('<<Cut>>'))
+        self.context_menu.entryconfigure('Copy', command=lambda: self._w.event_generate('<<Copy>>'))
+        self.context_menu.entryconfigure('Paste', command=lambda: self._w.event_generate('<<Paste>>'))
+
+    def undo(self, event: Optional['tk.Event'] = None) -> None:
+        """
+        Undo operation.
+
+        :param event: Event
+        """
+        if self.steps != 0:
+            self.steps -= 1
+            self._w.delete(0, tk.END)
+            self._w.insert(tk.END, self.changes[self.steps])
+
+    def redo(self, event: Optional['tk.Event'] = None) -> None:
+        """
+        Redo operation.
+
+        :param event: Event
+        """
+        if self.steps < len(self.changes):
+            self._w.delete(0, tk.END)
+            self._w.insert(tk.END, self.changes[self.steps])
+            self.steps += 1
+
+    def add_changes(self, event: Optional['tk.Event'] = None) -> None:
+        """
+        Add changes.
+
+        :param event: Event
+        """
+        if self._w.get() != self.changes[-1]:
+            self.changes.append(self._w.get())
+            self.steps += 1
+
+
+class CustomEntry(tk.Entry):
+    """
+    Entry with undo/redo and menu.
+    """
+
+    def __init__(self, parent, cfg: '_Settings', *args, **kwargs):
+        tk.Entry.__init__(self, parent, *args, **kwargs)
+        EditableTextGUI(self, cfg)
 
 
 class BorderedFrame(tk.Frame):

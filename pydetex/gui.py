@@ -19,7 +19,7 @@ import sys
 
 from outdated import check_outdated
 from nltk.tokenize import RegexpTokenizer
-from typing import Optional
+from typing import Optional, Tuple
 from warnings import warn
 
 sys.path.append('../')
@@ -109,7 +109,7 @@ class PyDetexGUI(object):
         f1.pack(fill='both', padx=10)
         f1.pack_propagate(0)
 
-        self._text_in = RichText(f1, wrap='word', undo=True, highlightthickness=hthick,
+        self._text_in = RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
                                  highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
         self._text_in.bind('<Key>', self._process_in_key)
@@ -121,8 +121,8 @@ class PyDetexGUI(object):
         f2.pack(fill='both', padx=10, pady=5)
         f2.pack_propagate(0)
 
-        self._text_out = RichText(f2, wrap='word', highlightthickness=hthick,
-                                  highlightcolor=hcolor, font_size=fsize)
+        self._text_out = RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
+                                  highlightcolor=hcolor, font_size=fsize, editable=False)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
@@ -417,20 +417,7 @@ class PyDetexGUI(object):
         """
         Show about window.
         """
-        # noinspection PyBroadException
-        try:
-            is_outdated, latest_version = check_outdated('pydetex', str(pydetex.version.ver))
-            if is_outdated:
-                ver = self._cfg.lang('about_ver_upgrade').format(latest_version)
-            else:
-                ver = self._cfg.lang('about_ver_latest')
-        except ValueError:
-            ver = self._cfg.lang('about_ver_dev')
-        except requests.exceptions.ConnectionError:
-            ver = self._cfg.lang('about_ver_err_conn')
-        except Exception:
-            ver = self._cfg.lang('about_ver_err_unkn')
-
+        _, _, ver = self._check_version()
         # f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
         n_app_opened = self._cfg.get(self._cfg.CFG_TOTAL_OPENED_APP)
         n_word_processed = self._cfg.get(self._cfg.CFG_TOTAL_PROCESSED_WORDS)
@@ -441,6 +428,29 @@ class PyDetexGUI(object):
               f'{pydetex.__copyright__}'
 
         messagebox.showinfo(title='About', message=msg)
+
+    def _check_version(self) -> Tuple[bool, str, str]:
+        """
+        Check software version.
+
+        :return: (Needs software update, new version, version text about)
+        """
+        is_outdated = False
+        latest_version = '0.0.0'
+        # noinspection PyBroadException
+        try:
+            is_outdated, latest_version = check_outdated('pydetex', str(pydetex.version.ver))
+            if is_outdated:
+                about_ver = self._cfg.lang('about_ver_upgrade').format(latest_version)
+            else:
+                about_ver = self._cfg.lang('about_ver_latest')
+        except ValueError:
+            about_ver = self._cfg.lang('about_ver_dev')
+        except requests.exceptions.ConnectionError:
+            about_ver = self._cfg.lang('about_ver_err_conn')
+        except Exception:
+            about_ver = self._cfg.lang('about_ver_err_unkn')
+        return is_outdated, latest_version, about_ver
 
 
 if __name__ == '__main__':
