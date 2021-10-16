@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/pydetex
 
 SETUP DISTRIBUTION
-Create setup for PyPI
+Create setup for PyPI.
 """
 
 from setuptools import setup, find_packages
@@ -28,8 +28,7 @@ requirements_docs.extend([
 
 requirements_tests = requirements.copy()
 requirements_tests.extend([
-    'codecov',
-    # 'pyautogui'
+    'codecov'
 ])
 
 # Setup library
@@ -75,7 +74,7 @@ setup(
     options={
         'bdist_wheel': {'universal': False}
     },
-    # entry_points={
-    #     'pyinstaller40': ['hook-dirs = pydetex.__pyinstaller:get_hook_dirs']
-    # }
+    entry_points={
+        'pyinstaller40': ['hook-dirs = pydetex.__pyinstaller:get_hook_dirs']
+    }
 )

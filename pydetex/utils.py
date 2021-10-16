@@ -33,7 +33,7 @@ __all__ = [
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 import langdetect
 
-import nltk
+import json
 import os
 import platform
 
@@ -42,16 +42,13 @@ from iso639 import Lang
 # noinspection PyPackageRequirements
 from iso639.exceptions import InvalidLanguageValue
 
-from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
 from typing import List, Tuple, Optional, Union
-from warnings import warn
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
 
 # Resources path
-# Set resouces path
 __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
 RESOURCES_PATH = __actualpath + 'res/'
 
@@ -64,21 +61,9 @@ if IS_OSX:
 else:
     from tkinter import Button
 
-_HAS_NLTK = False
-
-# Check if stopwods exists
-try:
-    _stopwords.words('english')
-    _HAS_NLTK = True
-except LookupError:
-    nltk.download('stopwords')
-
-# Re-try to download
-try:
-    _stopwords.words('english')
-    _HAS_NLTK = True
-except LookupError:
-    pass
+# Load all stopwords
+with open(RESOURCES_PATH + 'stopwords.json', encoding='UTF-8') as json_data:
+    _STOPWORDS = json.load(json_data)
 
 # Valid command chars
 VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -194,12 +179,10 @@ def check_repeated_words(
         'ru': 'russian',
         'sv': 'swedish'
     }
-    if lang in available_langs.keys() and _HAS_NLTK:
-        stop = _stopwords.words(available_langs[lang])
+    if lang in available_langs.keys():
+        stop = _STOPWORDS[lang]
         stemmer = SnowballStemmer(available_langs[lang])
     else:
-        if not _HAS_NLTK:
-            warn('nltk library does not exist. Check for your internet connection in order to use this feature')
         return s
 
     tokenizer = RegexpTokenizer(r'\w+')
