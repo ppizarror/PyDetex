@@ -15,10 +15,11 @@ from tkinter import messagebox
 
 import pyperclip
 import requests
+import string
 import sys
 
-from outdated import check_outdated
 from nltk.tokenize import RegexpTokenizer
+from outdated import check_outdated
 from typing import Optional, Tuple
 from warnings import warn
 
@@ -50,6 +51,8 @@ class PyDetexGUI(object):
     _ready: bool
     _root: 'tk.Tk'
     _settings_window: Optional['gui_ut.SettingsWindow']
+    _status_bar_cursor: 'tk.Label'
+    _status_bar_cursor_sel: 'tk.Label'
     _status_bar_lang: 'tk.Label'
     _status_bar_status: 'tk.Label'
     _status_bar_words: 'tk.Label'
@@ -74,12 +77,12 @@ class PyDetexGUI(object):
 
         # Configure window
         self._root.title('PyDetex')
-        if ut.IS_OSX:
-            img = tk.Image('photo', file=ut.RESOURCES_PATH + 'icon.gif')
-            # noinspection PyProtectedMember
-            self._root.tk.call('wm', 'iconphoto', self._root._w, img)
-        else:
+        img = tk.Image('photo', file=ut.RESOURCES_PATH + 'icon.gif')
+        # noinspection PyProtectedMember
+        self._root.tk.call('wm', 'iconphoto', self._root._w, img)
+        if not ut.IS_OSX:
             self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
+
         self._root.minsize(width=window_size[0], height=window_size[1])
         self._root.resizable(width=False, height=False)
         gui_ut.center_window(self._root, window_size)
@@ -110,6 +113,9 @@ class PyDetexGUI(object):
         self._text_in = gui_ut.RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
                                         highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
+        self._text_in.bind('<Button>', self._process_cursor_in)
+        self._text_in.bind('<FocusIn>', self._process_focusin_in)
+        self._text_in.bind('<FocusOut>', self._process_focusout_in)
         self._text_in.bind('<Key>', self._process_in_key)
         self._text_in.focus_force()
         self._text_in.focus()
@@ -159,17 +165,27 @@ class PyDetexGUI(object):
         f4.pack_propagate(0)
 
         # Detected language
-        self._status_bar_lang = gui_ut.make_label(f4, w=window_size[0] * 0.5, h=20, side=tk.LEFT, fg=status_fg,
-                                                  bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 10),
-                                                  separator=True)
+        show_status = 0.2 if window_size[0] > 750 else 0
+        self._status_bar_lang = gui_ut.make_label(f4, w=window_size[0] * (0.4 + (0.2 - show_status)), h=20,
+                                                  side=tk.LEFT, fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W,
+                                                  pad=(0, 0, 0, 10), separator=True)
 
         # Status
-        self._status_bar_status = gui_ut.make_label(f4, w=window_size[0] * 0.4, h=20, side=tk.LEFT, fg=status_fg,
-                                                    bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
+        self._status_bar_status = gui_ut.make_label(f4, w=window_size[0] * show_status, h=20, side=tk.LEFT,
+                                                    fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
                                                     separator=True)
 
+        # Cursor
+        self._status_bar_cursor = gui_ut.make_label(f4, w=window_size[0] * 0.125, h=20, side=tk.LEFT, fg=status_fg,
+                                                    bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+
+        # Cursor selected
+        self._status_bar_cursor_sel = gui_ut.make_label(f4, w=window_size[0] * 0.125, h=20, side=tk.LEFT, fg=status_fg,
+                                                        bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
+                                                        separator=True)
+
         # Total processed words
-        self._status_bar_words = gui_ut.make_label(f4, w=window_size[0] * 0.1, h=20, side=tk.LEFT, fg=status_fg,
+        self._status_bar_words = gui_ut.make_label(f4, w=window_size[0] * 0.15, h=20, side=tk.LEFT, fg=status_fg,
                                                    bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
 
         # ----------------------------------------------------------------------
@@ -187,10 +203,18 @@ class PyDetexGUI(object):
         self._tokenizer = RegexpTokenizer(r'\w+')
 
         # Inserts the placeholder text
-        self._text_in.insert(0.0, self._cfg.lang('placeholder'))
-        self._detect_language()
-
+        self._insert_in(self._cfg.lang('placeholder'))
         self._root.update()
+
+    def _insert_in(self, text: str) -> None:
+        """
+        Insert text to in widget.
+
+        :param text: Text
+        """
+        self._text_in.insert(tk.END, text)
+        self._detect_language()
+        self._process_cursor_in(None)
 
     def _status(self, text: str, clear: bool = False, clear_time: int = 500) -> None:
         """
@@ -212,6 +236,7 @@ class PyDetexGUI(object):
         """
         self._status(self._cfg.lang('status_idle'))
 
+    # noinspection PyUnresolvedReferences
     def _process_in_key(self, event: 'tk.Event') -> Optional['tk.Event']:
         """
         Process in keys.
@@ -222,9 +247,78 @@ class PyDetexGUI(object):
         if self._detect_language_event_id != '':
             self._root.after_cancel(self._detect_language_event_id)
 
-        self._status(self._cfg.lang('status_writing'), True)
+        if event.char in string.printable and event.char != '':
+            self._status(self._cfg.lang('status_writing'), True)
+        else:
+            self._status_clear()
         self._detect_language_event_id = self._root.after(100, self._detect_language)
+        self._process_cursor_in(event)
         return event
+
+    def _process_cursor_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
+        """
+        Process cursor on input text.
+
+        :param event: Event
+        :return: Event
+        """
+        self._root.after(50, self._process_cursor_event)
+        return event
+
+    def _process_focusin_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
+        """
+        Process focus in on input text.
+
+        :param event: Event
+        :return: Event
+        """
+        self._process_cursor_in(event)
+        return event
+
+    def _process_focusout_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
+        """
+        Process focus out on input text.
+
+        :param event: Event
+        :return: Event
+        """
+        self._status_bar_cursor['text'] = self._cfg.lang('status_cursor_input_focusout')
+        self._status_bar_cursor_sel['text'] = ''
+        return event
+
+    def _process_cursor_event(self) -> None:
+        """
+        Process cursor position.
+        """
+        window_w = self._cfg.get(self._cfg.CFG_WINDOW_SIZE)[0]
+        cur_pos = self._text_in.index(tk.INSERT)
+        if cur_pos is None:
+            self._status_bar_cursor['text'] = self._cfg.lang('status_cursor_null')
+        else:
+            line, pos = tuple(cur_pos.split('.'))
+            cur_t = self._cfg.lang('status_cursor') if window_w > 750 else self._cfg.lang('status_cursor_min')
+            self._status_bar_cursor['text'] = cur_t.format(pos, line)
+        try:
+            sf = self._text_in.count('1.0', 'sel.first')
+            sl = self._text_in.count('1.0', 'sel.last')
+            if sf is None:
+                sf = (0,)
+            d = sl[0] - sf[0]
+            sel = self._cfg.lang('status_cursor_selected') if window_w > 750 else self._cfg.lang(
+                'status_cursor_selected_min')
+            chars = self._cfg.lang('status_cursor_selected_chars') if window_w > 900 else self._cfg.lang(
+                'status_cursor_selected_chars_min')
+            s = f'{sel}: '
+            text = self._text_in.get(0.0, tk.END)
+            if d == 1:
+                self._status_bar_cursor_sel['text'] = \
+                    s + self._cfg.lang('status_cursor_selected_chars_single')
+            elif d == len(text) or d == len(text.strip()):
+                self._status_bar_cursor_sel['text'] = self._cfg.lang('status_cursor_selected_all')
+            else:
+                self._status_bar_cursor_sel['text'] = s + chars.format(d)
+        except tk.TclError:
+            self._status_bar_cursor_sel['text'] = ''
 
     # noinspection PyUnresolvedReferences
     @staticmethod
@@ -255,6 +349,9 @@ class PyDetexGUI(object):
         """
         Starts the application.
         """
+        # noinspection PyProtectedMember
+        if self._cfg._last_opened_day_diff >= 7:
+            self._root.after(1000, self._check_version_event)
         self._root.mainloop()
 
     def _clear(self) -> None:
@@ -287,6 +384,7 @@ class PyDetexGUI(object):
         text = self._text_in.get(0.0, tk.END)
         if text.strip() == '':
             return self._clear()
+        self._status(self._cfg.lang('status_processing'), True)
 
         self._text_out['state'] = tk.NORMAL
         self._copy_clip['state'] = tk.NORMAL
@@ -346,6 +444,7 @@ class PyDetexGUI(object):
         def _paste():
             return pyperclip.paste()
 
+        self._status(self._cfg.lang('copy_from_clip'))
         executor = concurrent.futures.ThreadPoolExecutor(1)
         future = executor.submit(_paste)
         try:
@@ -357,7 +456,8 @@ class PyDetexGUI(object):
                 self._root.after(100, self._process_clip)
             else:
                 self._paste_timeout_error = 0
-                warn(f'Paste process failed after {_MAX_PASTE_RETRY} attempts')
+                error = f'Paste process failed after {_MAX_PASTE_RETRY} attempts'
+                warn(error)
             return
 
         self._paste_timeout_error = 0
@@ -427,7 +527,7 @@ class PyDetexGUI(object):
               f'{self._cfg.lang("about_processed")}: {ut.format_number_d(n_word_processed, self._cfg.lang("format_d"))}\n\n' \
               f'{pydetex.__copyright__}'
 
-        messagebox.showinfo(title='About', message=msg)
+        messagebox.showinfo(title=self._cfg.lang('about'), message=msg)
 
     def _check_version(self) -> Tuple[bool, str, str]:
         """
@@ -451,6 +551,17 @@ class PyDetexGUI(object):
         except Exception:
             about_ver = self._cfg.lang('about_ver_err_unkn')
         return is_outdated, latest_version, about_ver
+
+    def _check_version_event(self) -> None:
+        """
+        Check the version. If outdated, raise a popup.
+        """
+        outdated, latest, _ = self._check_version()
+        if outdated:
+            messagebox.showinfo(
+                title=self._cfg.lang('version_upgrade_title'),
+                message=self._cfg.lang('version_upgrade').format(latest)
+            )
 
 
 if __name__ == '__main__':
