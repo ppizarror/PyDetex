@@ -35,7 +35,7 @@ _PIPELINES = {
 _WINDOW_SIZE = {
     'window_size_small': [700, 425, 140],
     'window_size_medium': [900, 513, 183],
-    'window_size_large': [1200, 615, 233]
+    'window_size_large': [1200, 613, 233]
 }
 
 
@@ -84,6 +84,7 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
                 'clear': 'Clear',
+                'copy_from_clip': 'Copying from clipboard',
                 'detected_lang': 'Detected language: {0} ({1})',
                 'detected_lang_write': 'Write something to start recognizing the language',
                 'format_d': ',',
@@ -100,10 +101,23 @@ class _LangManager(object):
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
+                'status_cursor': 'Cursor: {0}:{1}',
+                'status_cursor_input_focusout': 'Input text not selected',
+                'status_cursor_min': 'Cur: {0}:{1}',
+                'status_cursor_null': 'Cursor: Empty',
+                'status_cursor_selected': 'Selected',
+                'status_cursor_selected_all': 'Selected: all',
+                'status_cursor_selected_chars': '{0} chars',
+                'status_cursor_selected_chars_min': '{0} ch',
+                'status_cursor_selected_chars_single': '1 char',
+                'status_cursor_selected_min': 'Sel',
                 'status_idle': 'Idle',
+                'status_processing': 'Processing',
                 'status_words': 'Words: {0}',
                 'status_writing': 'Writing',
                 'tag_repeated': 'repeated',
+                'version_upgrade': 'You are using an outdated pydetex version, consider upgrading to v{0}.\n\nTo update, run "pip install --upgrade pydetex" in your terminal',
+                'version_upgrade_title': 'Oudated pydetex version',
                 'window_size_large': 'Large',
                 'window_size_medium': 'Medium',
                 'window_size_small': 'Small'
@@ -143,6 +157,7 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
                 'clear': 'Limpiar',
+                'copy_from_clip': 'Copiando desde portapapeles',
                 'detected_lang': 'Idioma detectado: {0} ({1})',
                 'detected_lang_write': 'Escribe algo para iniciar detección idioma',
                 'format_d': '.',
@@ -159,10 +174,23 @@ class _LangManager(object):
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
+                'status_cursor': 'Cursor: {0}:{1}',
+                'status_cursor_input_focusout': 'Texto entrada no seleccionado',
+                'status_cursor_min': 'Cur: {0}:{1}',
+                'status_cursor_null': 'Cursor: Vacío',
+                'status_cursor_selected': 'Selección',
+                'status_cursor_selected_all': 'Selección: todo',
+                'status_cursor_selected_chars': '{0} carácteres',
+                'status_cursor_selected_chars_min': '{0} crs.',
+                'status_cursor_selected_chars_single': '1 caracter',
+                'status_cursor_selected_min': 'Sel',
                 'status_idle': 'Esperando',
+                'status_processing': 'Procesando',
                 'status_words': 'Palabras: {0}',
                 'status_writing': 'Escribiendo',
                 'tag_repeated': 'repetido',
+                'version_upgrade': 'Estás usando una versión desactualizada de pydetex, considera actualizar a v{0}.\n\nPara esto, ejecuta "pip install --upgrade pydetex" en tu terminal',
+                'version_upgrade_title': 'Versión desactualizada de pydetex',
                 'window_size_large': 'Grande',
                 'window_size_medium': 'Mediano',
                 'window_size_small': 'Pequeño'
@@ -175,7 +203,8 @@ class _LangManager(object):
                 continue
             for t in self._lang['en'].keys():
                 if t not in self._lang[k]:
-                    warn(f'Language entry "{t}" on lang "{k}" does not exist')
+                    error = f'Language entry "{t}" on lang "{k}" does not exist'
+                    warn(error)
                     self._lang[k][t] = self._lang['en'][t]
 
     def get_available(self) -> List[str]:
@@ -205,6 +234,7 @@ class Settings(object):
     _available_pipelines: List[str]
     _default_settings: Dict[str, Tuple[Any, Type, Union[List[Any], Callable[[Any], bool]]]]
     _lang: '_LangManager'
+    _last_opened_day_diff: int
     _settings: Dict[str, Any]
     _valid_font_sizes: List[int]
     _valid_window_sizes: List[str]
@@ -227,14 +257,16 @@ class Settings(object):
                 _load = _f.readlines()
                 _f.close()
             except FileNotFoundError:
-                warn(f'Setting file {_SETTINGS_FILE[0]} could not be loaded or not exist. Creating new file')
+                _error = f'Setting file {_SETTINGS_FILE[0]} could not be loaded or not exist. Creating new file'
+                warn(_error)
             return _load
 
         if not ignore_file:
             try:
                 load = _load_file()
             except PermissionError:
-                warn(f'Settings file {_SETTINGS_FILE[0]} could not be opened (PermissionError)')
+                error = f'Settings file {_SETTINGS_FILE[0]} could not be opened (PermissionError)'
+                warn(error)
         else:
             _SETTINGS_FILE[0] = _SETTINGS_TEST
 
@@ -246,6 +278,7 @@ class Settings(object):
         self.CFG_FONT_SIZE = 'FONT_SIZE'
         self.CFG_LANG = 'LANG'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
+        self.CFG_LAST_OPENED_DAY = 'LAST_OPENED_DAY'
         self.CFG_PIPELINE = 'PIPELINE'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
@@ -269,6 +302,7 @@ class Settings(object):
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
             self.CFG_FONT_SIZE: (11, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
+            self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
@@ -300,6 +334,9 @@ class Settings(object):
                     self._settings[j] = self._parse_str(val)  # Update setting value
 
         # Update the value
+        today = ut.get_number_of_day()
+        self._last_opened_day_diff = abs(ut.get_number_of_day() - self.get(self.CFG_LAST_OPENED_DAY))
+        self.set(self.CFG_LAST_OPENED_DAY, today)
         self.set(self.CFG_TOTAL_OPENED_APP, self.get(self.CFG_TOTAL_OPENED_APP) + 1)
 
         # Save the settings
@@ -348,7 +385,8 @@ class Settings(object):
             val_valids = self._default_settings[key][2]
             # Check val type
             if not isinstance(value, val_type):
-                warn(f'Setting {key} should be type {val_type}, but received {type(value)}')
+                error = f'Setting {key} should be type {val_type}, but received {type(value)}'
+                warn(error)
                 return False
             if isinstance(val_valids, list):
                 if value in val_valids:  # Setting is within valid ones
@@ -357,16 +395,19 @@ class Settings(object):
                     str_valids = []
                     for t in val_valids:
                         str_valids.append(str(t))
-                    warn(f'Setting {key} value should have these values: {",".join(str_valids)}')
+                    error = f'Setting {key} value should have these values: {",".join(str_valids)}'
+                    warn(error)
             elif val_valids is None:
                 return True
             else:  # Is a function
                 if not val_valids(value):
-                    warn(f'Setting {key} do not pass valid test')
+                    error = f'Setting {key} do not pass valid test'
+                    warn(error)
                 else:
                     return True
         else:
-            warn(f'Setting {key} does not exist')
+            error = f'Setting {key} does not exist'
+            warn(error)
         return False
 
     def get(self, key: str, update: bool = True) -> Any:
@@ -431,4 +472,5 @@ class Settings(object):
                 f.write(f'{k} = {str(self._settings[k]).strip()}\n')
             f.close()
         except PermissionError:
-            warn(f'Settings file {_SETTINGS_FILE[0]} could not saved (PermissionError)')
+            error = f'Settings file {_SETTINGS_FILE[0]} could not saved (PermissionError)'
+            warn(error)
