@@ -19,10 +19,12 @@ __all__ = [
     'format_number_d',
     'get_diff_startend_word',
     'get_language_tag',
+    'get_number_of_day',
     'IS_OSX',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
+    'tokenize',
     'validate_float',
     'validate_int'
 ]
@@ -33,6 +35,7 @@ __all__ = [
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 import langdetect
 
+import datetime
 import json
 import os
 import platform
@@ -43,7 +46,7 @@ from iso639 import Lang
 from iso639.exceptions import InvalidLanguageValue
 
 from nltk.stem import SnowballStemmer
-from nltk.tokenize import RegexpTokenizer
+from nltk.tokenize import RegexpTokenizer as _RegexpTokenizer
 from typing import List, Tuple, Optional, Union
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
@@ -71,6 +74,23 @@ VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'
                            'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
                            'W', 'X', 'Y', 'Z']
+
+# Tokenizer
+TOKENIZER = _RegexpTokenizer(r'\w+')
+
+
+def tokenize(s: str) -> str:
+    """
+    Tokenize a given word.
+
+    :param s: Word
+    :return: Tokenized word
+    """
+    try:
+        return TOKENIZER.tokenize(s)[0]
+    except IndexError:
+        pass
+    return s
 
 
 def detect_language(s: str) -> str:
@@ -185,8 +205,6 @@ def check_repeated_words(
     else:
         return s
 
-    tokenizer = RegexpTokenizer(r'\w+')
-
     ignored_words = []
     # Apply filters to ignored words
     for w in ignore:
@@ -223,7 +241,7 @@ def check_repeated_words(
         if len(w) <= min_chars:
             w = ''
         if w != '':
-            w = tokenizer.tokenize(w)[0]
+            w = tokenize(w)
         if stemming:
             w = stemmer.stem(w)
         if stopwords and w in stop:
@@ -236,7 +254,7 @@ def check_repeated_words(
         # Check if the word exist on list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
-            stemmed_word = tokenizer.tokenize(original_w)[0]
+            stemmed_word = tokenize(original_w)
             diff_word = get_diff_startend_word(original_w, stemmed_word)
             if diff_word == ('', ''):
                 stemmed_word = original_w
@@ -742,3 +760,12 @@ def format_number_d(n: int, c: str) -> str:
     """
     assert isinstance(n, int)
     return format(n, ',').replace(',', c)
+
+
+def get_number_of_day() -> int:
+    """
+    Return the number of the day from the current year.
+
+    :return: Day number
+    """
+    return datetime.datetime.now().timetuple().tm_yday

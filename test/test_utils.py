@@ -426,3 +426,30 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.format_number_d(5000, ','), '5,000')
         self.assertEqual(ut.format_number_d(5000000, '.'), '5.000.000')
         self.assertRaises(AssertionError, lambda: ut.format_number_d(1.5, ','))
+
+    def test_tokenize(self) -> None:
+        """
+        Tokenize word.
+        """
+        s = """
+        # ----------------------------------------------------------------------
+        # Settings button
+        # ----------------------------------------------------------------------
+        
+
+        """
+        t = []
+        for w in s.split(' '):
+            tw = ut.tokenize(w)
+            if tw == '' or '\n' in tw:
+                continue
+            t.append(tw)
+        self.assertEqual(t, ['#', '#', 'Settings', 'button', '#'])
+        self.assertEqual(ut.tokenize('hello!!___..'), 'hello')
+
+    def test_get_number_of_day(self) -> None:
+        """
+        Test day number.
+        """
+        print(ut.get_number_of_day())
+        self.assertIsInstance(ut.get_number_of_day(), int)
