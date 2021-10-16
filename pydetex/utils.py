@@ -16,12 +16,15 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'format_number_d',
     'get_diff_startend_word',
     'get_language_tag',
+    'get_number_of_day',
     'IS_OSX',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
+    'tokenize',
     'validate_float',
     'validate_int'
 ]
@@ -32,7 +35,8 @@ __all__ = [
 # pt, ro, ru, sk, sl, so, sq, sv, sw, ta, te, th, tl, tr, uk, ur, vi, zh-cn, zh-tw
 import langdetect
 
-import nltk
+import datetime
+import json
 import os
 import platform
 
@@ -41,16 +45,13 @@ from iso639 import Lang
 # noinspection PyPackageRequirements
 from iso639.exceptions import InvalidLanguageValue
 
-from nltk.corpus import stopwords as _stopwords
 from nltk.stem import SnowballStemmer
-from nltk.tokenize import RegexpTokenizer
+from nltk.tokenize import RegexpTokenizer as _RegexpTokenizer
 from typing import List, Tuple, Optional, Union
-from warnings import warn
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
 
 # Resources path
-# Set resouces path
 __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
 RESOURCES_PATH = __actualpath + 'res/'
 
@@ -63,21 +64,9 @@ if IS_OSX:
 else:
     from tkinter import Button
 
-_HAS_NLTK = False
-
-# Check if stopwods exists
-try:
-    _stopwords.words('english')
-    _HAS_NLTK = True
-except LookupError:
-    nltk.download('stopwords')
-
-# Re-try to download
-try:
-    _stopwords.words('english')
-    _HAS_NLTK = True
-except LookupError:
-    pass
+# Load all stopwords
+with open(RESOURCES_PATH + 'stopwords.json', encoding='UTF-8') as json_data:
+    _STOPWORDS = json.load(json_data)
 
 # Valid command chars
 VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -85,6 +74,23 @@ VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'
                            'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
                            'W', 'X', 'Y', 'Z']
+
+# Tokenizer
+TOKENIZER = _RegexpTokenizer(r'\w+')
+
+
+def tokenize(s: str) -> str:
+    """
+    Tokenize a given word.
+
+    :param s: Word
+    :return: Tokenized word
+    """
+    try:
+        return TOKENIZER.tokenize(s)[0]
+    except IndexError:
+        pass
+    return s
 
 
 def detect_language(s: str) -> str:
@@ -193,15 +199,11 @@ def check_repeated_words(
         'ru': 'russian',
         'sv': 'swedish'
     }
-    if lang in available_langs.keys() and _HAS_NLTK:
-        stop = _stopwords.words(available_langs[lang])
+    if lang in available_langs.keys():
+        stop = _STOPWORDS[lang]
         stemmer = SnowballStemmer(available_langs[lang])
     else:
-        if not _HAS_NLTK:
-            warn('nltk library does not exist. Check for your internet connection in order to use this feature')
         return s
-
-    tokenizer = RegexpTokenizer(r'\w+')
 
     ignored_words = []
     # Apply filters to ignored words
@@ -239,7 +241,7 @@ def check_repeated_words(
         if len(w) <= min_chars:
             w = ''
         if w != '':
-            w = tokenizer.tokenize(w)[0]
+            w = tokenize(w)
         if stemming:
             w = stemmer.stem(w)
         if stopwords and w in stop:
@@ -252,7 +254,7 @@ def check_repeated_words(
         # Check if the word exist on list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
-            stemmed_word = tokenizer.tokenize(original_w)[0]
+            stemmed_word = tokenize(original_w)
             diff_word = get_diff_startend_word(original_w, stemmed_word)
             if diff_word == ('', ''):
                 stemmed_word = original_w
@@ -746,3 +748,24 @@ def syntax_highlight(s: str) -> str:
 
     # Return formatted string
     return s
+
+
+def format_number_d(n: int, c: str) -> str:
+    """
+    Formats a number on thousands.
+
+    :param n: Number
+    :param c: Format char
+    :return: Formatted number
+    """
+    assert isinstance(n, int)
+    return format(n, ',').replace(',', c)
+
+
+def get_number_of_day() -> int:
+    """
+    Return the number of the day from the current year.
+
+    :return: Day number
+    """
+    return datetime.datetime.now().timetuple().tm_yday

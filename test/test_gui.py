@@ -8,10 +8,11 @@ Test guis.
 
 from test._base import BaseTest
 
-# noinspection PyProtectedMember
-from pydetex.gui import PyDetexGUI, SettingsWindow
+from pydetex.gui import PyDetexGUI
 # noinspection PyProtectedMember
 from pydetex._gui_settings import Settings, _SETTINGS_FILE, _SETTINGS_TEST
+# noinspection PyProtectedMember
+from pydetex._gui_utils import SettingsWindow
 import pydetex.pipelines as pip
 
 import os
@@ -71,6 +72,9 @@ class GuiTest(BaseTest):
         self.assertTrue(cfg.check_setting(cfg.CFG_REPETITION_MIN_CHAR, '1'))
         self.assertFalse(cfg.check_setting(cfg.CFG_REPETITION_MIN_CHAR, '1f'))
         self.assertTrue(cfg.check_setting(cfg.CFG_REPETITION_MIN_CHAR, 1))
+
+        # Test day diff
+        self.assertEqual(cfg._last_opened_day_diff, 0)
 
         # Test font size
         self.assertFalse(cfg.check_setting(cfg.CFG_FONT_SIZE, 55))
