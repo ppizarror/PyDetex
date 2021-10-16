@@ -311,6 +311,8 @@ class RichText(tk.Text):
     def __init__(self, cfg: '_Settings', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
         editable = kwargs.pop('editable', True)
+        if editable:
+            kwargs['undo'] = True
 
         super().__init__(*args, **kwargs)
         self._default_font = tkfont.nametofont(self.cget('font'))
@@ -391,6 +393,10 @@ class EditableTextGUI(object):
         self._w.bind('<Control-y>', self.redo)
         self._w.bind('<Key>', self.add_changes)
 
+        if ut.IS_OSX:
+            self._w.bind('<Control-c>', lambda _: self._w.event_generate('<<Copy>>'))
+            self._w.bind('<Control-v>', lambda _: self._w.event_generate('<<Paste>>'))
+
     def popup(self, event: 'tk.Event') -> None:
         """
         Raise popup.
@@ -465,9 +471,14 @@ def center_window(root: 'tk.Tk', window_size: Union[Tuple[int, int], List[int]])
     :param root: Window object
     :param window_size: Window size
     """
-    root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
-                                   (root.winfo_screenwidth() - window_size[0]) / 2,
-                                   (root.winfo_screenheight() - window_size[1]) / 2 - 25 if ut.IS_OSX else 0))
+    if ut.IS_OSX:
+        root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
+                                       (root.winfo_screenwidth() - window_size[0]) / 2,
+                                       (root.winfo_screenheight() - window_size[1]) / 2 - 25))
+    else:
+        root.geometry('%dx%d+%d+%d' % (window_size[0], window_size[1],
+                                       (root.winfo_screenwidth() - window_size[0]) / 2,
+                                       (root.winfo_screenheight() - window_size[1]) / 2))
 
 
 def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **kwargs) -> 'tk.Label':
@@ -488,7 +499,8 @@ def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **k
     f.pack_propagate(0)  # don't shrink
     f.pack(side=side)
     label = tk.Label(f, *args, **kwargs)
-    label.pack(fill=tk.BOTH, expand=1, padx=(int(pad[3]), int(pad[1])), pady=(int(pad[0]), int(pad[2])))
-    if separator:
-        ttk.Separator(master, orient='vertical').pack(side=tk.LEFT, fill='y')
+    if w > 0:
+        label.pack(fill=tk.BOTH, expand=1, padx=(int(pad[3]), int(pad[1])), pady=(int(pad[0]), int(pad[2])))
+        if separator:
+            ttk.Separator(master, orient='vertical').pack(side=tk.LEFT, fill='y')
     return label
