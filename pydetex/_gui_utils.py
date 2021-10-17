@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 GUI UTILS
 Provides utils for the gui.
@@ -23,7 +23,7 @@ from tkinter import messagebox
 from typing import Callable, Tuple, Optional, Dict, Union, List
 
 import pydetex.utils as ut
-from pydetex._fonts import FONT_PROPERTIES
+from pydetex._fonts import FONT_PROPERTIES, FONT_TAGS, TAGS_FONT
 from pydetex._gui_settings import Settings as _Settings
 
 
@@ -359,8 +359,29 @@ class RichText(tk.Text):
         font.configure(**kwargs)
         self.tag_configure(tag, **tag_kwargs)
 
-    def insert_bullet(self, index, text):
+    def insert_bullet(self, index: float, text: str) -> None:
+        """
+        Inserts a bullet.
+
+        :param index: Position
+        :param text: Text
+        """
         self.insert(index, f'\u2022 {text}', 'bullet')
+
+    def insert_highlighted_text(self, s: str, clear: bool = False, font_format: bool = True) -> None:
+        """
+        Insert a highlighted text.
+
+        :param s: Text
+        :param clear: Clear before insert
+        :param font_format: If False, use normal font instead
+        """
+        # Write results and split tags
+        if clear:
+            self.delete(0.0, tk.END)
+        for t in ut.split_tags(s, list(FONT_TAGS.values())):
+            tag, text = t
+            self.insert('end', text, TAGS_FONT[tag] if font_format else 'normal')
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal

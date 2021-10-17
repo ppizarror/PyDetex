@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 GUI
 Basic gui that convers and executes a given pipeline.
@@ -30,7 +30,7 @@ import pydetex.pipelines as pip
 import pydetex.utils as ut
 import pydetex.version
 
-from pydetex._fonts import FONT_TAGS, TAGS_FONT
+from pydetex._fonts import FONT_TAGS
 from pydetex._gui_settings import Settings
 from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
@@ -57,8 +57,8 @@ class PyDetexGUI(object):
     _status_bar_status: 'tk.Label'
     _status_bar_words: 'tk.Label'
     _status_clear_event_id: str
-    _text_in: 'tk.Text'
-    _text_out: 'tk.Text'
+    _text_in: 'gui_ut.RichText'
+    _text_out: 'gui_ut.RichText'
     _tokenizer: 'RegexpTokenizer'
 
     def __init__(self) -> None:
@@ -341,7 +341,7 @@ class PyDetexGUI(object):
         """
         text = self._text_in.get(0.0, tk.END).strip()
         self._detected_lang_tag = ut.detect_language(text)
-        lang = ut.get_language_tag(self._detected_lang_tag)
+        lang = ut.get_language_name(self._detected_lang_tag)
         if text != '':
             self._status_bar_lang['text'] = self._cfg.lang('detected_lang').format(lang, self._detected_lang_tag)
         else:
@@ -404,9 +404,6 @@ class PyDetexGUI(object):
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
-        # Add formats
-        tags = list(FONT_TAGS.values())
-
         # Check repeated words
         if self._cfg.get(self._cfg.CFG_CHECK_REPETITION):
             out = ut.check_repeated_words(
@@ -420,23 +417,19 @@ class PyDetexGUI(object):
                 font_tag_format=FONT_TAGS['repeated_tag'] if font_format else '',
                 font_param_format=FONT_TAGS['repeated_word'] if font_format else '',
                 font_normal_format=FONT_TAGS['normal'] if font_format else '',
-                remove_tokens=tags,
+                remove_tokens=list(FONT_TAGS.values()),
                 tag=self._cfg.lang('tag_repeated')
             )
 
         # Apply syntax highlight
         out = ut.syntax_highlight(out)
 
-        # Write results and split tags
-        self._text_out.delete(0.0, tk.END)
-        for t in ut.split_tags(out, tags):
-            tag, text = t
-            self._text_out.insert('end', text, TAGS_FONT[tag] if font_format else 'normal')
+        # Insert the text
+        self._text_out.insert_highlighted_text(out, True, font_format)
 
+        # Configure status
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
         self._ready = True
-
-        # Lock output
         self._text_out['state'] = tk.DISABLED
         self._detect_language()
 

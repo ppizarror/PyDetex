@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 UTILS
 Several text utils.
@@ -13,12 +13,13 @@ __all__ = [
     'Button',
     'check_repeated_words',
     'detect_language',
+    'Dictionary',
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
     'format_number_d',
     'get_diff_startend_word',
-    'get_language_tag',
+    'get_language_name',
     'get_number_of_day',
     'IS_OSX',
     'RESOURCES_PATH',

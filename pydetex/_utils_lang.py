@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 UTILS LANG
 Language utils.
@@ -9,8 +9,9 @@ Language utils.
 __all__ = [
     'check_repeated_words',
     'detect_language',
+    'Dictionary',
     'get_diff_startend_word',
-    'get_language_tag',
+    'get_language_name',
     'tokenize'
 ]
 
@@ -22,6 +23,7 @@ import langdetect
 
 import json
 import os
+import urllib.error
 
 # noinspection PyPackageRequirements
 from iso639 import Lang
@@ -30,7 +32,11 @@ from iso639.exceptions import InvalidLanguageValue
 
 from nltk.stem import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer as _RegexpTokenizer
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
+
+# Dictionaries
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
 
 # Resources path
 __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
@@ -41,6 +47,45 @@ with open(__actualpath + 'res/' + 'stopwords.json', encoding='UTF-8') as json_da
 
 # Tokenizer
 TOKENIZER = _RegexpTokenizer(r'\w+')
+
+# Dicts
+_EDUCALINGO = ('bn', 'de', 'en', 'es', 'fr', 'hi', 'it', 'ja', 'jv', 'ko', 'mr',
+               'ms', 'pl', 'pt', 'ro', 'ru', 'ta', 'tr', 'uk', 'zh')
+
+# Enhanced lang names
+_LANG_NAMES = {
+    'bn': [('af', 'আফ্রিকান'), ('ar', 'আরবী'), ('bn', 'বাংলা'), ('de', 'জার্মান'), ('el', 'গ্রীক্\u200c'),
+           ('en', 'ইংরেজী'), ('es', 'স্পেনীয়'), ('fr', 'ফরাসি'), ('hi', 'হিন্দি'), ('it', 'ইতালীয়'), ('ja', 'জাপানি'),
+           ('jv', 'জাভানি'), ('ko', 'কোরিয়ান'), ('mr', 'মারাঠি'), ('ms', 'মালে'), ('no', 'নরওয়েজীয়'),
+           ('pl', 'পোলীশ'), ('pt', 'পর্তুগীজ'), ('ro', 'রোমানীয়'), ('ru', 'রুশ'), ('sv', 'সুইডিশ'), ('ta', 'তামিল'),
+           ('tr', 'তুর্কী'), ('uk', 'ইউক্রেনীয়'), ('vi', 'ভিয়েতনামিয়'), ('zh', 'চীনা')],
+    'de': [('af', 'Afrikaans'), ('ar', 'Arabisch'), ('bn', 'Bengalisch'), ('de', 'Deutsch'), ('el', 'Griechisch'),
+           ('en', 'Englisch'), ('es', 'Spanisch'), ('fr', 'Französisch'), ('hi', 'Hindi'), ('it', 'Italienisch'),
+           ('ja', 'Japanisch'), ('jv', 'Javanisch'), ('ko', 'Koreanisch'), ('mr', 'Marathi'), ('ms', 'Malaysisch'),
+           ('no', 'Norwegisch'), ('pl', 'Polnisch'), ('pt', 'Portugiesisch'), ('ro', 'Rumänisch'), ('ru', 'Russisch'),
+           ('sv', 'Schwedisch'), ('ta', 'Tamil'), ('tr', 'Türkisch'), ('uk', 'Ukrainisch'), ('vi', 'Vietnamesisch'),
+           ('zh', 'Chinesisch')],
+    'en': [('af', 'Afrikaans'), ('ar', 'Arabic'), ('bn', 'Bengali'), ('de', 'German'), ('el', 'Greek'),
+           ('en', 'English'), ('es', 'Spanish'), ('fr', 'French'), ('hi', 'Hindi'), ('it', 'Italian'),
+           ('ja', 'Japanese'), ('jv', 'Javanese'), ('ko', 'Korean'), ('mr', 'Marathi'), ('ms', 'Malay'),
+           ('no', 'Norwegian'), ('pl', 'Polish'), ('pt', 'Portuguese'), ('ro', 'Romanian'), ('ru', 'Russian'),
+           ('sv', 'Swedish'), ('ta', 'Tamil'), ('tr', 'Turkish'), ('uk', 'Ukrainian'), ('vi', 'Vietnamese'),
+           ('zh', 'Chinese')],
+    'es': [('af', 'Afrikáans'), ('ar', 'Árabe'), ('bn', 'Bengalí'), ('de', 'Alemán'), ('el', 'Griego'),
+           ('en', 'Inglés'), ('es', 'Español'), ('fr', 'Francés'), ('hi', 'Hindi'), ('it', 'Italiano'),
+           ('ja', 'Japonés'), ('jv', 'Javanés'), ('ko', 'Coreano'), ('mr', 'Maratí'), ('ms', 'Malayo'),
+           ('no', 'Noruego'), ('pl', 'Polaco'), ('pt', 'Portugués'), ('ro', 'Rumano'), ('ru', 'Ruso'), ('sv', 'Sueco'),
+           ('ta', 'Tamil'), ('tr', 'Turco'), ('uk', 'Ucraniano'), ('vi', 'Vietnamita'), ('zh', 'Chino')],
+    'fr': [('af', 'Afrikaans'), ('ar', 'Arabe'), ('bn', 'Bengali'), ('de', 'Allemand'), ('el', 'Grec'),
+           ('en', 'Anglais'), ('es', 'Espagnol'), ('fr', 'Français'), ('hi', 'Hindi'), ('it', 'Italien'),
+           ('ja', 'Japonais'), ('jv', 'Javanais'), ('ko', 'Coréen'), ('mr', 'Marathi'), ('ms', 'Malaisien'),
+           ('no', 'Norvégien'), ('pl', 'Polonais'), ('pt', 'Portugais'), ('ro', 'Roumain'), ('ru', 'Russe'),
+           ('sv', 'Suédois'), ('ta', 'Tamoul'), ('tr', 'Turc'), ('uk', 'Ukrainien'), ('vi', 'Vietnamien'),
+           ('zh', 'Chinois')],
+    'hi': [
+        
+    ]
+}
 
 
 def tokenize(s: str) -> str:
@@ -67,20 +112,23 @@ def detect_language(s: str) -> str:
     if s == '':
         return '–'
     try:
-        return langdetect.detect(s)
+        lang = langdetect.detect(s)
+        if lang == 'zh-cn' or lang == 'zh-tw':
+            lang = 'zh'
+        return lang
     except langdetect.lang_detect_exception.LangDetectException:  # No features in text
         return '–'
 
 
-def get_language_tag(s: str) -> str:
+def get_language_name(tag: str) -> str:
     """
     Returns a language name from its tag.
 
-    :param s: Language tag
+    :param tag: Language tag
     :return: Language name
     """
     try:
-        return Lang(s).name
+        return Lang(tag).name
     except InvalidLanguageValue:
         return 'Unknown'
 
@@ -238,3 +286,170 @@ def check_repeated_words(
     out_s = ' '.join(new_s)
     out_s = out_s.replace(newline_format, '\n')
     return out_s
+
+
+class Dictionary(object):
+    """
+    Dictionary. Support synonyms, antonyms and definitions from some languages.
+    """
+
+    _cached_soups: Dict[str, 'BeautifulSoup']  # Stores cached web
+    _langs: Dict[str, Tuple[bool, bool]]  # synonyms, definition, translation
+    _test_cached_file: str = ''  # If defined, loads that file instead
+
+    def __init__(self) -> None:
+        """
+        Constructor.
+        """
+        self._langs = {  # iso 639 codes
+            'en': (True, True),
+            'es': (True, True)
+        }
+        self._cached_soups = {}
+        self._test_cached_file = ''
+
+    @staticmethod
+    def _process(word: str) -> str:
+        """
+        Process a given word.
+
+        :param word: Word
+        :return: Word without invalid chars
+        """
+        s = ''.join(i for i in word if not i.isdigit())  # remove numbers
+        s = tokenize(s).lower()  # tokenize
+        s = s.replace(' ', '').replace('\n', '')  # remove spaces
+        return s
+
+    def _bsoup(self, link: str, encoding: str = 'utf-8') -> Optional['BeautifulSoup']:
+        """
+        Returns a parsed web.
+
+        :param link: Link
+        :param encoding: Web encoding
+        :return: Parsed web. None if error
+        """
+        if self._test_cached_file != '':  # Load test file
+            f = open(self._test_cached_file)
+            data = ''.join(f.readlines())
+            f.close()
+            return BeautifulSoup(data, 'html.parser')
+        bs_keys = list(self._cached_soups.keys())
+        if link in bs_keys:
+            return self._cached_soups[link]
+        try:
+            data = str(urlopen(link).read().decode(encoding))
+        except urllib.error.HTTPError:
+            return None
+        bs = BeautifulSoup(data, 'html.parser')
+        self._cached_soups[link] = bs
+        if len(bs_keys) >= 50:
+            del self._cached_soups[bs[0]]
+        return bs
+
+    def synonym(self, lang: str, word: str) -> List[str]:
+        """
+        Finds a synonym for a given word.
+
+        :param lang: Lang code
+        :param word: Word to retrieve
+        :return: Synonyms list
+        """
+        words = []
+        word = self._process(word)
+        if lang not in self._langs.keys():
+            return words
+        if lang in _EDUCALINGO:
+            bs = self._bsoup(f'https://educalingo.com/en/dic-{lang}/{word}')
+            if bs is None:
+                return words
+            results = [i for i in bs.find_all('div', {'class': 'contenido_sinonimos_antonimos0'})]
+            if len(results) > 0:
+                results = results[0]
+            else:
+                return words
+            for j in results.findAll('a'):
+                words.append(j.get('title').strip())
+        return words
+
+    def definition(self, lang: str, word: str) -> str:
+        """
+        Finds a definition for a given word.
+
+        :param lang: Lang code
+        :param word: Word to retrieve
+        :return: Definition
+        """
+        words = ''
+        word = self._process(word)
+        if lang not in self._langs.keys():
+            return words
+        if lang in _EDUCALINGO:
+            bs = self._bsoup(f'https://educalingo.com/en/dic-{lang}/{word}')
+            if bs is None:
+                return words
+
+            # Definition
+            results = [i for i in bs.find_all('div', {
+                'id': 'significado_de'})]
+            if len(results) > 0:
+                results = results[0]
+            else:
+                return words
+            words = results.text
+
+            # Wikipedia
+            results = [i for i in bs.find_all('span', {
+                'id': 'wiki_introduccion'})]
+            if len(results) > 0:
+                results = results[0]
+            else:
+                return words
+            words += '\n\n' + results.text
+
+        return words.strip()
+
+    def translate(self, lang: str, word: str) -> List[Tuple[str, str, str]]:
+        """
+        Translate a word.
+l
+        :param lang: Lang tag
+        :param word: Word to translate
+        :return: List of (Lang name, Lang tag, translated word)
+        """
+        words = []
+        word = self._process(word)
+        if lang not in self._langs.keys():
+            return words
+        if lang in _EDUCALINGO:
+            bs = self._bsoup(f'https://educalingo.com/fr/dic-{lang}/{word}')
+            if bs is None:
+                return words
+            results = [i for i in bs.find_all('div', {'class': 'traduccion0'})]
+            if len(results) == 0:
+                return words
+            for j in results:
+                lang_tag = j.get('id')
+                lang_name = j.find_all('h4', {'class', 'traductor'})
+                if len(lang_name) != 1:
+                    continue
+                lang_name = lang_name[0].find_all('strong', {})
+                if len(lang_name) != 1:
+                    continue
+                lang_name = lang_name[0].text.strip().capitalize()
+
+                # Find non-links
+                lang_nonlink = j.find_all('span', {'class': 'negro'})
+                if len(lang_nonlink) == 1:
+                    words.append((lang_name, lang_tag, lang_nonlink[0].text.strip()))
+                    continue
+
+                # Find links
+                lang_link = j.find_all('strong', {})
+                if len(lang_link) != 2:
+                    continue
+                lang_link = lang_link[1].find_all('a', {})
+                if len(lang_link) == 1:
+                    words.append((lang_name, lang_tag, lang_link[0].text.strip()))
+
+        return words

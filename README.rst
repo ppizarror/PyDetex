@@ -18,42 +18,39 @@ PyDetex
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
-.. image:: https://travis-ci.com/ppizarror/pydetex.svg?branch=master
-    :target: https://app.travis-ci.com/github/ppizarror/pydetex
+.. image:: https://travis-ci.com/ppizarror/PyDetex.svg?branch=master
+    :target: https://app.travis-ci.com/github/ppizarror/PyDetex
     :alt: Travis
 
-.. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/pydetex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/pydetex/alerts
+.. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/ppizarror/PyDetex/alerts
     :alt: Total alerts
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/ppizarror/pydetex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/pydetex/context:python
+.. image:: https://img.shields.io/lgtm/grade/python/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/ppizarror/PyDetex/context:python
     :alt: Language grade: Python
 
-.. image:: https://codecov.io/gh/ppizarror/pydetex/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/ppizarror/pydetex
+.. image:: https://codecov.io/gh/ppizarror/PyDetex/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/ppizarror/PyDetex
     :alt: Codecov
 
-.. image:: https://img.shields.io/github/issues/ppizarror/pydetex
-    :target: https://github.com/ppizarror/pydetex/issues
+.. image:: https://img.shields.io/github/issues/ppizarror/PyDetex
+    :target: https://github.com/ppizarror/PyDetex/issues
     :alt: Open issues
 
 .. image:: https://img.shields.io/pypi/dm/pydetex?color=purple
-    :target: https://pypi.org/project/pydetex/
+    :target: https://pypi.org/project/pydetex
     :alt: PyPi downloads
 
 .. image:: https://static.pepy.tech/personalized-badge/pydetex?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=total%20downloads
     :target: https://pepy.tech/project/pydetex
     :alt: Total downloads
 
-
 Introduction
 ------------
 
 A python application that removes LaTeX code and transforms it to plain text for grammar checking or other things.
 Multiple language support (15+), detects repeated words, and many things more to come!
-
-
 
 Install Instructions
 --------------------
@@ -63,7 +60,6 @@ PyDetex can be installed via pip, for both MacOS, Windows & Linux. Simply run:
 .. code-block:: bash
 
     $> python3 pip install --upgrade pydetex
-
 
 Launch the GUI, or use the library
 ----------------------------------
@@ -86,7 +82,6 @@ Simply run this command anywhere to execute the application, or just import pyde
 
     Multiple options to configure. Check repeated words, highlight undetected code, among much more things to come!
 
-
 TO-DOs
 ------
 
@@ -94,3 +89,9 @@ Currently, many things must be improved:
 
 - Learn \def and replace properly
 - Support for environments, such as *figure*, *equation*, *table*, etc..
+
+
+Author
+------
+
+<a href="https://ppizarror.com" title="ppizarror">Pablo Pizarro R.</a> | 2021

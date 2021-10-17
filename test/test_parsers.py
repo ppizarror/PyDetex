@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 TEST PARSERS
 Test several parsers which perform a single operation.
@@ -130,7 +130,7 @@ class ParserTest(BaseTest):
         self.assertEqual(par._NOT_FOUND_FILES, ['latex.tex', '.tex'])
         self.assertEqual(par.process_inputs('This loads a \\input{latex} or \\input{} epic'),
                          'This loads a \\input{latex} or \\input{} epic')
-        self.assertEqual(par.process_inputs('This loads a \\input{tex/simple} epic'),
+        self.assertEqual(par.process_inputs('This loads a \\input{data/simple} epic'),
                          'This loads a this is a simple file epic')
 
     def test_remove_commands_char(self) -> None:

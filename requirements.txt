@@ -1,9 +1,8 @@
-iso639-lang
 langdetect
 nltk
 outdated
+PyMultiDictionary
 pyperclip
 requests
-tkmacosx
-pydetex
 setuptools
+tkmacosx
