@@ -227,7 +227,7 @@ class PyDetexGUI(object):
         :return: Return the current selected word
         """
         try:
-            if self._text_in.selection_get() != '':
+            if self._text_in.selection_get() != '' and self._root.focus_get() == self._text_in:
                 sf = self._text_in.count('1.0', 'sel.first')
                 if sf is None:
                     sf = (0,)
@@ -237,7 +237,7 @@ class PyDetexGUI(object):
         except tk.TclError:
             pass
         try:
-            if self._text_out.selection_get() != '':
+            if self._text_out.selection_get() != '' and self._root.focus_get() == self._text_out:
                 sf = self._text_out.count('1.0', 'sel.first')
                 if sf is None:
                     sf = (0,)
