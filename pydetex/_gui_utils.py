@@ -16,13 +16,14 @@ __all__ = [
     'SettingsWindow'
 ]
 
+import concurrent.futures
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
 from PyMultiDictionary import MultiDictionary
-from typing import Callable, Tuple, Optional, Dict, Union, List, TYPE_CHECKING
+from typing import Callable, Tuple, Optional, Dict, Union, List, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pydetex.gui import PyDetexGUI
@@ -315,6 +316,12 @@ class DictionaryGUI(object):
     _lang: str
     _main: 'PyDetexGUI'
     _mean: 'tk.Button'
+    _query_active: Dict[str, int]
+    _query_events_id: Dict[str, str]
+    _query_max_trials: int
+    _query_output: Dict[str, Any]
+    _query_repeat_after: int
+    _stemmer: bool
     _syn: 'tk.Button'
     root: 'tk.Tk'
 
@@ -334,6 +341,7 @@ class DictionaryGUI(object):
         self._cfg = cfg  # Store setting reference
         self._dictionary = MultiDictionary()
         self._main = main
+        self._stemmer = False
 
         # Configure window
         self.root.minsize(width=window_size[0], height=window_size[1])
@@ -389,6 +397,13 @@ class DictionaryGUI(object):
         # Set the language
         self.set_lang(lang)
 
+        # Configure querys
+        self._query_active = {}
+        self._query_events_id = {}
+        self._query_max_trials = 20
+        self._query_output = {}
+        self._query_repeat_after = 750
+
     def set_lang(self, lang: str) -> None:
         """
         Set language.
@@ -400,12 +415,20 @@ class DictionaryGUI(object):
         lang_name = self._dictionary.get_language_name(lang, self._cfg.get(self._cfg.CFG_LANG))
         self.root.title(f'{self._cfg.lang("dictionary")} [{lang_name}]')
         self._lang = lang
+        self._update_buttons()
 
+    def _update_buttons(self, enable: bool = True) -> None:
+        """
+        Update app buttons.
+
+        :param enable: Enable or disable
+        :return:
+        """
         # Check language capability
-        syn, mean, _, ant = self._dictionary._langs[lang]
-        self._syn['state'] = tk.NORMAL if syn else tk.DISABLED
-        self._mean['state'] = tk.NORMAL if mean else tk.DISABLED
-        self._ant['state'] = tk.NORMAL if ant else tk.DISABLED
+        syn, mean, _, ant = self._dictionary._langs[self._lang]
+        self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
+        self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
+        self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
 
     @staticmethod
     def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
@@ -427,13 +450,66 @@ class DictionaryGUI(object):
         """
         return self._word.get().strip()
 
+    def _query_thread(self, key: str, query: Callable[[Any, ...], Any], master: Callable[[], None], *args) -> None:
+        """
+        Starts a new query.
+
+        :param key: Query key
+        :param query: Query. Should save to _query_output
+        :param master: Master (who called the query)
+        """
+        self._main._status(self._cfg.lang('dictionary_querying'))
+        self._update_buttons(False)
+        if key not in self._query_output.keys():
+            if key not in self._query_active.keys():
+                self._query_active[key] = 0
+            after = self._query_repeat_after
+            if self._query_active[key] == 0:
+                self._write(self._cfg.lang('dictionary_loading'))
+                executor = concurrent.futures.ThreadPoolExecutor(1)
+                executor.submit(query, *args)
+                after = 50
+            self._query_active[key] += 1
+            if self._query_active[key] <= self._query_repeat_after * self._query_max_trials:
+                self._query_events_id[key] = self.root.after(after, master)
+            else:
+                self._write(self._cfg.lang('dictionary_timeout'))
+
+    def _query_output_pop(self, key: str) -> Any:
+        """
+        Pop the output.
+
+        :param key: Key
+        :return: Data
+        """
+        if key not in self._query_output.keys():
+            return None
+        data = self._query_output[key]
+        del self._query_output[key]
+        del self._query_active[key]
+        self._main._status_clear()
+        self._update_buttons()
+        if self._query_events_id[key] != '':
+            self.root.after_cancel(self._query_events_id[key])
+            self._query_events_id[key] = ''
+        return data
+
     def _meaning(self) -> None:
         """
         Word meaning.
         """
-        self._main._status(self._cfg.lang('dictionary_querying'))
-        style, mean, wiki = self._dictionary.meaning(self._lang, self._get_word())
-        self._main._status_clear()
+        key = 'meaning'
+
+        def _process(word: str):
+            self._query_output[key] = self._dictionary.meaning(self._lang, word)
+            self._query_active[key] = 0
+            return
+
+        self._query_thread(key, _process, self._meaning, self._get_word())
+        data = self._query_output_pop(key)
+        if data is None:
+            return
+        style, mean, wiki = data
         if mean == '':
             return self._write(self._cfg.lang('dictionary_no_results'))
         style = ', '.join(style)
@@ -444,31 +520,47 @@ class DictionaryGUI(object):
         self._text_out.insert('end', mean, 'normal')
         if wiki != '':
             self._text_out.insert('end', '\n\n', 'normal')
-        self._text_out.insert('end', f'{self._cfg.lang("dictionary_wikipedia")}:\n', 'italic')
-        self._text_out.insert('end', f'{wiki}', 'normal')
+            self._text_out.insert('end', f'{self._cfg.lang("dictionary_wikipedia")}:\n', 'italic')
+            self._text_out.insert('end', f'{wiki}', 'normal')
         self._text_out['state'] = tk.DISABLED
 
     def _synonym(self) -> None:
         """
         Word synonym.
         """
-        self._main._status(self._cfg.lang('dictionary_querying'))
-        syn = self._dictionary.synonym(self._lang, self._get_word())
-        self._main._status_clear()
+        key = 'synonym'
+
+        def _process(word: str):
+            self._query_output[key] = self._dictionary.synonym(self._lang, word)
+            self._query_active[key] = 0
+            return
+
+        self._query_thread(key, _process, self._synonym, self._get_word())
+        syn = self._query_output_pop(key)
+        if syn is None:
+            return
         if len(syn) == 0:
             return self._write(self._cfg.lang('dictionary_no_results'))
         self._write(', '.join(syn))
 
     def _antonym(self) -> None:
         """
-        Word synonym.
+        Word aynonym.
         """
-        self._main._status(self._cfg.lang('dictionary_querying'))
-        syn = self._dictionary.antonym(self._lang, self._get_word())
-        self._main._status_clear()
-        if len(syn) == 0:
+        key = 'antonym'
+
+        def _process(word: str):
+            self._query_output[key] = self._dictionary.antonym(self._lang, word)
+            self._query_active[key] = 0
+            return
+
+        self._query_thread(key, _process, self._antonym, self._get_word())
+        ant = self._query_output_pop(key)
+        if ant is None:
+            return
+        if len(ant) == 0:
             return self._write(self._cfg.lang('dictionary_no_results'))
-        self._write(', '.join(syn))
+        self._write(', '.join(ant))
 
     def _write(self, text: str) -> None:
         """
@@ -487,9 +579,10 @@ class DictionaryGUI(object):
 
         :param word: Word
         """
+        self._text_out.clear()
         self._word.delete(0, tk.END)
         stemmer = ut.make_stemmer(self._lang)
-        if stemmer is not None:
+        if stemmer is not None and self._stemmer:
             word = stemmer.stem(word)
         self.root.after(50, lambda: self._word.insert(0, word))
 
