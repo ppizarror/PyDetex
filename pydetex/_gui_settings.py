@@ -111,7 +111,7 @@ class _LangManager(object):
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
                 'status_cursor': 'Cursor: {0}:{1}',
-                'status_cursor_input_focusout': 'Input text not selected',
+                'status_cursor_input_focusout': 'Input not selected',
                 'status_cursor_input_focusout_min': 'Not selected',
                 'status_cursor_min': 'Cur: {0}:{1}',
                 'status_cursor_null': 'Cursor: Empty',
