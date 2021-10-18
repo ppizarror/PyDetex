@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 FONTS
 Configures font styles.

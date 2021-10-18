@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 TEST UTILS
 Test utils.
@@ -22,13 +22,16 @@ class UtilsTest(BaseTest):
             by finding a rectangle proposal representing each segment's width, thickness, angle,
             and location. """
         self.assertEqual(ut.detect_language(s), 'en')
-        self.assertEqual(ut.get_language_tag('en'), 'English')
-        self.assertEqual(ut.get_language_tag('es'), 'Spanish')
-        self.assertEqual(ut.get_language_tag('unknown'), 'Unknown')
+        self.assertEqual(ut.get_language_name('en'), 'English')
+        self.assertEqual(ut.get_language_name('en', 'es'), 'Inglés')
+        self.assertEqual(ut.get_language_name('es'), 'Spanish')
+        self.assertEqual(ut.get_language_name('unknown'), 'Unknown')
+        self.assertEqual(ut.get_language_name('zh'), 'Chinese')
         s = """El modelo propuesto contiene diferentes métricas para coordenar las tareas de segmentación"""
         self.assertEqual(ut.detect_language(s), 'es')
         self.assertEqual(ut.detect_language(''), '–')
         self.assertEqual(ut.detect_language('https://epic.com'), '–')
+        self.assertEqual(ut.detect_language('好的'), 'zh')
 
     def test_repeat_words(self) -> None:
         """
@@ -429,7 +432,7 @@ class UtilsTest(BaseTest):
 
     def test_tokenize(self) -> None:
         """
-        Tokenize word.
+        Test tokenize.
         """
         s = """
         # ----------------------------------------------------------------------
@@ -441,15 +444,51 @@ class UtilsTest(BaseTest):
         t = []
         for w in s.split(' '):
             tw = ut.tokenize(w)
-            if tw == '' or '\n' in tw:
+            if tw == '' or '\n' in tw or '-' in tw:
                 continue
             t.append(tw)
-        self.assertEqual(t, ['#', '#', 'Settings', 'button', '#'])
+        self.assertEqual(t, ['Settings', 'button'])
         self.assertEqual(ut.tokenize('hello!!___..'), 'hello')
+        self.assertEqual(ut.tokenize('tex-things!!___..'), 'tex-things')
+        self.assertEqual(ut.tokenize('tex–things!!___..'), 'tex-things')
 
     def test_get_number_of_day(self) -> None:
         """
         Test day number.
         """
-        print(ut.get_number_of_day())
         self.assertIsInstance(ut.get_number_of_day(), int)
+
+    def test_word_from_cursor(self) -> None:
+        """
+        Get the word from a cursor.
+        """
+        #    0000000000111111111
+        #    0123456789012345678
+        s = "This is an example "
+        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 1), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 2), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 3), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 4), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 6), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 7), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 8), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 9), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 10), 'example')
+        self.assertEqual(ut.get_word_from_cursor(s, 18), '')
+        self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, -1))
+        self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, 19))
+
+        # Test with more invalid chars
+        s = "This         is     \t\t\n\nan\n\n\nexample\t\t\n"
+        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 13), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 15), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 26), 'example')
+
+        # With tags
+        s = "<repeated:3>This</repeated> is an example "
+        self.assertEqual(ut.get_word_from_cursor(s, 12), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 16), 'This</repeated>')

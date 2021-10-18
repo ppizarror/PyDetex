@@ -55,6 +55,8 @@ class GuiTest(BaseTest):
         gui_settings = SettingsWindow((360, 320), cfg)
         gui_settings.close()
 
+        gui._open_dictionary()
+
     def test_settings(self) -> None:
         """
         Test the app settings.
