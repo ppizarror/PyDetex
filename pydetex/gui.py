@@ -20,6 +20,7 @@ import sys
 
 from nltk.tokenize import RegexpTokenizer
 from outdated import check_outdated
+from PyMultiDictionary import MultiDictionary
 from typing import Optional, Tuple
 from warnings import warn
 
@@ -47,6 +48,7 @@ class PyDetexGUI(object):
     _copy_clip: 'tk.Button'
     _detect_language_event_id: str
     _detected_lang_tag: str
+    _dictionary: 'MultiDictionary'
     _paste_timeout_error: int
     _ready: bool
     _root: 'tk.Tk'
@@ -70,6 +72,7 @@ class PyDetexGUI(object):
         # Creates the window
         # ----------------------------------------------------------------------
         self._root = tk.Tk()
+        self._dictionary = MultiDictionary()
 
         # Load settings
         self._cfg = Settings()
@@ -114,6 +117,7 @@ class PyDetexGUI(object):
                                         highlightcolor=hcolor, font_size=fsize)
         self._text_in.pack(fill='both')
         self._text_in.bind('<Button>', self._process_cursor_in)
+        self._text_in.bind('<ButtonRelease>', self._process_cursor_in)
         self._text_in.bind('<FocusIn>', self._process_focusin_in)
         self._text_in.bind('<FocusOut>', self._process_focusout_in)
         self._text_in.bind('<Key>', self._process_in_key)
@@ -128,6 +132,10 @@ class PyDetexGUI(object):
         self._text_out = gui_ut.RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
                                          highlightcolor=hcolor, font_size=fsize, editable=False)
         self._text_out.bind('<Key>', self._process_out_key)
+        self._text_out.bind('<Button>', self._check_dictionary_selected)
+        self._text_out.bind('<ButtonRelease>', self._check_dictionary_selected)
+        self._text_out.bind('<FocusIn>', self._check_dictionary_selected)
+        self._text_out.bind('<FocusOut>', self._check_dictionary_selected)
         self._text_out.pack(fill='both')
 
         # ----------------------------------------------------------------------
@@ -205,6 +213,43 @@ class PyDetexGUI(object):
         # Inserts the placeholder text
         self._insert_in(self._cfg.lang('placeholder'))
         self._root.update()
+
+    def _get_selected_word(self) -> str:
+        """
+        Get selected word.
+
+        :return: Return the current selected word
+        """
+        try:
+            if self._text_in.selection_get() != '':
+                sf = self._text_in.count('1.0', 'sel.first')
+                if sf is None:
+                    sf = (0,)
+                word = ut.get_word_from_cursor(self._text_in.get(0.0, tk.END), sf[0])
+                if word != '':
+                    return word
+        except tk.TclError:
+            pass
+        try:
+            if self._text_out.selection_get() != '':
+                sf = self._text_out.count('1.0', 'sel.first')
+                if sf is None:
+                    sf = (0,)
+                word = ut.get_word_from_cursor(self._text_out.get(0.0, tk.END), sf[0])
+                if word != '':
+                    return word
+        except tk.TclError:
+            pass
+        return ''
+
+    # noinspection PyUnusedLocal
+    def _check_dictionary_selected(self, *args) -> None:
+        """
+        Check dictionary selected word.
+        """
+        word = ut.tokenize(self._get_selected_word())
+        if word != '':
+            print(word)
 
     def _insert_in(self, text: str) -> None:
         """
@@ -295,12 +340,16 @@ class PyDetexGUI(object):
         """
         window_w = self._cfg.get(self._cfg.CFG_WINDOW_SIZE)[0]
         cur_pos = self._text_in.index(tk.INSERT)
+
+        # Check cursor position
         if cur_pos is None:
             self._status_bar_cursor['text'] = self._cfg.lang('status_cursor_null')
         else:
             line, pos = tuple(cur_pos.split('.'))
             cur_t = self._cfg.lang('status_cursor') if window_w > 750 else self._cfg.lang('status_cursor_min')
             self._status_bar_cursor['text'] = cur_t.format(pos, line)
+
+        # Get cursor selection
         try:
             sf = self._text_in.count('1.0', 'sel.first')
             sl = self._text_in.count('1.0', 'sel.last')
@@ -320,18 +369,21 @@ class PyDetexGUI(object):
                 self._status_bar_cursor_sel['text'] = self._cfg.lang('status_cursor_selected_all')
             else:
                 self._status_bar_cursor_sel['text'] = s + chars.format(d)
+
         except tk.TclError:
             self._status_bar_cursor_sel['text'] = ''
 
-    # noinspection PyUnresolvedReferences
-    @staticmethod
-    def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
+        self._check_dictionary_selected()
+
+    def _process_out_key(self, event: 'tk.Event') -> Optional['tk.Event']:
         """
         Process out keys.
 
         :param event: Event
         :return: Event
         """
+        self._check_dictionary_selected()
+        # noinspection PyUnresolvedReferences
         if event.char == '':
             return event
 
@@ -341,7 +393,7 @@ class PyDetexGUI(object):
         """
         text = self._text_in.get(0.0, tk.END).strip()
         self._detected_lang_tag = ut.detect_language(text)
-        lang = ut.get_language_name(self._detected_lang_tag)
+        lang = self._dictionary.get_language_name(self._detected_lang_tag, self._cfg.get(self._cfg.CFG_LANG))
         if text != '':
             self._status_bar_lang['text'] = self._cfg.lang('detected_lang').format(lang, self._detected_lang_tag)
         else:
@@ -499,6 +551,7 @@ class PyDetexGUI(object):
         Close settings.
         """
         self._settings_window = None
+        self._detect_language()
         if self._ready:
             self._process()
 

@@ -8,7 +8,6 @@ Test utils.
 
 from test._base import BaseTest
 
-import os
 import pydetex.utils as ut
 from typing import Tuple
 
@@ -24,6 +23,7 @@ class UtilsTest(BaseTest):
             and location. """
         self.assertEqual(ut.detect_language(s), 'en')
         self.assertEqual(ut.get_language_name('en'), 'English')
+        self.assertEqual(ut.get_language_name('en', 'es'), 'Inglés')
         self.assertEqual(ut.get_language_name('es'), 'Spanish')
         self.assertEqual(ut.get_language_name('unknown'), 'Unknown')
         self.assertEqual(ut.get_language_name('zh'), 'Chinese')
@@ -444,11 +444,13 @@ class UtilsTest(BaseTest):
         t = []
         for w in s.split(' '):
             tw = ut.tokenize(w)
-            if tw == '' or '\n' in tw:
+            if tw == '' or '\n' in tw or '-' in tw:
                 continue
             t.append(tw)
         self.assertEqual(t, ['#', '#', 'Settings', 'button', '#'])
         self.assertEqual(ut.tokenize('hello!!___..'), 'hello')
+        self.assertEqual(ut.tokenize('tex-things!!___..'), 'tex-things')
+        self.assertEqual(ut.tokenize('tex–things!!___..'), 'tex-things')
 
     def test_get_number_of_day(self) -> None:
         """
@@ -456,95 +458,32 @@ class UtilsTest(BaseTest):
         """
         self.assertIsInstance(ut.get_number_of_day(), int)
 
-    def test_dictionary(self) -> None:
+    def test_word_from_cursor(self) -> None:
         """
-        Test dictionary.
+        Get the word from a cursor.
         """
-        d = ut.Dictionary()
+        #    0000000000111111111
+        #    0123456789012345678
+        s = "This is an example "
+        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 1), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 2), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 3), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 4), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 6), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 7), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 8), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 9), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 10), 'example')
+        self.assertEqual(ut.get_word_from_cursor(s, 18), '')
+        self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, -1))
+        self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, 19))
 
-        # Get lang names
-        s = d.translate('en', 'good')
-        print([(tag, lang) for (lang, tag, _) in sorted(s, key=lambda x: x[1])])
-        return
-
-        # Test word parse
-        self.assertEqual(d._process('word!!!  '), 'word')
-        self.assertEqual(d._process('invalid1'), 'invalid')
-        self.assertEqual(d._process('multiple words'), 'multiple')
-        self.assertEqual(d._process('multiple!!!! words'), 'multiple')
-        self.assertEqual(d._process('Abstract'), 'abstract')
-        self.assertEqual(d._process('1234Abstract'), 'abstract')
-        self.assertEqual(d._process('1234          Abstract'), 'abstract')
-        self.assertEqual(d._process('1234 !!! .....        Abstract'), 'abstract')
-        self.assertEqual(d._process('word.epic'), 'word')
-        self.assertEqual(d._process('  '), '')
-        self.assertEqual(d._process('\n\n!\nthis word'), 'this')
-        self.assertEqual(d._process('<hack>'), 'hack')
-
-        # Definition
-        __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
-        d._test_cached_file = __actualpath + 'data/educalingo_en_good.html'
-        tr = """The first definition of good in the dictionary is having admirable, pleasing, superior, or positive qualities; not negative, bad or mediocre. Other definition of good is morally excellent or admirable; virtuous; righteous. Good is also suitable or efficient for a purpose. 
-
-Good may refer to: ▪ Good and evil, the distinction between positive and negative entities ▪ Good, objects produced for market ▪ Good ▪ Good ▪ Good, West Virginia, USA ▪ Form of the Good, Plato's macrocosmic view of goodness in living Expressive works: ▪ Good ▪ Good, a 2008 film starring Viggo Mortensen ▪ Good ▪ Good ▪ Good, by Cecil Philip Taylor Companies: ▪ Good Entertainment ▪ GOOD Music, a record label ▪ Good Technology Music: ▪ "Good", a song by Better Than Ezra from Deluxe..."""
-        self.assertEqual(d.definition('en', 'good'), tr)
-
-        # Translate
-        tr = [('Chinese', 'zh-cn', '好的'),
-              ('Spanish', 'es', 'bueno'),
-              ('English', 'en', 'good'),
-              ('Hindi', 'hi', 'अच्छा'),
-              ('Arabic', 'ar', 'جَيِّد'),
-              ('Russian', 'ru', 'хороший'),
-              ('Portuguese', 'pt', 'bom'),
-              ('Bengali', 'bn', 'ভাল'),
-              ('French', 'fr', 'bon'),
-              ('Malay', 'ms', 'baik'),
-              ('German', 'de', 'gut'),
-              ('Japanese', 'ja', '良い'),
-              ('Korean', 'ko', '좋은'),
-              ('Javanese', 'jv', 'Apik'),
-              ('Vietnamese', 'vi', 'tốt'),
-              ('Tamil', 'ta', 'நல்ல'),
-              ('Marathi', 'mr', 'चांगले'),
-              ('Turkish', 'tr', 'iyi'),
-              ('Italian', 'it', 'buono'),
-              ('Polish', 'pl', 'dobry'),
-              ('Ukrainian', 'uk', 'гарний'),
-              ('Romanian', 'ro', 'bun'),
-              ('Greek', 'el', 'καλός'),
-              ('Afrikaans', 'af', 'goeie'),
-              ('Swedish', 'sv', 'bra'),
-              ('Norwegian', 'no', 'bra')]
-        s = d.translate('en', 'good')
-        self.assertEqual(s, tr)
-
-        # Synonyms
-        syn = ['able', 'acceptable', 'accomplished', 'accurate', 'adept', 'adequate', 'admirable', 'adroit',
-               'advantage', 'advantageous', 'agreeable', 'altruistic', 'ample', 'appropriate', 'auspicious',
-               'authentic', 'avail', 'awesome', 'bad', 'balmy', 'barrie', 'beaut', 'behalf', 'belting', 'beneficent',
-               'beneficial', 'benefit', 'benevolent', 'best', 'bitchin´', 'bona fide', 'booshit', 'bright', 'calm',
-               'capable', 'capital', 'charitable', 'cheerful', 'choice', 'clear', 'clement', 'clever', 'cloudless',
-               'commendable', 'compelling', 'competent', 'complete', 'congenial', 'considerable', 'constructive',
-               'convenient', 'convincing', 'convivial', 'correct', 'crucial', 'decorous', 'definite', 'dependable',
-               'desirable', 'dexterous', 'dinkum', 'divine', 'dope', 'dutiful', 'eatable', 'edible', 'efficient',
-               'enjoyable', 'entire', 'estimable', 'ethical', 'exact', 'excellence', 'excellent', 'exemplary', 'exo',
-               'expert', 'extensive', 'fair', 'fancy', 'favourable', 'fine', 'finest', 'first-class', 'first-rate',
-               'fit', 'fitting', 'friendly', 'full', 'gain', 'genuine', 'goodness', 'gracious', 'gratifying', 'great',
-               'halcyon', 'happy', 'healthy', 'helpful', 'honest', 'honourable', 'humane', 'interest', 'judicious',
-               'kind', 'kind-hearted', 'kindly', 'large', 'legitimate', 'long', 'lucrative', 'mannerly', 'merciful',
-               'merit', 'mild', 'moral', 'morality', 'obedient', 'obliging', 'opportune', 'orderly', 'pearler',
-               'persuasive', 'phat', 'pleasant', 'pleasing', 'pleasurable', 'polite', 'positive', 'praiseworthy',
-               'precise', 'probity', 'productive', 'proficient', 'profit', 'profitable', 'proper', 'propitious',
-               'prudent', 'rad', 'real', 'reasonable', 'rectitude', 'reliable', 'right', 'righteous', 'righteousness',
-               'salubrious', 'salutary', 'satisfactory', 'satisfying', 'schmick', 'seemly', 'sensible', 'service',
-               'shrewd', 'sik', 'skilled', 'solid', 'sound', 'special', 'splendid', 'substantial', 'sufficient',
-               'suitable', 'sunny', 'sunshiny', 'super', 'superb', 'superior', 'talented', 'tasty', 'thorough',
-               'timely', 'tiptop', 'true', 'trustworthy', 'uncorrupted', 'untainted', 'upright', 'uprightness', 'use',
-               'useful', 'usefulness', 'valid', 'valuable', 'virtue', 'virtuous', 'welfare', 'well-behaved',
-               'well-disposed', 'well-mannered', 'well-reasoned', 'well-thought-out', 'well-timed', 'wellbeing',
-               'whole', 'wholesome', 'wicked', 'wise', 'world-class', 'worth', 'worthwhile', 'worthy']
-        self.assertEqual(d.synonym('en', 'good'), syn)
-
-        # Synonyms
-        self.assertEqual(d.synonym('unknown', 'word'), [])
+        # Test with more invalid chars
+        s = "This         is     \t\t\n\nan\n\n\nexample\t\t\n"
+        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 13), 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 15), 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 26), 'example')

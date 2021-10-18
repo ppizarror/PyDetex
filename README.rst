@@ -94,4 +94,4 @@ Currently, many things must be improved:
 Author
 ------
 
-<a href="https://ppizarror.com" title="ppizarror">Pablo Pizarro R.</a> | 2021
+`Pablo Pizarro R. <https://ppizarror.com>`_ | 2021
