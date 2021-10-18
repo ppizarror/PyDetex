@@ -447,7 +447,7 @@ class UtilsTest(BaseTest):
             if tw == '' or '\n' in tw or '-' in tw:
                 continue
             t.append(tw)
-        self.assertEqual(t, ['#', '#', 'Settings', 'button', '#'])
+        self.assertEqual(t, ['Settings', 'button'])
         self.assertEqual(ut.tokenize('hello!!___..'), 'hello')
         self.assertEqual(ut.tokenize('tex-things!!___..'), 'tex-things')
         self.assertEqual(ut.tokenize('tex–things!!___..'), 'tex-things')
