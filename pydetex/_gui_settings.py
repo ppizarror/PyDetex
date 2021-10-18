@@ -336,7 +336,7 @@ class Settings(object):
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
             self.CFG_TOTAL_OPENED_APP: (0, int, lambda x: x >= 0),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
-            self.CFG_WINDOW_SIZE: (self._valid_window_sizes[0], str, self._valid_window_sizes)
+            self.CFG_WINDOW_SIZE: (self._valid_window_sizes[1], str, self._valid_window_sizes)
         }
 
         # The valid settings
