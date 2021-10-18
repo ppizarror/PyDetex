@@ -1,7 +1,7 @@
 langdetect
 nltk
 outdated
-PyMultiDictionary
+PyMultiDictionary>=1.0.5
 pyperclip
 requests
 setuptools
