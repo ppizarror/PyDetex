@@ -488,6 +488,9 @@ class DictionaryGUI(object):
         :param word: Word
         """
         self._word.delete(0, tk.END)
+        stemmer = ut.make_stemmer(self._lang)
+        if stemmer is not None:
+            word = stemmer.stem(word)
         self.root.after(50, lambda: self._word.insert(0, word))
 
     def close(self) -> None:

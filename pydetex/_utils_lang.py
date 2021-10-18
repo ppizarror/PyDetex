@@ -12,6 +12,7 @@ __all__ = [
     'get_diff_startend_word',
     'get_language_name',
     'get_word_from_cursor',
+    'make_stemmer',
     'tokenize'
 ]
 
@@ -27,7 +28,7 @@ import os
 # noinspection PyProtectedMember
 from PyMultiDictionary._utils import tokenize, get_language_name
 from nltk.stem import SnowballStemmer
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 # Resources path
 __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
@@ -35,6 +36,27 @@ __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/'
 # Load all stopwords
 with open(__actualpath + 'res/' + 'stopwords.json', encoding='UTF-8') as json_data:
     _STOPWORDS = json.load(json_data)
+
+_AVAILABLE_STEMMER_LANGS: Dict[str, str] = {
+    'ar': 'arabic',
+    'da': 'danish',
+    'de': 'german',
+    'en': 'english',
+    'es': 'spanish',
+    'fi': 'finnish',
+    'fr': 'french',
+    'hu': 'hungarian',
+    'it': 'italian',
+    'nb': 'norwegian',
+    'nd': 'norwegian',
+    'nl': 'dutch',
+    'nn': 'norwegian',
+    'no': 'norwegian',
+    'pt': 'portuguese',
+    'ro': 'romanian',
+    'ru': 'russian',
+    'sv': 'swedish'
+}
 
 
 def detect_language(s: str) -> str:
@@ -71,6 +93,18 @@ def get_diff_startend_word(original: str, new: str) -> Tuple[str, str]:
     if pos == -1:
         return '', ''
     return original[0:pos], original[pos + len(new):len(original)]
+
+
+def make_stemmer(lang: str) -> Optional['SnowballStemmer']:
+    """
+    Returns a stemmer.
+
+    :param lang: Lang code
+    :return: Stemmer or None if not available
+    """
+    if lang in _AVAILABLE_STEMMER_LANGS.keys():
+        return SnowballStemmer(_AVAILABLE_STEMMER_LANGS[lang])
+    return None
 
 
 def check_repeated_words(
@@ -113,29 +147,9 @@ def check_repeated_words(
         remove_tokens = []
 
     # Check languages
-    available_langs = {
-        'ar': 'arabic',
-        'da': 'danish',
-        'de': 'german',
-        'en': 'english',
-        'es': 'spanish',
-        'fi': 'finnish',
-        'fr': 'french',
-        'hu': 'hungarian',
-        'it': 'italian',
-        'nb': 'norwegian',
-        'nd': 'norwegian',
-        'nl': 'dutch',
-        'nn': 'norwegian',
-        'no': 'norwegian',
-        'pt': 'portuguese',
-        'ro': 'romanian',
-        'ru': 'russian',
-        'sv': 'swedish'
-    }
-    if lang in available_langs.keys():
+    if lang in _AVAILABLE_STEMMER_LANGS.keys():
         stop = _STOPWORDS[lang]
-        stemmer = SnowballStemmer(available_langs[lang])
+        stemmer = make_stemmer(lang)
     else:
         return s
 

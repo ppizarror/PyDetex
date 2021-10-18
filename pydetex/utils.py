@@ -22,6 +22,7 @@ __all__ = [
     'get_number_of_day',
     'get_word_from_cursor',
     'IS_OSX',
+    'make_stemmer',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
