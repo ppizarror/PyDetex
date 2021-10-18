@@ -487,3 +487,8 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.get_word_from_cursor(s, 13), 'is')
         self.assertEqual(ut.get_word_from_cursor(s, 15), 'an')
         self.assertEqual(ut.get_word_from_cursor(s, 26), 'example')
+
+        # With tags
+        s = "<repeated:3>This</repeated> is an example "
+        self.assertEqual(ut.get_word_from_cursor(s, 12), 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 16), 'This')

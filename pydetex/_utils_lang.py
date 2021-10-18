@@ -239,7 +239,10 @@ def get_word_from_cursor(s: str, pos: int) -> str:
             if s[j].strip() == '':
                 p = j
                 break
+            elif s[j].strip() == '>':
+                p = j + 1
+                break
         for j in range(pos + 1, len(s)):  # Find next
-            if s[j].strip() == '':
+            if s[j].strip() in ('', '<'):
                 return s[p:j].strip()
     return ''
