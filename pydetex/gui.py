@@ -380,6 +380,7 @@ class PyDetexGUI(object):
         # noinspection PyProtectedMember
         if self._cfg._last_opened_day_diff >= 7:
             self._root.after(1000, self._check_version_event)
+        self._root.after(1000, lambda: self._root.lift())
         self._root.mainloop()
 
     def _clear(self) -> None:
