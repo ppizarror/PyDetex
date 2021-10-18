@@ -450,7 +450,7 @@ class DictionaryGUI(object):
         """
         return self._word.get().strip()
 
-    def _query_thread(self, key: str, query: Callable[[Any, ...], Any], master: Callable[[], None], *args) -> None:
+    def _query_thread(self, key: str, query: Callable[[Any], Any], master: Callable[[], None], *args) -> None:
         """
         Starts a new query.
 
