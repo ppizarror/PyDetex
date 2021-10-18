@@ -105,10 +105,10 @@ class PyDetexGUI(object):
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
                   relief=tk.GROOVE).pack(side=tk.RIGHT)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
-                  relief=tk.GROOVE).pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 10))
+                  relief=tk.GROOVE).pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 11))
         self._dictionary_btn = tk.Button(f0, text=ut.button_text(self._cfg.lang('dictionary')),
                                          command=self._open_dictionary, relief=tk.GROOVE)
-        self._dictionary_btn.pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 10))
+        self._dictionary_btn.pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 11))
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
         fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
@@ -138,10 +138,6 @@ class PyDetexGUI(object):
         self._text_out = gui_ut.RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
                                          highlightcolor=hcolor, font_size=fsize, copy=True)
         self._text_out.bind('<Key>', self._process_out_key)
-        self._text_out.bind('<Button>', self._check_dictionary_selected)
-        self._text_out.bind('<ButtonRelease>', self._check_dictionary_selected)
-        self._text_out.bind('<FocusIn>', self._check_dictionary_selected)
-        self._text_out.bind('<FocusOut>', self._check_dictionary_selected)
         self._text_out.pack(fill='both')
 
         # ----------------------------------------------------------------------
@@ -219,44 +215,6 @@ class PyDetexGUI(object):
         # Inserts the placeholder text
         self._insert_in(self._cfg.lang('placeholder'))
         self._root.update()
-
-    def _get_selected_word(self) -> str:
-        """
-        Get selected word.
-
-        :return: Return the current selected word
-        """
-        try:
-            if self._text_in.selection_get() != '' and self._root.focus_get() == self._text_in:
-                sf = self._text_in.count('1.0', 'sel.first')
-                if sf is None:
-                    sf = (0,)
-                word = ut.get_word_from_cursor(self._text_in.get(0.0, tk.END), sf[0])
-                if word != '':
-                    return word
-        except tk.TclError:
-            pass
-        try:
-            if self._text_out.selection_get() != '' and self._root.focus_get() == self._text_out:
-                sf = self._text_out.count('1.0', 'sel.first')
-                if sf is None:
-                    sf = (0,)
-                word = ut.get_word_from_cursor(self._text_out.get(0.0, tk.END), sf[0])
-                if word != '':
-                    return word
-        except tk.TclError:
-            pass
-        return ''
-
-    # noinspection PyUnusedLocal
-    def _check_dictionary_selected(self, *args) -> str:
-        """
-        Check dictionary selected word.
-
-        :return: Return the selected word
-        """
-        word = ut.tokenize(self._get_selected_word())
-        return word
 
     def _insert_in(self, text: str) -> None:
         """
@@ -380,16 +338,14 @@ class PyDetexGUI(object):
         except tk.TclError:
             self._status_bar_cursor_sel['text'] = ''
 
-        self._check_dictionary_selected()
-
-    def _process_out_key(self, event: 'tk.Event') -> Optional['tk.Event']:
+    @staticmethod
+    def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
         """
         Process out keys.
 
         :param event: Event
         :return: Event
         """
-        self._check_dictionary_selected()
         # noinspection PyUnresolvedReferences
         if event.char == '':
             return event
@@ -412,7 +368,7 @@ class PyDetexGUI(object):
         # Check if dictionary is available
         # noinspection PyProtectedMember
         if self._detected_lang_tag in self._dictionary._langs.keys():
-            self._status_bar_lang['text'] += f'  [{self._cfg.lang("dictionary")}]'
+            self._status_bar_lang['text'] += f' [{self._cfg.lang("dictionary")}]'
             self._dictionary_btn['state'] = tk.NORMAL
         else:
             self._dictionary_btn['state'] = tk.DISABLED
@@ -424,6 +380,7 @@ class PyDetexGUI(object):
         # noinspection PyProtectedMember
         if self._cfg._last_opened_day_diff >= 7:
             self._root.after(1000, self._check_version_event)
+        self._root.after(1000, lambda: self._root.lift())
         self._root.mainloop()
 
     def _clear(self) -> None:
@@ -573,11 +530,44 @@ class PyDetexGUI(object):
         if self._ready:
             self._process()
 
+    def _get_selected_word(self) -> str:
+        """
+        Get selected word.
+
+        :return: Return the current selected word
+        """
+        word = ''
+
+        # Text in
+        try:
+            if self._text_in.selection_get() != '' and self._root.focus_get() == self._text_in:
+                sf = self._text_in.count('1.0', 'sel.first')
+                if sf is None:
+                    sf = (0,)
+                word = ut.get_word_from_cursor(self._text_in.get(0.0, tk.END), sf[0])
+        except tk.TclError:
+            pass
+
+        # Text out
+        try:
+            if self._text_out.selection_get() != '' and self._root.focus_get() == self._text_out and word == '':
+                sf = self._text_out.count('1.0', 'sel.first')
+                if sf is None:
+                    sf = (0,)
+                word = ut.get_word_from_cursor(self._text_out.get(0.0, tk.END), sf[0])
+        except tk.TclError:
+            pass
+
+        # Apply pipeline
+        word = pip.strict(word)
+        word = ut.tokenize(word)
+        return word
+
     def _open_dictionary(self) -> None:
         """
         Launch dictionary.
         """
-        selected_word = self._check_dictionary_selected()
+        selected_word = self._get_selected_word()
         if self._dictionary_window:
             if selected_word != '':
                 self._dictionary_window.insert_word(selected_word)
@@ -657,7 +647,3 @@ class PyDetexGUI(object):
                 title=self._cfg.lang('version_upgrade_title'),
                 message=self._cfg.lang('version_upgrade').format(latest)
             )
-
-
-if __name__ == '__main__':
-    PyDetexGUI().start()

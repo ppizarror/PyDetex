@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 PYDETEX HOOK
 Used by Pyinstaller.
@@ -44,6 +44,7 @@ def _append_to_datas(file_path: str, target_folder: str, base_target_folder: str
 # Append resources
 res_files = [
     'res/cog.ico',
+    'res/dictionary.ico',
     'res/icon.gif',
     'res/icon.ico',
     'res/stopwords.json'
