@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 VERSION
 Defines version.
@@ -34,6 +34,6 @@ class Version(tuple):
     patch = property(lambda self: self[2])
 
 
-vernum = Version(0, 6, 3)
+vernum = Version(0, 7, 0)
 ver = str(vernum)
 rev = ''

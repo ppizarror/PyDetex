@@ -100,6 +100,14 @@ class ParserTest(BaseTest):
         self.assertEqual(par.remove_comments(s),
                          '\\section{Introduction}\n\nArchitectural floor plans are documents that result from an iterative design, planning, and engineering pro')
 
+        # Comment right to newline
+        s = 'Therefore, the scope was restricted to analyzing vector-based CAD files or retrieving individual elements ' \
+            'from plans with a simple format. \\\\% Therefore, the scope was restricted to analyze vector-based CAD files,' \
+            ' or retrieving individual elements from plans with a simple format. \\'
+        t = 'Therefore, the scope was restricted to analyzing vector-based CAD files or retrieving individual elements ' \
+            'from plans with a simple format. \\\\'
+        self.assertEqual(par.remove_comments(s), t)
+
     def test_simple_replace(self) -> None:
         """
         Test simple replace format.
@@ -186,3 +194,17 @@ class ParserTest(BaseTest):
         self.assertEqual(par.remove_commands_param_noargv(s), ' yes')
         s = '\\delete'
         self.assertEqual(par.remove_commands_param_noargv(s), '')
+
+    def test_process_single_char_equations(self) -> None:
+        """
+        Process single char equations.
+        """
+        s = 'This code does not \$contain any equation$!!'
+        self.assertEqual(par.process_single_char_equations(s), s)
+        s = 'This code must be $x$ processed!!'
+        self.assertEqual(par.process_single_char_equations(s), 'This code must be x processed!!')
+        s = par.simple_replace('$\\alpha$-shape is really nice')
+        self.assertEqual(par.process_single_char_equations(s), 'α-shape is really nice')
+        s = 'Because $x$ no lower needs any other supervision as $y$ or $z$ in \$30 or \$40$$'
+        self.assertEqual(par.process_single_char_equations(s),
+                         'Because x no lower needs any other supervision as y or z in \$30 or \$40')

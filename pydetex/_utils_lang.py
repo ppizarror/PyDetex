@@ -11,6 +11,7 @@ __all__ = [
     'detect_language',
     'get_diff_startend_word',
     'get_language_name',
+    'get_phrase_from_cursor',
     'get_word_from_cursor',
     'make_stemmer',
     'tokenize'
@@ -224,13 +225,13 @@ def check_repeated_words(
     return out_s
 
 
-def get_word_from_cursor(s: str, pos: int) -> str:
+def get_word_from_cursor(s: str, pos: int) -> Tuple[str, int, int]:
     """
     Return the word from an string on a given cursor.
 
     :param s: String
     :param pos: Position to check the string
-    :return: Word
+    :return: Word, position start, position end
     """
     assert 0 <= pos < len(s)
     pos += 1
@@ -245,7 +246,7 @@ def get_word_from_cursor(s: str, pos: int) -> str:
                 p = k
                 found = True
             elif s[k].strip() == '' and found:
-                return s[p:k].strip()
+                return s[p:k].strip(), p, k - 1
 
     else:
         for w in range(pos):  # Find prev
@@ -258,5 +259,36 @@ def get_word_from_cursor(s: str, pos: int) -> str:
                 break
         for j in range(pos + 1, len(s)):  # Find next
             if s[j].strip() in ('', '<'):
-                return s[p:j].strip()
-    return ''
+                return s[p:j].strip(), p, j - 1
+
+    return '', -1, -1
+
+
+def get_phrase_from_cursor(s: str, pos_init: int, pos_end: int) -> str:
+    """
+    Get a phrase from the cursor. It tries to retrieve the entire words selected.
+
+    :param s: String
+    :param pos_init: Initial position
+    :param pos_end: End position
+    :return: Retrieved word
+    """
+    assert pos_init <= pos_end
+
+    # Get first word
+    s0, i, _ = get_word_from_cursor(s, pos_init)
+    j = i
+
+    if s[pos_end].strip() == '':  # Is empty, find the previous word
+        for k in range(1, pos_end):
+            _k = pos_end - k
+            if s[_k].strip() != '':
+                j = _k + 1
+                break
+    else:
+        _, _, j = get_word_from_cursor(s, pos_end)
+
+    if j <= i:
+        return s0
+
+    return s[i:j]

@@ -3,4 +3,5 @@ nltk
 outdated
 PyMultiDictionary>=1.0.5
 pyperclip
+requests
 tkmacosx

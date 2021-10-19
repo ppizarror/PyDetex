@@ -22,7 +22,7 @@ from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
-from PyMultiDictionary import MultiDictionary
+from PyMultiDictionary import MultiDictionary, DICT_THESAURUS
 from typing import Callable, Tuple, Optional, Dict, Union, List, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -413,7 +413,10 @@ class DictionaryGUI(object):
         if lang not in self._dictionary._langs.keys():
             self.close()
         lang_name = self._dictionary.get_language_name(lang, self._cfg.get(self._cfg.CFG_LANG))
-        self.root.title(f'{self._cfg.lang("dictionary")} [{lang_name}]')
+        try:
+            self.root.title(f'{self._cfg.lang("dictionary")} [{lang_name}]')
+        except tk.TclError:
+            pass
         self._lang = lang
         self._update_buttons()
 
@@ -425,7 +428,10 @@ class DictionaryGUI(object):
         :return:
         """
         # Check language capability
-        syn, mean, _, ant = self._dictionary._langs[self._lang]
+        try:
+            syn, mean, _, ant = self._dictionary._langs[self._lang]
+        except KeyError:
+            syn, mean, ant = False, False, False
         self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
         self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
         self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
@@ -531,7 +537,10 @@ class DictionaryGUI(object):
         key = 'synonym'
 
         def _process(word: str):
-            self._query_output[key] = self._dictionary.synonym(self._lang, word)
+            if self._lang == 'en':
+                self._query_output[key] = self._dictionary.synonym(self._lang, word, DICT_THESAURUS)
+            else:
+                self._query_output[key] = self._dictionary.synonym(self._lang, word)
             self._query_active[key] = 0
             return
 

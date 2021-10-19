@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 PIPELINES
 Defines the pipelines which apply parsers.
@@ -28,6 +28,7 @@ def simple(s: str) -> str:
     if len(s) == 0:
         return s
     s = '\n'.join(s.splitlines())
+    s = par.remove_comments(s)
     s = par.simple_replace(s)
     s = par.remove_common_tags(s)
     s = par.process_cite(s)
@@ -36,6 +37,7 @@ def simple(s: str) -> str:
     s = par.remove_comments(s)
     s = par.process_quotes(s)
     s = par.process_inputs(s)
+    s = par.process_single_char_equations(s)
     if len(s) > 0 and s[-1] == '\\':
         s = s[0:len(s) - 1]
     return s
