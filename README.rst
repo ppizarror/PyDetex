@@ -45,6 +45,10 @@ PyDetex
 .. image:: https://static.pepy.tech/personalized-badge/pydetex?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=total%20downloads
     :target: https://pepy.tech/project/pydetex
     :alt: Total downloads
+    
+.. image:: https://img.shields.io/badge/buy%20me%20a-Ko--fi-02b9fe
+    :target: https://ko-fi.com/ppizarror
+    :alt: Buy me a Ko-fi
 
 Introduction
 ------------
