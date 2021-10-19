@@ -541,20 +541,25 @@ class PyDetexGUI(object):
         # Text in
         try:
             if self._text_in.selection_get() != '' and self._root.focus_get() == self._text_in:
+                text = self._text_in.get(0.0, tk.END)
                 sf = self._text_in.count('1.0', 'sel.first')
+                se = self._text_in.count('1.0', 'sel.last')
                 if sf is None:
                     sf = (0,)
-                word = ut.get_word_from_cursor(self._text_in.get(0.0, tk.END), sf[0])
+                # print([text[sf[0]:se[0]]])
+                word = ut.get_phrase_from_cursor(text, sf[0], se[0] - 1)
         except tk.TclError:
             pass
 
         # Text out
         try:
             if self._text_out.selection_get() != '' and self._root.focus_get() == self._text_out and word == '':
+                text = self._text_out.get(0.0, tk.END)
                 sf = self._text_out.count('1.0', 'sel.first')
+                se = self._text_out.count('1.0', 'sel.last')
                 if sf is None:
                     sf = (0,)
-                word = ut.get_word_from_cursor(self._text_out.get(0.0, tk.END), sf[0])
+                word = ut.get_phrase_from_cursor(text, sf[0], se[0] - 1)
         except tk.TclError:
             pass
 

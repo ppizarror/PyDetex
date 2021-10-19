@@ -464,31 +464,48 @@ class UtilsTest(BaseTest):
         """
         #    0000000000111111111
         #    0123456789012345678
-        s = "This is an example "
-        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 1), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 2), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 3), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 4), 'is')
-        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
-        self.assertEqual(ut.get_word_from_cursor(s, 6), 'is')
-        self.assertEqual(ut.get_word_from_cursor(s, 7), 'an')
-        self.assertEqual(ut.get_word_from_cursor(s, 8), 'an')
-        self.assertEqual(ut.get_word_from_cursor(s, 9), 'an')
-        self.assertEqual(ut.get_word_from_cursor(s, 10), 'example')
-        self.assertEqual(ut.get_word_from_cursor(s, 18), '')
+        s = 'This is an example '
+        self.assertEqual(ut.get_word_from_cursor(s, 0)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 1)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 2)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 3)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 4)[0], 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 5)[0], 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 6)[0], 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 7)[0], 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 8)[0], 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 9)[0], 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 10)[0], 'example')
+        self.assertEqual(ut.get_word_from_cursor(s, 18)[0], '')
         self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, -1))
         self.assertRaises(AssertionError, lambda: ut.get_word_from_cursor(s, 19))
 
         # Test with more invalid chars
-        s = "This         is     \t\t\n\nan\n\n\nexample\t\t\n"
-        self.assertEqual(ut.get_word_from_cursor(s, 0), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 5), 'is')
-        self.assertEqual(ut.get_word_from_cursor(s, 13), 'is')
-        self.assertEqual(ut.get_word_from_cursor(s, 15), 'an')
-        self.assertEqual(ut.get_word_from_cursor(s, 26), 'example')
+        s = 'This         is     \t\t\n\nan\n\n\nexample\t\t\n'
+        self.assertEqual(ut.get_word_from_cursor(s, 0)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 5)[0], 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 13)[0], 'is')
+        self.assertEqual(ut.get_word_from_cursor(s, 15)[0], 'an')
+        self.assertEqual(ut.get_word_from_cursor(s, 26)[0], 'example')
 
         # With tags
-        s = "<repeated:3>This</repeated> is an example "
-        self.assertEqual(ut.get_word_from_cursor(s, 12), 'This')
-        self.assertEqual(ut.get_word_from_cursor(s, 16), 'This</repeated>')
+        s = '<repeated:3>This</repeated> is an example '
+        self.assertEqual(ut.get_word_from_cursor(s, 12)[0], 'This')
+        self.assertEqual(ut.get_word_from_cursor(s, 16)[0], 'This</repeated>')
+
+    def test_phrase_from_cursor(self) -> None:
+        """
+        Get the phrase from a cursor.
+        """
+        s = '        a nice plain '
+        self.assertEqual(ut.get_phrase_from_cursor(s, 0, 1), 'a')
+
+        s = '...well, this performed relativelly well. For these reasons,    the ...'
+        self.assertEqual(s[43:55], 'or these rea')
+        self.assertEqual(ut.get_phrase_from_cursor(s, 43, 55), 'For these reasons,')
+        self.assertEqual(ut.get_phrase_from_cursor(s, 43, 60), 'For these reasons,')
+        self.assertEqual(ut.get_phrase_from_cursor(s, 55, 55), 'reasons,')
+        self.assertEqual(ut.get_phrase_from_cursor(s, 62, 62), 'the')
+
+        s = 'returns a nice'
+        self.assertEqual(ut.get_phrase_from_cursor(s, 0, 9), 'returns a')
