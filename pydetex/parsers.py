@@ -1,6 +1,6 @@
 """
 PyDetex
-https://github.com/ppizarror/pydetex
+https://github.com/ppizarror/PyDetex
 
 PARSERS
 Defines parsers, which perform a single task for removal LaTex things.
@@ -14,6 +14,7 @@ __all__ = [
     'process_labels',
     'process_quotes',
     'process_ref',
+    'process_single_char_equations',
     'remove_commands_char',
     'remove_commands_param',
     'remove_commands_param_noargv',
@@ -34,6 +35,7 @@ _TAG_FILE_ERROR = '|FILEERROR|'
 # Parser font format
 FONT_FORMAT_SETTINGS = {
     'cite': '',
+    'equation': '',
     'normal': '',
     'ref': ''
 }
@@ -61,6 +63,37 @@ def _find_str(s: str, char: str) -> int:
             index += 1
 
     return -1
+
+
+def _os_listfolder() -> List[str]:
+    """
+    Returns the folders from the current path.
+
+    :return: Folder list
+    """
+    dirs = os.listdir('./')
+    folders = []
+    for k in dirs:
+        if os.path.isdir(k):
+            folders.append(k + '/')
+    return folders
+
+
+def _load_file(f: str, path: str) -> str:
+    """
+    Try to load a file.
+
+    :param f: Filename
+    :param path: Path to look from
+    :return: File contents
+    """
+    try:
+        fo = open(path + f, 'r')
+        s = '\n'.join(fo.readlines())
+        fo.close()
+        return s
+    except FileNotFoundError:
+        return _TAG_FILE_ERROR
 
 
 def find_str(s: str, char: Union[str, List[str], Tuple[str, ...]]) -> int:
@@ -357,37 +390,6 @@ def simple_replace(s: str) -> str:
     return s
 
 
-def _load_file(f: str, path: str) -> str:
-    """
-    Try to load a file.
-
-    :param f: Filename
-    :param path: Path to look from
-    :return: File contents
-    """
-    try:
-        fo = open(path + f, 'r')
-        s = '\n'.join(fo.readlines())
-        fo.close()
-        return s
-    except FileNotFoundError:
-        return _TAG_FILE_ERROR
-
-
-def _os_listfolder() -> List[str]:
-    """
-    Returns the folders from the current path.
-
-    :return: Folder list
-    """
-    dirs = os.listdir('./')
-    folders = []
-    for k in dirs:
-        if os.path.isdir(k):
-            folders.append(k + '/')
-    return folders
-
-
 def process_inputs(s: str) -> str:
     """
     Process inputs, and try to copy the content.
@@ -511,6 +513,34 @@ def remove_commands_param_noargv(s: str) -> str:
                 new_s += s[i]
             elif i < tex_tags[k][1]:
                 pass
+            else:  # advance to other tag
+                k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def process_single_char_equations(s: str) -> str:
+    """
+    Process single char equations, removing the $ symbols.
+
+    :param s: Latex code
+    :return: Code without symbols
+    """
+    tex_tags = ut.find_tex_command_char(s, '$', True)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i < tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][1]:
+                if i == tex_tags[k][0] + 1 and tex_tags[k][1] - tex_tags[k][0] == 2:
+                    new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
             else:  # advance to other tag
                 k += 1
         else:

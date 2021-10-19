@@ -423,6 +423,7 @@ class PyDetexGUI(object):
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
         PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
+        PARSER_FONT_FORMAT['equation'] = FONT_TAGS['italic'] if font_format else ''
         PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
         PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
 
