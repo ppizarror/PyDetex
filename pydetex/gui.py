@@ -653,3 +653,7 @@ class PyDetexGUI(object):
                 title=self._cfg.lang('version_upgrade_title'),
                 message=self._cfg.lang('version_upgrade').format(latest)
             )
+
+
+if __name__ == '__main__':
+    PyDetexGUI().start()
