@@ -28,6 +28,7 @@ def simple(s: str) -> str:
     if len(s) == 0:
         return s
     s = '\n'.join(s.splitlines())
+    s = par.remove_comments(s)
     s = par.simple_replace(s)
     s = par.remove_common_tags(s)
     s = par.process_cite(s)

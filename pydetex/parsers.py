@@ -268,8 +268,10 @@ def remove_comments(s: str) -> str:
     :param s: Text
     :return: Text without comments
     """
-    symbol = '|COMMENTPERCENTAGESYMBOL|'
+    symbol = '⇱COMMENTPERCENTAGESYMBOL⇲'
+    newline_symbol = '⇱NEWLINESYMBOL⇲'
     s = s.replace('  ', ' ')
+    s = s.replace('\\\\', newline_symbol)
     s = s.replace('\\%', symbol)
     k = s.split('\n')
     for r in range(len(k)):
@@ -313,6 +315,7 @@ def remove_comments(s: str) -> str:
         w.pop()
     s = '\n'.join(w)
     s = s.replace(symbol, '%').strip()
+    s = s.replace(newline_symbol, '\\\\')
     return s
 
 

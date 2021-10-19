@@ -100,6 +100,14 @@ class ParserTest(BaseTest):
         self.assertEqual(par.remove_comments(s),
                          '\\section{Introduction}\n\nArchitectural floor plans are documents that result from an iterative design, planning, and engineering pro')
 
+        # Comment right to newline
+        s = 'Therefore, the scope was restricted to analyzing vector-based CAD files or retrieving individual elements ' \
+            'from plans with a simple format. \\\\% Therefore, the scope was restricted to analyze vector-based CAD files,' \
+            ' or retrieving individual elements from plans with a simple format. \\'
+        t = 'Therefore, the scope was restricted to analyzing vector-based CAD files or retrieving individual elements ' \
+            'from plans with a simple format. \\\\'
+        self.assertEqual(par.remove_comments(s), t)
+
     def test_simple_replace(self) -> None:
         """
         Test simple replace format.
