@@ -22,7 +22,7 @@ from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import messagebox
 
-from PyMultiDictionary import *
+from PyMultiDictionary import MultiDictionary, DICT_THESAURUS
 from typing import Callable, Tuple, Optional, Dict, Union, List, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
