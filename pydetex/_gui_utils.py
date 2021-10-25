@@ -17,6 +17,7 @@ __all__ = [
 ]
 
 import concurrent.futures
+import textwrap
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
@@ -41,6 +42,8 @@ class SettingsWindow(object):
     _cfg: '_Settings'
     _dict_langs: Dict[str, str]
     _dict_pipelines: Dict[str, str]
+    _pipeline_descr_title: 'tk.Label'
+    _pipeline_description: 'tk.Label'
     _var_check_repetition: 'tk.BooleanVar'
     _var_check_repetition_stemming: 'tk.BooleanVar'
     _var_check_repetition_stopwords: 'tk.BooleanVar'
@@ -128,9 +131,20 @@ class SettingsWindow(object):
 
         self._var_pipeline = tk.StringVar(self.root)
         self._var_pipeline.set(self._cfg.lang(cfg.get(cfg.CFG_PIPELINE, update=False)))  # default value
+        self._var_pipeline.trace('w', self._change_description_pipeline)
 
         pipe = tk.OptionMenu(f, self._var_pipeline, *list(self._dict_pipelines.keys()))
         pipe.pack(side=tk.LEFT)
+
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=0)
+        label_fg = '#999999' if ut.IS_OSX else '#666666'
+        label_pad = 5 if ut.IS_OSX else 15
+        self._pipeline_descr_title = make_label(f, w=70, h=40, side=tk.LEFT, fg=label_fg,  # bg='blue',
+                                                bd=0, relief=tk.SUNKEN, anchor=tk.E, pad=(0, label_pad, 5, 7))
+        self._pipeline_description = make_label(f, w=window_size[0] - 70, h=40, side=tk.LEFT, fg=label_fg,  # bg='red',
+                                                bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 5, 0), justify=tk.LEFT)
+        self._change_description_pipeline()
 
         # Check repetition
         f_repetition = tk.LabelFrame(f0, text=self._cfg.lang('cfg_words_repetition'), bd=1, relief=tk.GROOVE)
@@ -238,6 +252,19 @@ class SettingsWindow(object):
 
         # Update
         self.root.update()
+
+    # noinspection PyUnusedLocal
+    def _change_description_pipeline(self, *args) -> None:
+        """
+        Event raised if pipeline is changed.
+
+        :param args: Args
+        """
+        t = self._cfg.lang(f'{self._dict_pipelines[self._var_pipeline.get()]}_description')
+        # t = f'{self._var_pipeline.get()}: {t}'
+        t = '\n'.join(textwrap.wrap(t, 41 if ut.IS_OSX else 50))
+        self._pipeline_descr_title['text'] = f'{self._var_pipeline.get()}:'
+        self._pipeline_description['text'] = t
 
     def close(self) -> None:
         """

@@ -9,12 +9,12 @@ Defines parsers, which perform a single task for removal LaTex things.
 __all__ = [
     'find_str',
     'FONT_FORMAT_SETTINGS',
+    'process_chars_equations',
     'process_cite',
     'process_inputs',
     'process_labels',
     'process_quotes',
     'process_ref',
-    'process_single_char_equations',
     'remove_commands_char',
     'remove_commands_param',
     'remove_commands_param_noargv',
@@ -25,6 +25,8 @@ __all__ = [
 ]
 
 import os
+import pydetex.utils as ut
+
 from typing import List, Tuple, Union
 
 # Files
@@ -32,7 +34,9 @@ _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
 _TAG_FILE_ERROR = '|FILEERROR|'
 
-# Parser font format
+# Parser font format. This dict stores the font of some tex elements to be represented
+# in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
+# they are empty, and are updated in the PyDetexGUI._process() method
 FONT_FORMAT_SETTINGS = {
     'cite': '',
     'equation': '',
@@ -40,7 +44,7 @@ FONT_FORMAT_SETTINGS = {
     'ref': ''
 }
 
-import pydetex.utils as ut
+LANG_TEX_TAGS = ut.LangTexTextTags()
 
 
 def _find_str(s: str, char: str) -> int:
@@ -200,8 +204,8 @@ def process_cite(s: str) -> str:
                     if w not in cites.keys():
                         cites[w] = len(cites.keys()) + 1
                     c = c.replace(w, str(cites[w]))
-                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + '[' + c + ']' + FONT_FORMAT_SETTINGS['normal'] + s[
-                                                                                                            k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + '[' + c + ']' + \
+                    FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
 
 
@@ -268,24 +272,27 @@ def remove_comments(s: str) -> str:
     :param s: Text
     :return: Text without comments
     """
-    symbol = '⇱COMMENTPERCENTAGESYMBOL⇲'
+    comment_symbol = '⇱COMMENTPERCENTAGESYMBOL⇲'
     newline_symbol = '⇱NEWLINESYMBOL⇲'
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
-    s = s.replace('\\%', symbol)
+    s = s.replace('\\%', comment_symbol)
     k = s.split('\n')
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
-    line_merge = []
+    line_merge: List[bool] = []
     for r in range(len(k)):
         sp = k[r].split('%')
         k[r] = sp[0]  # Removes all comments from list
         line_merge.append(len(sp) > 1)
     line_merge.append(False)
+    line_merge2: List[bool] = line_merge.copy()
     k.append('')
     for r in range(len(k)):
         if line_merge[r] and not line_merge[r + 1] and k[r + 1] != '':
-            line_merge[r + 1] = True
+            line_merge2[r + 1] = True
+    for r in range(len(k)):
+        line_merge[r] = line_merge[r] or line_merge2[r]
     new_k = []
     j = 0
     merged_str = ''
@@ -314,7 +321,7 @@ def remove_comments(s: str) -> str:
     if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
     s = '\n'.join(w)
-    s = s.replace(symbol, '%').strip()
+    s = s.replace(comment_symbol, '%').strip()
     s = s.replace(newline_symbol, '\\\\')
     return s
 
@@ -401,11 +408,12 @@ def process_inputs(s: str) -> str:
     :return: Text copied with data
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
+    symbol = '⇱INPUTFILETAG⇲'
     tx = ''
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
-            return s.replace('|INPUTFILETAG', '\\input{')
+            return s.replace(symbol, '\\input{')
         m = 0
         for j in range(len(s)):
             if s[k + j] == '{':
@@ -432,12 +440,12 @@ def process_inputs(s: str) -> str:
                             break
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
-                        s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
+                        s = s[:k] + symbol + s[k + m + 1:]
                     else:
                         print('\tFile found and loaded')
                         s = s[:k] + tx + s[k + j + 1:]
                 else:
-                    s = s[:k] + '|INPUTFILETAG' + s[k + m + 1:]
+                    s = s[:k] + symbol + s[k + m + 1:]
                 break
 
 
@@ -470,11 +478,42 @@ def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_esca
     return new_s
 
 
-def remove_commands_param(s: str) -> str:
+def output_text_for_some_commands(s: str, lang: str) -> str:
+    """
+    Replaces the command for a particular text.
+
+    :param s: Latex string code
+    :param lang: Language tag of the code
+    :return: Text string or empty if error
+    """
+    # Stores the commands to be transformed
+    # 'command name': (argument number, argument is optional, LANG_TEX_TAGS tag to be replaced)
+    commands = {
+        'caption': (1, False, 'caption'),
+        'subfloat': (1, True, 'sub_figure_title')
+    }
+    new_s = ''
+
+    # Get the commands
+    cmd_args = ut.get_tex_commands_args(s)
+    for c in cmd_args:
+        if c[0] in commands.keys():
+            cmd_argnum, cmd_is_optional, cmd_tag = commands[c[0]]
+            if len(c) - 1 >= cmd_argnum:
+                if c[cmd_argnum][1] == cmd_is_optional:
+                    argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
+                    argv = remove_commands_param(argv, lang)  # Remove commands within the argument
+                    new_s += LANG_TEX_TAGS.get(lang, cmd_tag).format(argv)
+
+    return new_s
+
+
+def remove_commands_param(s: str, lang: str) -> str:
     """
     Remove all commands with params.
 
     :param s: String
+    :param lang: Language tag of the code
     :return: Code with removed chars
     """
     tex_tags = ut.find_tex_commands(s)
@@ -490,9 +529,25 @@ def remove_commands_param(s: str) -> str:
             elif i < tex_tags[k][3] + 1:
                 pass
             else:  # advance to other tag
+                new_s += output_text_for_some_commands(s[tex_tags[k][0]:tex_tags[k][3] + 2], lang)
                 k += 1
         else:
             new_s += s[i]
+
+    # Replace all command symbols
+    parenthesis_open_symbol = '⇱PARENTHESIS_OPEN_SYMBOL⇲'
+    parenthesis_close_symbol = '⇱PARENTHESIS_CLOSE_SYMBOL⇲'
+    # parenthesis_sq_open_symbol = '⇱PARENTHESIS_SQ_OPEN_SYMBOL⇲'
+    # parenthesis_sq_close_symbol = '⇱PARENTHESIS_SQ_CLOSE_SYMBOL⇲'
+    new_s = new_s.replace('\\{', parenthesis_open_symbol)
+    new_s = new_s.replace('\\}', parenthesis_close_symbol)
+    # new_s = new_s.replace('\\[', parenthesis_sq_open_symbol)
+    # new_s = new_s.replace('\\]', parenthesis_sq_close_symbol)
+    new_s = new_s.replace('{', '').replace('}', '')  # .replace('[', '').replace(']', '')
+    new_s = new_s.replace(parenthesis_open_symbol, '\\{')
+    new_s = new_s.replace(parenthesis_close_symbol, '\\}')
+    # new_s = new_s.replace(parenthesis_sq_open_symbol, '\\[')
+    # new_s = new_s.replace(parenthesis_sq_close_symbol, '\\]')
 
     return new_s
 
@@ -524,11 +579,13 @@ def remove_commands_param_noargv(s: str) -> str:
     return new_s
 
 
-def process_single_char_equations(s: str) -> str:
+def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
     """
     Process single char equations, removing the $ symbols.
 
     :param s: Latex code
+    :param lang: Language tag of the code
+    :param single_only: Only process single char equations. If False, replaces the equation by a text-label
     :return: Code without symbols
     """
     tex_tags = ut.find_tex_command_char(s, '$', True)
@@ -536,6 +593,7 @@ def process_single_char_equations(s: str) -> str:
         return s
     new_s = ''
     k = 0  # Moves through tags
+    eqn_number = 0
 
     for i in range(len(s)):
         if k < len(tex_tags):
@@ -545,7 +603,14 @@ def process_single_char_equations(s: str) -> str:
                 if i == tex_tags[k][0] + 1 and tex_tags[k][1] - tex_tags[k][0] == 2:
                     new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
             else:  # advance to other tag
+                if tex_tags[k][1] - tex_tags[k][0] > 2:
+                    if not single_only:
+                        new_s += LANG_TEX_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        eqn_number += 1
+                    else:
+                        new_s += s[tex_tags[k][0]:tex_tags[k][1] + 1]
                 k += 1
+
         else:
             new_s += s[i]
 
