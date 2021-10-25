@@ -66,3 +66,24 @@ class ParserTest(BaseTest):
         self.assertEqual(pip.strict(s), 'This is removed. Not epic [1]')
         s = 'This \\quoteepic{code removed!}is removed \\totally nice. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed nice. Not epic [1]')
+
+        s = """Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things and returns a friendly plain text!
+        The following is a excellent figure:
+        
+        \\begin{figure}
+          \centering
+            \\reflectbox{%
+              \includegraphics[width=0.5\\textwidth]{gull}}
+          \caption{A picture of the same gull
+                   looking the other way!}
+        \end{figure}
+        
+        well $nothing has happened really$ epic $\\alpha$
+        """
+        t = """Write or paste here your LaTeX code. It simply removes all tex-things and returns a friendly plain text!
+The following is a excellent figure:
+
+CAPTION: A picture of the same gull looking the other way!
+
+well EQUATION_0 epic α"""
+        self.assertEqual(pip.strict(s), t)
