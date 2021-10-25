@@ -380,7 +380,7 @@ class PyDetexGUI(object):
         # noinspection PyProtectedMember
         if self._cfg._last_opened_day_diff >= 7:
             self._root.after(1000, self._check_version_event)
-        self._root.after(1000, lambda: self._root.lift())
+        self._root.after(100, lambda: self._root.lift())
         self._root.mainloop()
 
     def _clear(self) -> None:
@@ -428,7 +428,7 @@ class PyDetexGUI(object):
         PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
 
         # Process the text and get the language
-        out = self.pipeline(text)
+        out = self.pipeline(text, self._detected_lang_tag)
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
@@ -514,7 +514,8 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = gui_ut.SettingsWindow((375, 427 if ut.IS_OSX else 448), self._cfg)
+        delta_h = 0 if ut.IS_OSX else 21
+        self._settings_window = gui_ut.SettingsWindow((375, 465 + delta_h), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
