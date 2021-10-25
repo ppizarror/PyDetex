@@ -8,11 +8,13 @@ Language utils.
 
 __all__ = [
     'check_repeated_words',
+    'complete_langs_dict',
     'detect_language',
     'get_diff_startend_word',
     'get_language_name',
     'get_phrase_from_cursor',
     'get_word_from_cursor',
+    'LangTexTextTags',
     'make_stemmer',
     'tokenize'
 ]
@@ -30,6 +32,7 @@ import os
 from PyMultiDictionary._utils import tokenize, get_language_name
 from nltk.stem import SnowballStemmer
 from typing import List, Tuple, Optional, Dict
+from warnings import warn
 
 # Resources path
 __actualpath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/'
@@ -58,6 +61,57 @@ _AVAILABLE_STEMMER_LANGS: Dict[str, str] = {
     'ru': 'russian',
     'sv': 'swedish'
 }
+
+
+class LangTexTextTags(object):
+    """
+    Stores the tex tags for several commands.
+    """
+
+    _lang: Dict[str, Dict[str, str]]
+
+    def __init__(self) -> None:
+        """
+        Constructor.
+        """
+        self._lang = {
+            'en': {
+                'caption': 'CAPTION: {0}\n',
+                'multi_char_equ': 'EQUATION_{0}',
+                'sub_figure_title': 'SUB FIGURE TITLE: {0}\n'
+            },
+        }
+        complete_langs_dict(self._lang)
+
+    def get(self, lang: str, tag: str) -> str:
+        """
+        Retrieves a language tag value.
+
+        :param lang: Language
+        :param tag: Tag to retrieve
+        :return: Value of the language's tag
+        """
+        if lang not in self._lang.keys():
+            lang = 'en'
+        if tag not in self._lang[lang].keys():
+            raise ValueError(f'Lang {lang} tag {tag} does not exist')
+        return self._lang[lang][tag]
+
+
+def complete_langs_dict(lang: Dict[str, Dict[str, str]]) -> None:
+    """
+    Completes a language dict. Assumes 'en' is the main language.
+
+    :param lang: Language dict
+    """
+    for k in lang.keys():
+        if k == 'en':
+            continue
+        for t in lang['en'].keys():
+            if t not in lang[k]:
+                error = f'Language entry "{t}" on lang "{k}" does not exist'
+                warn(error)
+                lang[k][t] = lang['en'][t]
 
 
 def detect_language(s: str) -> str:
