@@ -37,7 +37,8 @@ FONT_FORMAT_SETTINGS = {
     'cite': '',
     'equation': '',
     'normal': '',
-    'ref': ''
+    'ref': '',
+    'multi_char_equ': 'EQU_LABEL',
 }
 
 import pydetex.utils as ut
@@ -282,7 +283,7 @@ def remove_comments(s: str) -> str:
         k[r] = sp[0]  # Removes all comments from list
         line_merge.append(len(sp) > 1)
     line_merge.append(False)
-    k.append('')
+    k.append(' ')
     for r in range(len(k)):
         if line_merge[r] and not line_merge[r + 1] and k[r + 1] != '':
             line_merge[r + 1] = True
@@ -469,6 +470,28 @@ def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_esca
 
     return new_s
 
+def output_text_for_some_commands(inpt):
+    sub_fig_index = inpt.find('subfigure')
+    SUBFIG_LEN = 9
+    try:
+        if len(inpt) > sub_fig_index + SUBFIG_LEN and sub_fig_index != -1:
+            end_sub_fig_index = inpt[sub_fig_index+SUBFIG_LEN:].find(']')
+            if inpt[sub_fig_index+SUBFIG_LEN] == '[' and end_sub_fig_index != -1:
+                return 'SUB_FIGURE TITLE: ' + inpt[sub_fig_index+SUBFIG_LEN+1:sub_fig_index+SUBFIG_LEN + end_sub_fig_index] + '\n'
+
+        caption_index = inpt.find('caption')
+        CAPTION_LEN = 7
+
+        if caption_index != -1:
+            # end_caption_index = inpt[caption_index + CAPTION_LEN:].find('}')
+            if len(inpt) > caption_index + CAPTION_LEN and inpt[caption_index + CAPTION_LEN] == '{': # and end_caption_index != -1:
+                return 'CAPTION: ' + inpt[caption_index+CAPTION_LEN+1:] + '\n'
+        return ' '
+    except Exception as e:
+        print("found unexpected error when parsing", inpt)
+        return ''
+
+
 
 def remove_commands_param(s: str) -> str:
     """
@@ -490,6 +513,7 @@ def remove_commands_param(s: str) -> str:
             elif i < tex_tags[k][3] + 1:
                 pass
             else:  # advance to other tag
+                new_s += output_text_for_some_commands(s[tex_tags[k][0]:tex_tags[k][3]+1])
                 k += 1
         else:
             new_s += s[i]
@@ -546,6 +570,40 @@ def process_single_char_equations(s: str) -> str:
                     new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
             else:  # advance to other tag
                 k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def process_chars_equations(s: str) -> str:
+    """
+    Process single char equations, removing the $ symbols.
+
+    :param s: Latex code
+    :return: Code without symbols
+    """
+    tex_tags = ut.find_tex_command_char(s, '$', True)
+    if len(tex_tags) == 0:
+        return s
+    new_s = ''
+    k = 0  # Moves through tags
+
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i < tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][1]:
+                if i == tex_tags[k][0] + 1 and tex_tags[k][1] - tex_tags[k][0] == 2:
+                    new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
+                # else:
+                    # new_s += FONT_FORMAT_SETTINGS['equation'] + FONT_FORMAT_SETTINGS['multi_char_equ'] + FONT_FORMAT_SETTINGS['normal']
+            else:  # advance to other tag
+                # new_s += FONT_FORMAT_SETTINGS['multi_char_equ']
+                if tex_tags[k][1] - tex_tags[k][0] > 2:
+                    new_s += FONT_FORMAT_SETTINGS['multi_char_equ']
+                k += 1
+
         else:
             new_s += s[i]
 
