@@ -12,10 +12,11 @@ __all__ = [
     'apply_tag_tex_commands_no_argv',
     'find_tex_command_char',
     'find_tex_commands',
-    'find_tex_commands_noargv'
+    'find_tex_commands_noargv',
+    'get_tex_commands_args'
 ]
 
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 # Valid command chars
 VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -119,13 +120,13 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
 
              00000000001111111111222
              01234567890123456789012
-                     x       x x  x
+                     a       b c  d
     Example: This is \aCommand{nice}... => ((8,16,18,21), ...)
 
     :param s: Latex code
-    :return: Tuple if found codes
+    :return: Tuple if found codes (a, b, c, d, command continues)
     """
-    found = []
+    found: List = []
     is_cmd = False
     is_argv = False
     s += '_'
@@ -207,6 +208,32 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
         found[k] = tuple(found[k])
 
     return tuple(found)
+
+
+def get_tex_commands_args(s: str) -> Tuple[Tuple[Union[str, Tuple[str, bool]], ...], ...]:
+    """
+    Get all the arguments from a tex command. Each command argument has a boolean
+    indicating if that is optional or not.
+
+    Example: This is \aCommand[\label{}]{nice} and... => (('aCommand', ('\label{}', True), ('nice', False)), ...)
+
+    :param s: Latex code
+    :return: Arguments
+    """
+    tags = find_tex_commands(s)
+    commands = []
+    command = []
+    for t in tags:
+        a, b, c, d, cont = t
+        if len(command) == 0:
+            command.append(s[a + 1:b + 1].strip())
+        arg = s[c - 1:d + 2]
+        optional = '[' in arg
+        command.append((arg[1:-1], optional))
+        if not cont:
+            commands.append(tuple(command))
+            command = []
+    return tuple(commands)
 
 
 def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
