@@ -113,7 +113,7 @@ def button_text(s: str) -> str:
     :param s: Button's text
     :return: Text
     """
-    return s if IS_OSX else '  {0}  '.format(s)
+    return s if IS_OSX else f'  {s}  '
 
 
 def validate_int(p: str) -> bool:
