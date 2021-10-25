@@ -78,8 +78,13 @@ class LangTexTextTags(object):
             'en': {
                 'caption': 'CAPTION: {0}\n',
                 'multi_char_equ': 'EQUATION_{0}',
-                'sub_figure_title': 'SUB FIGURE TITLE: {0}\n'
+                'sub_figure_title': 'SUB_FIGURE TITLE: {0}\n'
             },
+            'ens': {
+                'caption': 'LEYENDA: {0}\n',
+                'multi_char_equ': 'ECUACIÓN_{0}',
+                'sub_figure_title': 'TÍTULO SUB_FIGURA: {0}\n'
+            }
         }
         complete_langs_dict(self._lang)
 
