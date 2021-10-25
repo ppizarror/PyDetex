@@ -104,8 +104,10 @@ class _LangManager(object):
                 'menu_cut': 'Cut',
                 'menu_paste': 'Paste',
                 'pipeline_simple': 'Simple',
+                'pipeline_simple_description': 'Removes common Tex commands, replaces cites and references',
                 'pipeline_strict': 'Strict',
-                'placeholder': 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, and returns a nice plain text!',
+                'pipeline_strict_description': 'An extension of the Simple pipeline which removes all Tex commands and environments',
+                'placeholder': 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things and returns a friendly plain text!',
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
                 'process_copy': 'Copy to clipboard',
@@ -189,7 +191,9 @@ class _LangManager(object):
                 'menu_cut': 'Cortar',
                 'menu_paste': 'Pegar',
                 'pipeline_simple': 'Simple',
+                'pipeline_simple_description': 'Elimina comandos Tex comunes, remplaza citas y referencias',
                 'pipeline_strict': 'Estricto',
+                'pipeline_strict_description': 'Una extensión del pipeline simple que elimina todos los entornos y comandos',
                 'placeholder': 'Escribe o pega aquí tu código \\texttt{LaTeX}. El programa simplemente eliminará todo lo relacionado a tex y retornará un lindo texto plano!',
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',
@@ -222,14 +226,7 @@ class _LangManager(object):
         }
 
         # Extend languages if not defined
-        for k in self._lang.keys():
-            if k == 'en':
-                continue
-            for t in self._lang['en'].keys():
-                if t not in self._lang[k]:
-                    error = f'Language entry "{t}" on lang "{k}" does not exist'
-                    warn(error)
-                    self._lang[k][t] = self._lang['en'][t]
+        ut.complete_langs_dict(self._lang)
 
     def get_available(self) -> List[str]:
         """
