@@ -620,7 +620,7 @@ class PyDetexGUI(object):
         self._dictionary_window.on_destroy = self._close_dictionary
         try:
             self._dictionary_window.root.update()
-        except AttributeError:
+        except (AttributeError, tk.TclError):
             pass
 
     def _close_dictionary(self) -> None:
