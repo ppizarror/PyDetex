@@ -103,6 +103,7 @@ class _LangManager(object):
                 'menu_copy': 'Copy',
                 'menu_cut': 'Cut',
                 'menu_paste': 'Paste',
+                'open_file': 'Open file',
                 'pipeline_simple': 'Simple',
                 'pipeline_strict': 'Strict',
                 'placeholder': 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things, and returns a nice plain text!',
@@ -115,6 +116,7 @@ class _LangManager(object):
                 'status_cursor': 'Cursor: {0}:{1}',
                 'status_cursor_input_focusout': 'Input not selected',
                 'status_cursor_input_focusout_min': 'Not selected',
+                'status_cursor_input_focusout_min2': 'No sel',
                 'status_cursor_min': 'Cur: {0}:{1}',
                 'status_cursor_null': 'Cursor: Empty',
                 'status_cursor_selected': 'Selected',
@@ -125,6 +127,7 @@ class _LangManager(object):
                 'status_cursor_selected_min': 'Sel',
                 'status_idle': 'Idle',
                 'status_processing': 'Processing',
+                'status_requesting_file': 'Requesting file',
                 'status_words': 'Words: {0}',
                 'status_writing': 'Writing',
                 'tag_repeated': 'repeated',
@@ -188,6 +191,7 @@ class _LangManager(object):
                 'menu_copy': 'Copiar',
                 'menu_cut': 'Cortar',
                 'menu_paste': 'Pegar',
+                'open_file': 'Abrir archivo',
                 'pipeline_simple': 'Simple',
                 'pipeline_strict': 'Estricto',
                 'placeholder': 'Escribe o pega aquí tu código \\texttt{LaTeX}. El programa simplemente eliminará todo lo relacionado a tex y retornará un lindo texto plano!',
@@ -200,6 +204,7 @@ class _LangManager(object):
                 'status_cursor': 'Cursor: {0}:{1}',
                 'status_cursor_input_focusout': 'Texto entrada no seleccionado',
                 'status_cursor_input_focusout_min': 'No seleccionado',
+                'status_cursor_input_focusout_min2': 'No sel',
                 'status_cursor_min': 'Cur: {0}:{1}',
                 'status_cursor_null': 'Cursor: Vacío',
                 'status_cursor_selected': 'Selección',
@@ -210,6 +215,7 @@ class _LangManager(object):
                 'status_cursor_selected_min': 'Sel',
                 'status_idle': 'Esperando',
                 'status_processing': 'Procesando',
+                'status_requesting_file': 'Esperando archivo',
                 'status_words': 'Palabras: {0}',
                 'status_writing': 'Escribiendo',
                 'tag_repeated': 'repetido',
@@ -301,8 +307,9 @@ class Settings(object):
         self.CFG_CHECK_REPETITION = 'CHECK_REPETITION'
         self.CFG_FONT_SIZE = 'FONT_SIZE'
         self.CFG_LANG = 'LANG'
-        self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_LAST_OPENED_DAY = 'LAST_OPENED_DAY'
+        self.CFG_LAST_OPENED_FOLDER = 'LAST_OPENED_FOLDER'
+        self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
@@ -327,6 +334,7 @@ class Settings(object):
             self.CFG_FONT_SIZE: (11, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
+            self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
