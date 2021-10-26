@@ -228,9 +228,9 @@ class PyDetexGUI(object):
         last_path_cfg = self._cfg.get(self._cfg.CFG_LAST_OPENED_FOLDER)
         initial_dir = '/' if not os.path.isdir(last_path_cfg) else last_path_cfg
         filename = filedialog.askopenfilename(
-            title='Open a file',
+            title=self._cfg.lang('open_file_select'),
             initialdir=initial_dir,
-            filetypes=[('Tex file', '*.tex')])
+            filetypes=[(self._cfg.lang('open_file_latex_file'), '*.tex')])
         if filename == '':
             return self._status_clear()
         filename_dir = os.path.dirname(filename)
