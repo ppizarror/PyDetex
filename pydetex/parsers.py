@@ -527,8 +527,8 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     # (command name, argument number, argument is optional, LANG_TEX_TAGS tag to be replaced, total commands)
     commands = [
         ('caption', 1, False, 'caption', 1),
-        ('insertimage', 3, False, 'figure_caption', 3),
-        ('insertimage', 4, False, 'figure_caption', 4),
+        ('insertimage', 3, False, 'figure_caption', 3),  # Format \insertimage{file}{args}{caption}
+        ('insertimage', 4, False, 'figure_caption', 4),  # Format \insertimage[opt. keywords]{file}{args}{caption}
         ('insertimageboxed', 4, False, 'figure_caption', 4),
         ('insertimageboxed', 5, False, 'figure_caption', 5),
         ('subfloat', 1, True, 'sub_figure_title', 1)
