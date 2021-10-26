@@ -55,7 +55,7 @@ Introduction
 
 A python application that removes LaTeX code and transforms it to plain text for
 grammar checking or other things. Multiple language support (15+), detects repeated
-words, offsers a dictionary (synonyms, antonyms, definitions), and many things more to come!
+words, offers a dictionary (synonyms, antonyms, definitions), and many things more to come!
 
 Install Instructions
 --------------------
@@ -85,7 +85,7 @@ Simply run this command anywhere to execute the application, or just import pyde
     :scale: 40%
     :align: center
 
-    Multiple options to configure. Check repeated words, highlight undetected code, among much more things to come!
+    Multiple options to configure: Check repeated words, highlight undetected code, or use different pipelines.
 
 TO-DOs
 ------

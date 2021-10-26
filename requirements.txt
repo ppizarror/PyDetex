@@ -1,7 +1,7 @@
 langdetect
 nltk
 outdated
-PyMultiDictionary>=1.0.5
+PyMultiDictionary>=1.1.0
 pyperclip
 requests
 tkmacosx

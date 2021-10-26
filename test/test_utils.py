@@ -273,9 +273,23 @@ class UtilsTest(BaseTest):
         s = 'This is \\f[1]{2} \\g{3} \\h[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
         _test(s, ('1', '2', '3', '6', '7', '9', '10', '11'))
 
+        # Test corrupt
+        _test('This is a \\caption {epic \\caption{nice} sad')
+
         # Check continues
         t = [k[4] for k in ut.find_tex_commands(s)]
         self.assertEqual(t, [True, False, False, True, False, True, True, False])
+
+    def test_get_tex_commands_args(self) -> None:
+        """
+        Test get tex command args.
+        """
+        s = 'This is a \\aCommand[optional]{argument} nice'
+        self.assertEqual(ut.get_tex_commands_args(s), (('aCommand', ('optional', True), ('argument', False)),))
+        s = 'This is a \\caption {epic} \\caption{nice} sad'
+        self.assertEqual(ut.get_tex_commands_args(s), (('caption', ('epic', False)), ('caption', ('nice', False))))
+        s = 'This is \\subfloat[a title]'
+        self.assertEqual(ut.get_tex_commands_args(s), (('subfloat', ('a title', True)),))
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
@@ -509,3 +523,12 @@ class UtilsTest(BaseTest):
 
         s = 'returns a nice'
         self.assertEqual(ut.get_phrase_from_cursor(s, 0, 9), 'returns a')
+
+    def test_lang_text_tex_langs(self) -> None:
+        """
+        Test the LangTexTextTags object.
+        """
+        lang = ut.LangTexTextTags()
+        self.assertEqual(lang.get('en', 'multi_char_equ'), 'EQUATION_{0}')
+        self.assertEqual(lang.get('it', 'multi_char_equ'), 'EQUATION_{0}')
+        self.assertRaises(ValueError, lambda: lang.get('en', 'unknown_tag'))

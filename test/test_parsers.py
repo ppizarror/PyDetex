@@ -163,20 +163,23 @@ class ParserTest(BaseTest):
         Remove commands.
         """
         s = 'This \\f{must be removed} yes!'
-        self.assertEqual(par.remove_commands_param(s), 'This  yes!')
-        self.assertEqual(par.remove_commands_param(''), '')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'This  yes!')
+        self.assertEqual(par.remove_commands_param('', 'en'), '')
         s = 'This \\texttt{\insertimage{nice}{1}}no'
-        self.assertEqual(par.remove_commands_param(s), 'This no')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'This no')
         s = '\\insertimage[\label{epic}]{delete this}'
-        self.assertEqual(par.remove_commands_param(s), '')
+        self.assertEqual(par.remove_commands_param(s, 'en'), '')
         s = 'Very\\insertimage[\label{epic}]{delete this} Epic'
-        self.assertEqual(par.remove_commands_param(s), 'Very Epic')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'Very Epic')
         s = 'Very\\insertimage[\label{epic}]{delete this} Epic \\not yes'
-        self.assertEqual(par.remove_commands_param(s), 'Very Epic \\not yes')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'Very Epic \\not yes')
         s = 'Ni\\f       {}ce'
-        self.assertEqual(par.remove_commands_param(s), 'Nice')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'Nice')
         s = 'Ni\\f   \n    [][][]{}ce'
-        self.assertEqual(par.remove_commands_param(s), 'Nice')
+        self.assertEqual(par.remove_commands_param(s, 'en'), 'Nice')
+        s = '\caption {thus, the analysis \{cannot\} be based \mycommand{only} using {nice} symbols}'
+        self.assertEqual(par.remove_commands_param(s, 'en').strip(),
+                         'CAPTION: thus, the analysis \{cannot\} be based  using nice symbols')
 
     def test_remove_commands_noargv(self) -> None:
         """
@@ -195,16 +198,43 @@ class ParserTest(BaseTest):
         s = '\\delete'
         self.assertEqual(par.remove_commands_param_noargv(s), '')
 
-    def test_process_single_char_equations(self) -> None:
+    def test_process_chars_equations(self) -> None:
         """
         Process single char equations.
         """
+        # Test single only
         s = 'This code does not \$contain any equation$!!'
-        self.assertEqual(par.process_single_char_equations(s), s)
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), s)
         s = 'This code must be $x$ processed!!'
-        self.assertEqual(par.process_single_char_equations(s), 'This code must be x processed!!')
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), 'This code must be x processed!!')
         s = par.simple_replace('$\\alpha$-shape is really nice')
-        self.assertEqual(par.process_single_char_equations(s), 'α-shape is really nice')
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), 'α-shape is really nice')
         s = 'Because $x$ no lower needs any other supervision as $y$ or $z$ in \$30 or \$40$$'
-        self.assertEqual(par.process_single_char_equations(s),
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True),
                          'Because x no lower needs any other supervision as y or z in \$30 or \$40')
+        s = 'This code $with several chars$ should not be removed'
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), s)
+
+        # Test multiple
+        s = 'This code $with several chars$ should not be removed'
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=False),
+                         'This code EQUATION_0 should not be removed')
+        s = 'This $equation 0$ and \$equation $equation 1$ must by replaced'
+        self.assertEqual(par.process_chars_equations(s, '-', single_only=False),
+                         'This EQUATION_0 and \$equation EQUATION_1 must by replaced')
+
+    def test_output_text_for_some_commands(self) -> None:
+        """
+        Test output text for some commands, like caption or subfigure.
+        """
+        s = """
+        \\begin{figure}
+            \centering
+            \\reflectbox{%
+            \includegraphics[width=0.5\textwidth]{gull}}
+            \caption   {A picture of the same gull\nlooking the other way!}
+            \caption[invalid]
+        \end{figure}
+        """
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(),
+                         'CAPTION: A picture of the same gull looking the other way!')
