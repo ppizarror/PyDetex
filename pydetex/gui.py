@@ -10,9 +10,11 @@ __all__ = ['PyDetexGUI']
 
 import concurrent.futures
 import tkinter as tk
+from tkinter import filedialog
 from tkinter import ttk
 from tkinter import messagebox
 
+import os
 import pyperclip
 import requests
 import string
@@ -102,6 +104,8 @@ class PyDetexGUI(object):
         f0 = tk.Frame(self._root, border=10, width=window_size[0], height=50)
         f0.pack()
         f0.pack_propagate(0)
+        tk.Button(f0, text=ut.button_text(self._cfg.lang('open_file')), command=self._open_file,
+                  relief=tk.GROOVE).pack(side=tk.LEFT)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
                   relief=tk.GROOVE).pack(side=tk.RIGHT)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('settings')), command=self._open_settings,
@@ -216,6 +220,31 @@ class PyDetexGUI(object):
         self._insert_in(self._cfg.lang('placeholder'))
         self._root.update()
 
+    def _open_file(self) -> None:
+        """
+        Opens a file.
+        """
+        self._status(self._cfg.lang('status_requesting_file'))
+        last_path_cfg = self._cfg.get(self._cfg.CFG_LAST_OPENED_FOLDER)
+        initial_dir = '/' if not os.path.isdir(last_path_cfg) else last_path_cfg
+        filename = filedialog.askopenfilename(
+            title=self._cfg.lang('open_file_select'),
+            initialdir=initial_dir,
+            filetypes=[(self._cfg.lang('open_file_latex_file'), '*.tex')])
+        if filename == '':
+            return self._status_clear()
+        filename_dir = os.path.dirname(filename)
+        self._cfg.set(self._cfg.CFG_LAST_OPENED_FOLDER, filename_dir)
+        try:
+            f = open(filename, 'r')
+            text = ''.join(f.readlines())
+            f.close()
+            self._clear()
+            self._insert_in(text)
+            self._cfg.save()
+        except PermissionError:
+            pass
+
     def _insert_in(self, text: str) -> None:
         """
         Insert text to in widget.
@@ -292,9 +321,12 @@ class PyDetexGUI(object):
         :param event: Event
         :return: Event
         """
-        w = self._cfg.get(self._cfg.CFG_WINDOW_SIZE)[0] > 750
-        fout = self._cfg.lang('status_cursor_input_focusout') if w else self._cfg.lang(
-            'status_cursor_input_focusout_min')
+        fout = self._cfg.lang('status_cursor_input_focusout')
+        w = self._cfg.get(self._cfg.CFG_WINDOW_SIZE)[0]
+        if w < 1000:
+            fout = self._cfg.lang('status_cursor_input_focusout_min')
+        if w < 750:
+            fout = self._cfg.lang('status_cursor_input_focusout_min2')
         self._status_bar_cursor['text'] = fout
         self._status_bar_cursor_sel['text'] = ''
         return event
