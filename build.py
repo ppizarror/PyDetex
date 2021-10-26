@@ -25,6 +25,10 @@ if mode == 'pyinstaller':
 
 elif mode == 'pip':
     if os.path.isdir('dist/pip'):
+        for k in os.listdir('dist'):
+            if '.egg' in k:
+                os.remove(f'dist/{k}')
+    if os.path.isdir('dist/pip'):
         for k in os.listdir('dist/pip'):
             if 'pydetex-' in k:
                 os.remove(f'dist/pip/{k}')
