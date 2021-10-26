@@ -77,11 +77,13 @@ class LangTexTextTags(object):
         self._lang = {
             'en': {
                 'caption': 'CAPTION: {0}\n',
+                'figure_caption': 'FIGURE_CAPTION: {0}\n',
                 'multi_char_equ': 'EQUATION_{0}',
                 'sub_figure_title': 'SUB_FIGURE TITLE: {0}\n'
             },
             'ens': {
                 'caption': 'LEYENDA: {0}\n',
+                'figure_caption': 'LEYENDA_FIGURA: {0}\n',
                 'multi_char_equ': 'ECUACIÓN_{0}',
                 'sub_figure_title': 'TÍTULO SUB_FIGURA: {0}\n'
             }
