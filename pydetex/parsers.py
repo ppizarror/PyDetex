@@ -549,7 +549,7 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
                         if argv != '':
                             argv = FONT_FORMAT_SETTINGS['tex_text_tag_content'] + argv  # Add format text
                             text = LANG_TEX_TEXT_TAGS.get(lang, cmd_tag).format(argv)
-                            new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal']
+                            new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal'] + '\n'
 
                         break
 

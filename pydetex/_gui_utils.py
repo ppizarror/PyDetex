@@ -618,12 +618,15 @@ class DictionaryGUI(object):
 
         :param word: Word
         """
-        self._text_out.clear()
-        self._word.delete(0, tk.END)
-        stemmer = ut.make_stemmer(self._lang)
-        if stemmer is not None and self._stemmer:
-            word = stemmer.stem(word)
-        self.root.after(50, lambda: self._word.insert(0, word))
+        try:
+            self._text_out.clear()
+            self._word.delete(0, tk.END)
+            stemmer = ut.make_stemmer(self._lang)
+            if stemmer is not None and self._stemmer:
+                word = stemmer.stem(word)
+            self.root.after(50, lambda: self._word.insert(0, word))
+        except tk.TclError:
+            pass
 
     def close(self) -> None:
         """
