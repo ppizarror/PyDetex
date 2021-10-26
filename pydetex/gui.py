@@ -458,6 +458,8 @@ class PyDetexGUI(object):
         PARSER_FONT_FORMAT['equation'] = FONT_TAGS['italic'] if font_format else ''
         PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
         PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
+        PARSER_FONT_FORMAT['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
+        PARSER_FONT_FORMAT['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
 
         # Process the text and get the language
         out = self.pipeline(text, self._detected_lang_tag)
