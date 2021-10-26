@@ -81,7 +81,7 @@ Simply run this command anywhere to execute the application, or just import pyde
 
     Tadada... !!! A simple GUI to process your LaTex, and paste into Grammarly? ＼(^o^)／
 
-.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/pydetex_windows.jpeg
+.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/pydetex_windows.png
     :scale: 40%
     :align: center
 
