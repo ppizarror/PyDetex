@@ -11,6 +11,7 @@ __all__ = [
     'FONT_FORMAT_SETTINGS',
     'process_chars_equations',
     'process_cite',
+    'process_cite_replace_tags',
     'process_inputs',
     'process_labels',
     'process_quotes',
@@ -32,7 +33,9 @@ from typing import List, Tuple, Union
 # Files
 _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
-_TAG_FILE_ERROR = '|FILEERROR|'
+_TAG_FILE_ERROR = '⇱FILEERROR⇲'
+_TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+_TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
 
 # Parser font format. This dict stores the font of some tex elements to be represented
 # in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
@@ -41,10 +44,77 @@ FONT_FORMAT_SETTINGS = {
     'cite': '',
     'equation': '',
     'normal': '',
-    'ref': ''
+    'ref': '',
+    'tex_text_tag': '',
+    'tex_text_tag_content': ''
 }
 
-LANG_TEX_TAGS = ut.LangTexTextTags()
+LANG_TEX_TEXT_TAGS = ut.LangTexTextTags()
+
+# Replace symbols
+REPLACE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
+    # Common
+    ('\\item', '-'),
+    ('--', '–'),
+    ('\\\\', '\n'),
+    ('\\ ', ' '),
+
+    # Letters
+    ('ﬁ', 'fi'),
+]
+REPLACE_UNIQUE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
+    # Greek
+    ('\\alpha', 'α'),
+    ('\\beta', 'β'),
+    ('\\chi', 'χ'),
+    ('\\delta', 'δ'),
+    ('\\Delta', 'Δ'),
+    ('\\epsilon', 'ϵ'),
+    ('\\eta', 'η'),
+    ('\\gamma', 'γ'),
+    ('\\Gamma', 'Γ'),
+    ('\\iota', 'ι'),
+    ('\\kappa', 'κ'),
+    ('\\lambda', 'λ'),
+    ('\\Lambda', 'Λ'),
+    ('\\mu', 'μ'),
+    ('\\nu', 'ν'),
+    ('\\omega', 'ω'),
+    ('\\Omega', 'Ω'),
+    ('\\phi', 'φ'),
+    ('\\Phi', 'Φ'),
+    ('\\pi', 'π'),
+    ('\\Pi', 'Π'),
+    ('\\psi', 'ψ'),
+    ('\\Psi', 'Ψ'),
+    ('\\rho', 'ρ'),
+    ('\\sigma', 'σ'),
+    ('\\Sigma', 'Σ'),
+    ('\\tau', 'τ'),
+    ('\\theta', 'θ'),
+    ('\\Theta', 'Θ'),
+    ('\\upsilon', 'υ'),
+    ('\\varepsilon', 'ε'),
+    ('\\varphi', 'φ'),
+    ('\\varrho', 'ϱ'),
+    ('\\vartheta', '𝜗'),
+    ('\\xi', 'ξ'),
+    ('\\Xi', 'Ξ'),
+    ('\\zeta', 'ζ'),
+
+    # Arrows
+    ('\\leftarrow', '←'),
+    ('\\rightarrow', '→'),
+    ('\\Leftarrow', '⇐'),
+    ('\\Rightarrow', '⇒'),
+    ('\\uparrow', '↑'),
+    ('\\downarrow', '↓'),
+    ('\\Uparrow', '⇑'),
+    ('\\Downarrow', '⇓'),
+    ('\\leftrightarrow', '↔'),
+    ('\\longleftarrow', '⟵'),
+    ('\\longrightarrow', '⟶')
+]
 
 
 def _find_str(s: str, char: str) -> int:
@@ -204,9 +274,23 @@ def process_cite(s: str) -> str:
                     if w not in cites.keys():
                         cites[w] = len(cites.keys()) + 1
                     c = c.replace(w, str(cites[w]))
-                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + '[' + c + ']' + \
-                    FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
+                    _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
+
+
+def process_cite_replace_tags(s: str, cite_format: Tuple[str, str] = ('[', ']')) -> str:
+    """
+    Replaces cite tags to an specific format.
+
+    :param s: String
+    :param cite_format: Cite format
+    :return: String with no cites
+    """
+    assert len(cite_format) == 2
+    s = s.replace(_TAG_OPEN_CITE, (cite_format[0]))
+    s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
+    return s
 
 
 def process_labels(s: str) -> str:
@@ -214,7 +298,7 @@ def process_labels(s: str) -> str:
     Removes labels.
 
     :param s: String
-    :return:
+    :return: String with no labels
     """
     while True:
         k = find_str(s, '\\label{')
@@ -333,70 +417,23 @@ def simple_replace(s: str) -> str:
     :param s: String
     :return: String with replaced items
     """
-    library: List[Tuple[str, str]] = [
-        # Common
-        ('\\item', '-'),
-        ('--', '–'),
-        ('\\\\', '\n'),
-        ('\\ ', ' '),
-
-        # Letters
-        ('ﬁ', 'fi'),
-
-        # Greek
-        ('\\alpha', 'α'),
-        ('\\beta', 'β'),
-        ('\\chi', 'χ'),
-        ('\\delta', 'δ'),
-        ('\\Delta', 'Δ'),
-        ('\\epsilon', 'ϵ'),
-        ('\\eta', 'η'),
-        ('\\gamma', 'γ'),
-        ('\\Gamma', 'Γ'),
-        ('\\iota', 'ι'),
-        ('\\kappa', 'κ'),
-        ('\\lambda', 'λ'),
-        ('\\Lambda', 'Λ'),
-        ('\\mu', 'μ'),
-        ('\\nu', 'ν'),
-        ('\\omega', 'ω'),
-        ('\\Omega', 'Ω'),
-        ('\\phi', 'φ'),
-        ('\\Phi', 'Φ'),
-        ('\\pi', 'π'),
-        ('\\Pi', 'Π'),
-        ('\\psi', 'ψ'),
-        ('\\Psi', 'Ψ'),
-        ('\\rho', 'ρ'),
-        ('\\sigma', 'σ'),
-        ('\\Sigma', 'Σ'),
-        ('\\tau', 'τ'),
-        ('\\theta', 'θ'),
-        ('\\Theta', 'Θ'),
-        ('\\upsilon', 'υ'),
-        ('\\varepsilon', 'ε'),
-        ('\\varphi', 'φ'),
-        ('\\varrho', 'ϱ'),
-        ('\\vartheta', '𝜗'),
-        ('\\xi', 'ξ'),
-        ('\\Xi', 'Ξ'),
-        ('\\zeta', 'ζ'),
-
-        # Arrows
-        ('\\leftarrow', '←'),
-        ('\\rightarrow', '→'),
-        ('\\Leftarrow', '⇐'),
-        ('\\Rightarrow', '⇒'),
-        ('\\uparrow', '↑'),
-        ('\\downarrow', '↓'),
-        ('\\Uparrow', '⇑'),
-        ('\\Downarrow', '⇓'),
-        ('\\leftrightarrow', '↔'),
-        ('\\longleftarrow', '⟵'),
-        ('\\longrightarrow', '⟶')
-    ]
-    for w in library:
+    for w in REPLACE_SYMBOLS_LIBRARY:
         s = s.replace(w[0], w[1])
+
+    # Replace unique symbols
+    s += ' '
+    invalid_tag = '⇱SYMBOL_REPLACE_TAG_TOKEN⇲'
+    for w in REPLACE_UNIQUE_SYMBOLS_LIBRARY:
+        word, repl = w
+        while True:
+            k = s.find(word)
+            if k == -1:
+                break
+            if s[k + len(word)] not in ut.VALID_TEX_COMMAND_CHARS:
+                s = s[0:k] + repl + s[k + len(word):]
+            else:
+                s = s[0:k + 1] + invalid_tag + s[k + 1:]
+    s = s[0:len(s) - 1].replace(invalid_tag, '')
     return s
 
 
@@ -487,23 +524,34 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     :return: Text string or empty if error
     """
     # Stores the commands to be transformed
-    # 'command name': (argument number, argument is optional, LANG_TEX_TAGS tag to be replaced)
-    commands = {
-        'caption': (1, False, 'caption'),
-        'subfloat': (1, True, 'sub_figure_title')
-    }
+    # (command name, argument number, argument is optional, LANG_TEX_TAGS tag to be replaced, total commands)
+    commands = [
+        ('caption', 1, False, 'caption', 1),
+        ('insertimage', 3, False, 'figure_caption', 3),  # Format \insertimage{file}{args}{caption}
+        ('insertimage', 4, False, 'figure_caption', 4),  # Format \insertimage[opt. keywords]{file}{args}{caption}
+        ('insertimageboxed', 4, False, 'figure_caption', 4),
+        ('insertimageboxed', 5, False, 'figure_caption', 5),
+        ('subfloat', 1, True, 'sub_figure_title', 1)
+    ]
     new_s = ''
 
     # Get the commands
     cmd_args = ut.get_tex_commands_args(s)
     for c in cmd_args:
-        if c[0] in commands.keys():
-            cmd_argnum, cmd_is_optional, cmd_tag = commands[c[0]]
-            if len(c) - 1 >= cmd_argnum:
-                if c[cmd_argnum][1] == cmd_is_optional:
-                    argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
-                    argv = remove_commands_param(argv, lang)  # Remove commands within the argument
-                    new_s += LANG_TEX_TAGS.get(lang, cmd_tag).format(argv)
+        for cmd in commands:
+            if c[0] == cmd[0]:
+                _, cmd_argnum, cmd_is_optional, cmd_tag, total_commands = cmd
+                if len(c) - 1 >= cmd_argnum and len(c) - 1 == total_commands:
+                    if c[cmd_argnum][1] == cmd_is_optional:
+                        argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
+                        argv = remove_commands_param(argv, lang)  # Remove commands within the argument
+                        argv = argv.strip()
+                        if argv != '':
+                            argv = FONT_FORMAT_SETTINGS['tex_text_tag_content'] + argv  # Add format text
+                            text = LANG_TEX_TEXT_TAGS.get(lang, cmd_tag).format(argv)
+                            new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal']
+
+                        break
 
     return new_s
 
@@ -529,7 +577,9 @@ def remove_commands_param(s: str, lang: str) -> str:
             elif i < tex_tags[k][3] + 1:
                 pass
             else:  # advance to other tag
-                new_s += output_text_for_some_commands(s[tex_tags[k][0]:tex_tags[k][3] + 2], lang)
+                sub_s = s[tex_tags[k][0]:tex_tags[k][3] + 2]
+                if not tex_tags[k][4]:  # If the command does not continue
+                    new_s += output_text_for_some_commands(sub_s, lang)
                 k += 1
         else:
             new_s += s[i]
@@ -537,17 +587,17 @@ def remove_commands_param(s: str, lang: str) -> str:
     # Replace all command symbols
     parenthesis_open_symbol = '⇱PARENTHESIS_OPEN_SYMBOL⇲'
     parenthesis_close_symbol = '⇱PARENTHESIS_CLOSE_SYMBOL⇲'
-    # parenthesis_sq_open_symbol = '⇱PARENTHESIS_SQ_OPEN_SYMBOL⇲'
-    # parenthesis_sq_close_symbol = '⇱PARENTHESIS_SQ_CLOSE_SYMBOL⇲'
+    parenthesis_sq_open_symbol = '⇱PARENTHESIS_SQ_OPEN_SYMBOL⇲'
+    parenthesis_sq_close_symbol = '⇱PARENTHESIS_SQ_CLOSE_SYMBOL⇲'
     new_s = new_s.replace('\\{', parenthesis_open_symbol)
     new_s = new_s.replace('\\}', parenthesis_close_symbol)
-    # new_s = new_s.replace('\\[', parenthesis_sq_open_symbol)
-    # new_s = new_s.replace('\\]', parenthesis_sq_close_symbol)
+    new_s = new_s.replace('\\[', parenthesis_sq_open_symbol)
+    new_s = new_s.replace('\\]', parenthesis_sq_close_symbol)
     new_s = new_s.replace('{', '').replace('}', '')  # .replace('[', '').replace(']', '')
     new_s = new_s.replace(parenthesis_open_symbol, '\\{')
     new_s = new_s.replace(parenthesis_close_symbol, '\\}')
-    # new_s = new_s.replace(parenthesis_sq_open_symbol, '\\[')
-    # new_s = new_s.replace(parenthesis_sq_close_symbol, '\\]')
+    new_s = new_s.replace(parenthesis_sq_open_symbol, '\\[')
+    new_s = new_s.replace(parenthesis_sq_close_symbol, '\\]')
 
     return new_s
 
@@ -605,7 +655,7 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
             else:  # advance to other tag
                 if tex_tags[k][1] - tex_tags[k][0] > 2:
                     if not single_only:
-                        new_s += LANG_TEX_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        new_s += LANG_TEX_TEXT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
                         eqn_number += 1
                     else:
                         new_s += s[tex_tags[k][0]:tex_tags[k][1] + 1]

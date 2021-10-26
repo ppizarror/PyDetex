@@ -13,7 +13,8 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
-    'get_tex_commands_args'
+    'get_tex_commands_args',
+    'VALID_TEX_COMMAND_CHARS'
 ]
 
 from typing import Tuple, Union, List

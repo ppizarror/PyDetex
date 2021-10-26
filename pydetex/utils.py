@@ -30,6 +30,7 @@ __all__ = [
     'split_tags',
     'syntax_highlight',
     'tokenize',
+    'VALID_TEX_COMMAND_CHARS',
     'validate_float',
     'validate_int'
 ]

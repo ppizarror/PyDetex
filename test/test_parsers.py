@@ -53,12 +53,15 @@ class ParserTest(BaseTest):
         """
         Removes cites from text.
         """
-        self.assertEqual(par.process_cite('hello \\cite{number1,number2} epic'), 'hello [1,2] epic')
-        self.assertEqual(par.process_cite('this is \\cite{number1} epic \\cite{number2} and \\cite{number1}'),
+        s = 'hello \\cite{number1,number2} epic'
+        self.assertEqual(par.process_cite_replace_tags(par.process_cite(s)),
+                         'hello [1,2] epic')
+        s = 'this is \\cite{number1} epic \\cite{number2} and \\cite{number1}'
+        self.assertEqual(par.process_cite_replace_tags(par.process_cite(s)),
                          'this is [1] epic [2] and [1]')
+        s = 'This is another example, \\cite*{Downson} et al. suggests that yes, but \\cite{Epic} not'
         self.assertEqual(
-            par.process_cite(
-                'This is another example, \\cite*{Downson} et al. suggests that yes, but \\cite{Epic} not'),
+            par.process_cite_replace_tags(par.process_cite(s)),
             'This is another example, [1] et al. suggests that yes, but [2] not')
 
     def test_process_ref(self) -> None:
@@ -115,6 +118,8 @@ class ParserTest(BaseTest):
         self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
         self.assertEqual(par.simple_replace('This is a example formula $\\alpha\longrightarrow\\beta+1$'),
                          'This is a example formula $α⟶β+1$')
+        self.assertEqual(par.simple_replace('This is \\alphaNot but \\alpha'),
+                         'This is \\alphaNot but α')
 
     def test_remove_common_tags(self) -> None:
         """
@@ -238,3 +243,15 @@ class ParserTest(BaseTest):
         """
         self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(),
                          'CAPTION: A picture of the same gull looking the other way!')
+
+        # Custom template
+        s = '\\insertimage[]{imagefile}{width=5cm}{}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), '')
+        s = '\\insertimage[]{imagefile}{width=5cm}{e}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: e')
+        s = '\\insertimage{imagefile}{width=5cm}{e}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: e')
+        s = '\\insertimageboxed{imagefile}{width=5cm}{0.5}{legend}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: legend')
+        s = 'Nice\n\insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model.}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: A U-Net model.')

@@ -459,9 +459,12 @@ class DictionaryGUI(object):
             syn, mean, _, ant = self._dictionary._langs[self._lang]
         except KeyError:
             syn, mean, ant = False, False, False
-        self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
-        self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
-        self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
+        try:
+            self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
+            self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
+            self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
+        except tk.TclError:
+            pass
 
     @staticmethod
     def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
