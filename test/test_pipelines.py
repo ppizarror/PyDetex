@@ -56,11 +56,16 @@ class ParserTest(BaseTest):
         self.assertEqual(pip.simple(s),
                          '- The academic databases\nWeb of Science, Scopus, IEEE/IET Xplore, Science Direct, ACM Digital Library, ASCE Library, ProQuest, and Springer were used for article search and selection. Also, online tools Semantic Scholar and Connected Papers were employed to retrieve similar articles powered by AI and visual graphs.\n\n- Keywords such as "floor plan analysis", "floor plan recognition and interpretation", "floor plan segmentation", "floor plan image", "apartment structure", "wall segmentation", "architectural plan vectorization", "room and wall retrieval", "apartment graph", "object detection in floor plans", and "parsing floor plan images" were used to search the databases. The search date period ranged from 1995 to \\fecha. For each article, its cross-references and similar works were also considered for revision.')
 
+        # Test replacers
+        s = 'This is a \\Thetamagic but also \\Theta is not or \\Theta\\Epic or \\Theta\n sad'
+        t = 'This is a \\Thetamagic but also Θ is not or Θ\Epic or Θ\nsad'
+        self.assertEqual(pip.simple(s), t)
+
     def test_strict(self) -> None:
         """
         Strict pipeline.
         """
-        s = 'This contains \\insertimage{\label{1}}{2}{3}commands, but must be removed!\\'
+        s = 'This contains \\insertimageanother{\label{1}}{2}{3}commands, but must be removed!\\'
         self.assertEqual(pip.strict(s), 'This contains commands, but must be removed!')
         s = 'This \\quoteepic{code removed!}is removed\\totally. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed. Not epic [1]')
@@ -86,4 +91,17 @@ The following is a excellent figure:
 CAPTION: A picture of the same gull looking the other way!
 
 well EQUATION_0 epic α"""
+        self.assertEqual(pip.strict(s), t)
+
+        s = """Yamasaki et al. \cite{Yamasaki2018} also presented a fully convolutional end-to-end FCN network to label pixels in apartment floor plans by performing a general semantic segmentation, ignoring spatial relations between elements and room boundary. The classified pixels from 12 classes formed a graph to model the structure and measure the structural similarity for apartment retrieval. % \\\\% 1
+        
+        \insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model which segments the walls from a rasterized floor plan image. Layer legend: \\textit{(yellow)} convolutional block, \\textit{(orange)} max-pool, \\textit{(blue)} up-sampling, and \\textit{(purple)} softmax.}% The encoder, comprised of several de-convolutions, captures the context and finer grain structures. Conversely, the decoder reconstruct the output segmented image, combining spatial information from the encoder.}
+        
+        % U-NET
+        A U-Net approach was introduced by Yang \eta \etal \cite{Yang2018}, alongside the pixel deconvolutional layers PixelDCL \cite{Gao2017} to avoid checkerboard artifacts while segmenting walls and doors. """
+        t = """Yamasaki et al. [1] also presented a fully convolutional end-to-end FCN network to label pixels in apartment floor plans by performing a general semantic segmentation, ignoring spatial relations between elements and room boundary. The classified pixels from 12 classes formed a graph to model the structure and measure the structural similarity for apartment retrieval.
+
+FIGURE_CAPTION: A U-Net model which segments the walls from a rasterized floor plan image. Layer legend: (yellow) convolutional block, (orange) max-pool, (blue) up-sampling, and (purple) softmax.
+
+A U-Net approach was introduced by Yang η [2], alongside the pixel deconvolutional layers PixelDCL [3] to avoid checkerboard artifacts while segmenting walls and doors."""
         self.assertEqual(pip.strict(s), t)
