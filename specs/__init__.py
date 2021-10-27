@@ -14,11 +14,14 @@ __all__ = [
     'get_exe',
     'get_pyz',
     'is_osx',
-    'is_win'
+    'is_win',
+    'save_zip'
 ]
 
-import platform
+from pydetex.version import ver
+from zipfile import ZipFile, ZIP_DEFLATED
 import os
+import platform
 
 print('Inializing specs')
 print(f'Current path: {os.getcwd()}')
@@ -29,7 +32,7 @@ is_osx = platform.system() == 'Darwin'
 is_win = platform.system() == 'Windows'
 
 # Configure
-app_name = 'PyDetex' if not is_osx else 'PyDetex_OSX'
+app_name = 'PyDetex' if not is_osx else 'PyDetex_macOS'
 app_icon = '../pydetex/res/icon.ico' if not is_osx else '../pydetex/res/icon.icns'
 block_cipher = None
 
@@ -46,6 +49,7 @@ excluded_binaries_contains = [
     'markupsafe',
     f'miktex{sep}bin',
     'pandas',
+    'pygame',
     # 'sklearn',
     f'zmq{sep}backend{sep}cython'
 ]
@@ -103,7 +107,6 @@ def get_analysis(analysis, toc):
     # Update its propeties
     print('Updating binaries')
     new_binaries = []
-    sk = []
     for i in a.binaries:
         ex_contains = False
         for j in excluded_binaries_contains:
@@ -213,3 +216,37 @@ def get_pyz(pyz, a):
     Return the PYZ object.
     """
     return pyz(a.pure, a.zipped_data, cipher=block_cipher)
+
+
+def save_zip(filename, output, in_folder='dist', out_folder='dist/out_zip'):
+    """
+    Save a zip file.
+    """
+    # Removes the old file
+    if not os.path.isdir(out_folder):
+        os.makedirs(out_folder)
+    for k in os.listdir(out_folder):
+        if output in k:
+            print(f'Removing old zip: {out_folder}/{k}')
+            os.remove(f'{out_folder}/{k}')
+
+    filename_full = f'{in_folder}/{filename}'
+    output = f'{out_folder}/{output}'
+    out_file = f'{output}_v{ver}.zip'
+    print(f'Compressing to: {out_file}')
+    with ZipFile(out_file, 'w', ZIP_DEFLATED) as zipf:
+        if os.path.isdir(filename_full):
+            zipdir(filename_full, zipf)
+        else:
+            zipf.write(filename_full, arcname=filename)
+
+
+def zipdir(path, ziph):
+    """
+    Zip a folder.
+    """
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file),
+                       os.path.relpath(os.path.join(root, file),
+                                       os.path.join(path, '..')))
