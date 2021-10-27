@@ -15,3 +15,6 @@ a = specs.get_analysis(Analysis, TOC)
 pyz = specs.get_pyz(PYZ, a)
 exe = specs.get_exe(EXE, pyz, a, True)
 app = specs.get_bundle(BUNDLE, exe)
+
+# Save to zip
+specs.save_zip('PyDetex_macOS.app', 'PyDetex.macOS')

@@ -8,3 +8,6 @@ if specs.is_osx: exit()
 a = specs.get_analysis(Analysis, TOC)
 pyz = specs.get_pyz(PYZ, a)
 exe = specs.get_exe(EXE, pyz, a, True)
+
+# Save to zip
+specs.save_zip('PyDetex.exe', 'PyDetex.Win64')
