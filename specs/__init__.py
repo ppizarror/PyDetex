@@ -9,19 +9,46 @@ Defines spec constructor.
 __all__ = [
     'block_cipher',
     'get_analysis',
+    'get_bundle',
     'get_collect',
     'get_exe',
-    'get_pyz'
+    'get_pyz',
+    'is_osx',
+    'is_win'
 ]
 
+import platform
 import os
 
+print('Inializing specs')
+print(f'Current path: {os.getcwd()}')
+print(f'Platform: {platform.system()}')
+
+sep = os.path.sep
+is_osx = platform.system() == 'Darwin'
+is_win = platform.system() == 'Windows'
+
 # Configure
-app_name = 'PyDetex'
-app_icon = '../pydetex/res/icon.ico'
+app_name = 'PyDetex' if not is_osx else 'PyDetex_OSX'
+app_icon = '../pydetex/res/icon.ico' if not is_osx else '../pydetex/res/icon.icns'
 block_cipher = None
 
-excluded_binaries = []
+excluded_binaries = [
+    'brotli._brotli',
+    'cryptography.hazmat.bindings._rust',
+    'libiconv.2.dylib',
+    'libicudata.68.dylib',
+    'libicuuc.68.dylib'
+]
+excluded_binaries_contains = [
+    # 'lib-dynload',
+    'lxml',
+    'markupsafe',
+    f'miktex{sep}bin',
+    'pandas',
+    # 'sklearn',
+    f'zmq{sep}backend{sep}cython'
+]
 excluded_modules = [
     'IPython',
     'matplotlib',
@@ -45,7 +72,7 @@ def _path(p: str, sz: int = 60) -> str:
     """
     Returns a parsed path.
     """
-    p = p.replace('\\', '/')
+    p = p.replace(sep, '/')
     if len(p) < sz:
         return p
     else:
@@ -76,9 +103,17 @@ def get_analysis(analysis, toc):
     # Update its propeties
     print('Updating binaries')
     new_binaries = []
+    sk = []
     for i in a.binaries:
-        if 'miktex\\bin' in i[1] or i[0] in excluded_binaries:
-            print(f'\tRemoved:\t{_path(i[1])} ({_file_sz(i[1])})')
+        ex_contains = False
+        for j in excluded_binaries_contains:
+            if j + sep in i[1]:
+                ex_contains = True
+                break
+        if 'sklearn' in i[0] and i[0] != 'sklearn.__check_build._check_build':
+            ex_contains = True
+        if ex_contains or i[0] in excluded_binaries:
+            print(f'\tRemoved:\t{_path(i[1])} ({_file_sz(i[1])}) <{i[0]}>')
             continue
         new_binaries.append(i)
     print('Program binaries')
@@ -93,6 +128,22 @@ def get_analysis(analysis, toc):
 
     # Return the analysis
     return a
+
+
+def get_bundle(bundle, exe):
+    """
+    Return a bundle for OSX.
+    """
+    return bundle(
+        exe,
+        name=app_name + '.app',
+        icon=app_icon,
+        bundle_identifier='com.ppizarror',
+        info_plist={
+            'NSPrincipalClass': 'NSApplication',
+            'NSAppleScriptEnabled': False
+        },
+    )
 
 
 def get_collect(collect, a, exe):

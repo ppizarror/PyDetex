@@ -2,6 +2,7 @@
 
 import sys; sys.path.insert(0, '.')
 import specs
+if specs.is_osx: exit()
 
 # Create the analysis
 a = specs.get_analysis(Analysis, TOC)
