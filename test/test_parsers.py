@@ -116,16 +116,14 @@ class ParserTest(BaseTest):
         Test simple replace format.
         """
         self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
+        self.assertEqual(par.simple_replace('This is an \\itemBad a'), 'This is an \\itemBad a')
         self.assertEqual(par.simple_replace('This is a example formula $\\alpha\longrightarrow\\beta+1$'),
                          'This is a example formula $α⟶β+1$')
         self.assertEqual(par.simple_replace('This is \\alphaNot but \\alpha'),
                          'This is \\alphaNot but α')
-
-    def test_remove_common_tags(self) -> None:
-        """
-        Remove common tags.
-        """
-        self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
+        self.assertEqual(par.simple_replace('This is a $x_0$ and $x^2$'), 'This is a $x₀$ and $x²$')
+        self.assertEqual(par.simple_replace('The following example $\\alpha_0+\\beta^2=0$'),
+                         'The following example $α₀+β²=0$')
 
     def test_process_quotes(self) -> None:
         """

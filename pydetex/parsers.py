@@ -28,6 +28,7 @@ __all__ = [
 import os
 import pydetex.utils as ut
 
+from pydetex._symbols import *
 from typing import List, Tuple, Union
 
 # Files
@@ -50,71 +51,6 @@ FONT_FORMAT_SETTINGS = {
 }
 
 LANG_TEX_TEXT_TAGS = ut.LangTexTextTags()
-
-# Replace symbols
-REPLACE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
-    # Common
-    ('\\item', '-'),
-    ('--', '–'),
-    ('\\\\', '\n'),
-    ('\\ ', ' '),
-
-    # Letters
-    ('ﬁ', 'fi'),
-]
-REPLACE_UNIQUE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
-    # Greek
-    ('\\alpha', 'α'),
-    ('\\beta', 'β'),
-    ('\\chi', 'χ'),
-    ('\\delta', 'δ'),
-    ('\\Delta', 'Δ'),
-    ('\\epsilon', 'ϵ'),
-    ('\\eta', 'η'),
-    ('\\gamma', 'γ'),
-    ('\\Gamma', 'Γ'),
-    ('\\iota', 'ι'),
-    ('\\kappa', 'κ'),
-    ('\\lambda', 'λ'),
-    ('\\Lambda', 'Λ'),
-    ('\\mu', 'μ'),
-    ('\\nu', 'ν'),
-    ('\\omega', 'ω'),
-    ('\\Omega', 'Ω'),
-    ('\\phi', 'φ'),
-    ('\\Phi', 'Φ'),
-    ('\\pi', 'π'),
-    ('\\Pi', 'Π'),
-    ('\\psi', 'ψ'),
-    ('\\Psi', 'Ψ'),
-    ('\\rho', 'ρ'),
-    ('\\sigma', 'σ'),
-    ('\\Sigma', 'Σ'),
-    ('\\tau', 'τ'),
-    ('\\theta', 'θ'),
-    ('\\Theta', 'Θ'),
-    ('\\upsilon', 'υ'),
-    ('\\varepsilon', 'ε'),
-    ('\\varphi', 'φ'),
-    ('\\varrho', 'ϱ'),
-    ('\\vartheta', '𝜗'),
-    ('\\xi', 'ξ'),
-    ('\\Xi', 'Ξ'),
-    ('\\zeta', 'ζ'),
-
-    # Arrows
-    ('\\leftarrow', '←'),
-    ('\\rightarrow', '→'),
-    ('\\Leftarrow', '⇐'),
-    ('\\Rightarrow', '⇒'),
-    ('\\uparrow', '↑'),
-    ('\\downarrow', '↓'),
-    ('\\Uparrow', '⇑'),
-    ('\\Downarrow', '⇓'),
-    ('\\leftrightarrow', '↔'),
-    ('\\longleftarrow', '⟵'),
-    ('\\longrightarrow', '⟶')
-]
 
 
 def _find_str(s: str, char: str) -> int:
@@ -423,7 +359,7 @@ def simple_replace(s: str) -> str:
     # Replace unique symbols
     s += ' '
     invalid_tag = '⇱SYMBOL_REPLACE_TAG_TOKEN⇲'
-    for w in REPLACE_UNIQUE_SYMBOLS_LIBRARY:
+    for w in REPLACE_TEX_COMMANDS_LIBRARY:
         word, repl = w
         while True:
             k = s.find(word)
@@ -432,9 +368,33 @@ def simple_replace(s: str) -> str:
             if s[k + len(word)] not in ut.VALID_TEX_COMMAND_CHARS:
                 s = s[0:k] + repl + s[k + len(word):]
             else:
-                s = s[0:k + 1] + invalid_tag + s[k + 1:]
+                s = s[0:k + 1] + invalid_tag + s[k + 1:]  # format ...\\INVALID_TAG...
     s = s[0:len(s) - 1].replace(invalid_tag, '')
-    return s
+
+    # Replace equation symbols
+    tex_tags = ut.find_tex_command_char(s, '$', True)
+    new_s = ''
+    k = 0  # Moves through tags
+    added_s = False
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i <= tex_tags[k][0]:
+                new_s += s[i]
+            elif i < tex_tags[k][1]:
+                if not added_s:
+                    k_s: str = s[tex_tags[k][0] + 1:tex_tags[k][1] + 1]
+                    # Replace
+                    for j in REPLACE_EQUATION_SYMBOLS_LIBRARY:
+                        k_s = k_s.replace(j[0], j[1])
+                    new_s += k_s
+                added_s = True
+            else:  # advance to other tag
+                k += 1
+                added_s = False
+        else:
+            new_s += s[i]
+
+    return new_s
 
 
 def process_inputs(s: str) -> str:
