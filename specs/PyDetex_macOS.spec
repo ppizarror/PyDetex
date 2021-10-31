@@ -6,7 +6,8 @@ import specs
 if specs.is_win: exit()
 
 try:
-    os.system(f'rm -rf dist/PyDetex_OSX.app')
+    os.system(f'rm -rf dist/PyDetex_macOS.app')
+    os.system(f'rm dist/PyDetex_macOS')
 except:
     pass
 

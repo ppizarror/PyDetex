@@ -39,9 +39,17 @@ block_cipher = None
 excluded_binaries = [
     'brotli._brotli',
     'cryptography.hazmat.bindings._rust',
+    'libc++.1.dylib',
     'libiconv.2.dylib',
     'libicudata.68.dylib',
-    'libicuuc.68.dylib'
+    'libicuuc.68.dylib',
+    'libncurses.6.dylib',
+    'libomp.dylib',
+    'libreadline.8.dylib',
+    'libtinfo.6.dylib',
+    'libtinfow.6.dylib',
+    'libxml2.2.dylib',
+    'libzmq.5.dylib'
 ]
 excluded_binaries_contains = [
     # 'lib-dynload',
