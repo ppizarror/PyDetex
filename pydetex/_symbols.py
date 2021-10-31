@@ -16,14 +16,14 @@ from typing import List, Tuple
 
 REPLACE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
     # Common
-    ('\\\\', '\n'),
     ('\\ ', ' '),
+    ('\\\\', '\n'),
 
     # Letters
     ('--', '–'),
     ('---', '—'),
     ('~', ' '),
-    ('ﬁ', 'fi'),
+    ('ﬁ', 'fi')
 ]
 
 REPLACE_EQUATION_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
@@ -32,6 +32,9 @@ REPLACE_EQUATION_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
     ('^+', '⁺'),
     ('^-', '⁻'),
     ('^0', '⁰'),
+    ('^1', '¹'),
+    ('^2', '²'),
+    ('^3', '³'),
     ('^4', '⁴'),
     ('^5', '⁵'),
     ('^6', '⁶'),
@@ -112,7 +115,7 @@ REPLACE_EQUATION_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
     ('_t', 'ₜ'),
     ('_u', 'ᵤ'),
     ('_v', 'ᵥ'),
-    ('_x', 'ₓ'),
+    ('_x', 'ₓ')
 ]
 
 REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
@@ -276,6 +279,7 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\invamp', '⅋'),
     ('\\Iota', 'Ι'),
     ('\\iota', 'ι'),
+    ('\\item', '-'),
     ('\\jmath', 'ȷ'),
     ('\\Join', '⨝'),
     ('\\Kappa', 'Κ'),
@@ -340,6 +344,11 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\mathbb{7}', '𝟟'),
     ('\\mathbb{8}', '𝟠'),
     ('\\mathbb{9}', '𝟡'),
+    ('\\mathbb{\\gamma}', 'ℽ'),
+    ('\\mathbb{\\Gamma}', 'ℿ'),
+    ('\\mathbb{\\pi}', 'ℼ'),
+    ('\\mathbb{\\Pi}', 'ℾ'),
+    ('\\mathbb{\\Sigma}', '⅀'),
     ('\\mathbb{A}', '𝔸'),
     ('\\mathbb{a}', '𝕒'),
     ('\\mathbb{B}', '𝔹'),
@@ -392,11 +401,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\mathbb{y}', '𝕪'),
     ('\\mathbb{Z}', 'ℤ'),
     ('\\mathbb{z}', '𝕫'),
-    ('\\mathbb{\\gamma}', 'ℽ'),
-    ('\\mathbb{\\Gamma}', 'ℿ'),
-    ('\\mathbb{\\pi}', 'ℼ'),
-    ('\\mathbb{\\Pi}', 'ℾ'),
-    ('\\mathbb{\\Sigma}', '⅀'),
     ('\\mathcal g', 'ℊ'),
     ('\\mathfrak C', 'ℭ'),
     ('\\mathfrak H', 'ℌ'),
@@ -436,8 +440,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\nleq', '≰'),
     ('\\nless', '≮'),
     ('\\nmid', '∤'),
-    ('\\notin', '∉'),
-    ('\\notni', '∌'),
     ('\\not\\approx', '≉'),
     ('\\not\\asymp', '≭'),
     ('\\not\\equiv', '≢'),
@@ -460,6 +462,8 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\not\\vDash', '⊭'),
     ('\\not\\Vdash', '⊮'),
     ('\\not\\VDash', '⊯'),
+    ('\\notin', '∉'),
+    ('\\notni', '∌'),
     ('\\nparallel', '∦'),
     ('\\nprec', '⊀'),
     ('\\nrightarrow', '↛'),
@@ -660,6 +664,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\Xi', 'Ξ'),
     ('\\xi', 'ξ'),
     ('\\Yup', '⅄'),
-    ('\\Zeta', 'Ζ'),
     ('\\zeta', 'ζ'),
+    ('\\Zeta', 'Ζ')
 ]
