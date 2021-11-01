@@ -104,7 +104,7 @@ TO-DOs
 Currently, many things must be improved:
 
 - Learn \def and replace properly
-- Support for environments, such as *figure*, *equation*, *table*, etc..
+- Support for environments, such as *figure*, *table*, etc..
 
 
 Author
