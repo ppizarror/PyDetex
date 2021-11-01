@@ -76,16 +76,18 @@ class LangTexTextTags(object):
         """
         self._lang = {
             'en': {
-                'caption': 'CAPTION: {0}',
-                'figure_caption': 'FIGURE_CAPTION: {0}',
+                'caption': 'CAPTION: {0}{1}',
+                'figure_caption': 'FIGURE_CAPTION: {0}{1}',
+                'link': 'LINK: {0}{1}',
                 'multi_char_equ': 'EQUATION_{0}',
-                'sub_figure_title': 'SUB_FIGURE TITLE: {0}'
+                'sub_figure_title': 'SUB_FIGURE TITLE: {0}{1}'
             },
             'ens': {
-                'caption': 'LEYENDA: {0}',
-                'figure_caption': 'LEYENDA_FIGURA: {0}',
+                'caption': 'LEYENDA: {0}{1}',
+                'figure_caption': 'LEYENDA_FIGURA: {0}{1}',
+                'link': 'ENLACE: {0}{1}',
                 'multi_char_equ': 'ECUACIÓN_{0}',
-                'sub_figure_title': 'TÍTULO SUB_FIGURA: {0}'
+                'sub_figure_title': 'TÍTULO SUB_FIGURA: {0}{1}'
             }
         }
         complete_langs_dict(self._lang)

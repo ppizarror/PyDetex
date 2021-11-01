@@ -22,7 +22,8 @@ __all__ = [
     'remove_comments',
     'remove_common_tags',
     'remove_tag',
-    'simple_replace'
+    'simple_replace',
+    'unicode_chars_equations'
 ]
 
 import os
@@ -388,7 +389,7 @@ def simple_replace(s: str) -> str:
                         k_s = k_s.replace(j[0], j[1])
                     new_s += k_s
                 added_s = True
-            else:  # advance to other tag
+            else:  # Advance to other tag
                 k += 1
                 added_s = False
         else:
@@ -467,7 +468,7 @@ def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_esca
                 new_s += s[i]
             elif i < tex_tags[k][1]:
                 pass
-            else:  # advance to other tag
+            else:  # Advance to other tag
                 k += 1
         else:
             new_s += s[i]
@@ -484,14 +485,22 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     :return: Text string or empty if error
     """
     # Stores the commands to be transformed
-    # (command name, argument number, argument is optional, LANG_TEX_TAGS tag to be replaced, total commands)
-    commands = [
-        ('caption', 1, False, 'caption', 1),
-        ('insertimage', 3, False, 'figure_caption', 3),  # Format \insertimage{file}{args}{caption}
-        ('insertimage', 4, False, 'figure_caption', 4),  # Format \insertimage[opt. keywords]{file}{args}{caption}
-        ('insertimageboxed', 4, False, 'figure_caption', 4),
-        ('insertimageboxed', 5, False, 'figure_caption', 5),
-        ('subfloat', 1, True, 'sub_figure_title', 1)
+    # (
+    #   command name,
+    #   [(argument number, argument is optional), ...],
+    #   tag to be replaced,
+    #   total commands,
+    #   add new line
+    # )
+    # All *arguments will be formatted using the tag
+    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, bool]] = [
+        ('caption', [(1, False)], LANG_TEX_TEXT_TAGS.get(lang, 'caption'), 1, True),
+        ('href', [(2, False)], LANG_TEX_TEXT_TAGS.get(lang, 'link'), 2, False),
+        ('insertimage', [(3, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 3, True),
+        ('insertimage', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
+        ('insertimageboxed', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
+        ('insertimageboxed', [(5, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 5, True),
+        ('subfloat', [(1, True)], LANG_TEX_TEXT_TAGS.get(lang, 'sub_figure_title'), 1, True)
     ]
     new_s = ''
 
@@ -500,16 +509,23 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     for c in cmd_args:
         for cmd in commands:
             if c[0] == cmd[0]:
-                _, cmd_argnum, cmd_is_optional, cmd_tag, total_commands = cmd
-                if len(c) - 1 >= cmd_argnum and len(c) - 1 == total_commands:
-                    if c[cmd_argnum][1] == cmd_is_optional:
-                        argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
-                        argv = remove_commands_param(argv, lang)  # Remove commands within the argument
-                        argv = argv.strip()
-                        if argv != '':
-                            argv = FONT_FORMAT_SETTINGS['tex_text_tag_content'] + argv  # Add format text
-                            text = LANG_TEX_TEXT_TAGS.get(lang, cmd_tag).format(argv)
-                            new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal'] + '\n'
+                _, cmd_args, cmd_tag, total_commands, cmd_newline = cmd
+                if len(c) - 1 == total_commands:
+                    args = []
+                    for j in cmd_args:
+                        cmd_argnum, cmd_is_optional = j
+                        if len(c) - 1 >= j[0] >= 0 and c[cmd_argnum][1] == cmd_is_optional:
+                            argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
+                            argv = remove_commands_param(argv, lang)  # Remove commands within the argument
+                            argv = argv.strip()
+                            if argv != '':
+                                args.append(argv)
+                    if len(args) == len(cmd_args):
+                        args.insert(0, FONT_FORMAT_SETTINGS['tex_text_tag_content'])  # Add format text
+                        text = cmd_tag.format(*args)
+                        new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal']
+                        if cmd_newline:
+                            new_s += '\n'
 
                         break
 
@@ -536,7 +552,7 @@ def remove_commands_param(s: str, lang: str) -> str:
                 new_s += s[i]
             elif i < tex_tags[k][3] + 1:
                 pass
-            else:  # advance to other tag
+            else:  # Advance to other tag
                 sub_s = s[tex_tags[k][0]:tex_tags[k][3] + 2]
                 if not tex_tags[k][4]:  # If the command does not continue
                     new_s += output_text_for_some_commands(sub_s, lang)
@@ -581,8 +597,40 @@ def remove_commands_param_noargv(s: str) -> str:
                 new_s += s[i]
             elif i < tex_tags[k][1]:
                 pass
-            else:  # advance to other tag
+            else:  # Advance to other tag
                 k += 1
+        else:
+            new_s += s[i]
+
+    return new_s
+
+
+def unicode_chars_equations(s: str) -> str:
+    """
+    Converts all $equations$ to unicode.
+
+    :param s: Latex code
+    :return: Latex with unicode converted
+    """
+    # Replace equation symbols
+    tex_tags = ut.find_tex_command_char(s, '$', True)
+    new_s = ''
+    k = 0  # Moves through tags
+    added_s = False
+    for i in range(len(s)):
+        if k < len(tex_tags):
+            if i <= tex_tags[k][0]:
+                new_s += s[i]
+                if i == tex_tags[k][0] and tex_tags[k][1] - tex_tags[k][0] == 1:
+                    k += 1
+            elif i < tex_tags[k][1]:
+                if not added_s:
+                    k_s: str = s[tex_tags[k][0] + 1:tex_tags[k][1] + 1]
+                    new_s += ut.tex_to_unicode(k_s)
+                added_s = True
+            else:  # Advance to other tag
+                k += 1
+                added_s = False
         else:
             new_s += s[i]
 
@@ -612,7 +660,7 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
             elif i < tex_tags[k][1]:
                 if i == tex_tags[k][0] + 1 and tex_tags[k][1] - tex_tags[k][0] == 2:
                     new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
-            else:  # advance to other tag
+            else:  # Advance to other tag
                 if tex_tags[k][1] - tex_tags[k][0] > 2:
                     if not single_only:
                         new_s += LANG_TEX_TEXT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
