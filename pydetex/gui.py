@@ -287,9 +287,7 @@ class PyDetexGUI(object):
             self._root.after_cancel(self._detect_language_event_id)
 
         if event.char in string.printable and event.char != '':
-            self._status(self._cfg.lang('status_writing'), True)
-        else:
-            self._status_clear()
+            self._status(self._cfg.lang('status_writing'), True, 1000)
         self._detect_language_event_id = self._root.after(100, self._detect_language)
         self._process_cursor_in(event)
         return event
