@@ -29,6 +29,7 @@ __all__ = [
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
+    'tex_to_unicode',
     'tokenize',
     'VALID_TEX_COMMAND_CHARS',
     'validate_float',

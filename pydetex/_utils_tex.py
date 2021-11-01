@@ -14,10 +14,14 @@ __all__ = [
     'find_tex_commands',
     'find_tex_commands_noargv',
     'get_tex_commands_args',
+    'tex_to_unicode',
     'VALID_TEX_COMMAND_CHARS'
 ]
 
-from typing import Tuple, Union, List
+import os
+import re
+
+from typing import Tuple, Union, List, Dict, Optional, Any
 
 # Valid command chars
 VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -25,6 +29,19 @@ VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'
                            'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
                            'W', 'X', 'Y', 'Z']
+
+# Tex to unicode
+_TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
+    'latex_symbols': [],
+    'subscripts': {},
+    'superscripts': {},
+    'textbb': {},
+    'textbf': {},
+    'textcal': {},
+    'textfrak': {},
+    'textit': {},
+    'textmono': {}
+}
 
 
 def find_tex_command_char(
@@ -391,3 +408,151 @@ def apply_tag_tex_commands_no_argv(
             new_s += s[i]
 
     return new_s
+
+
+def _convert_single_symbol(s: str) -> Optional[str]:
+    """
+    If s is just a latex code 'alpha' or 'beta' it converts it to its
+    unicode representation.
+
+    :param s:
+    :return:
+    """
+    ss = '\\' + s
+    for (code, val) in _TEX_TO_UNICODE['latex_symbols']:
+        if code == ss:
+            return val
+    return None
+
+
+def convert_latex_symbols(s: str) -> str:
+    """
+    Replace each '\alpha', '\beta' and similar latex symbols with
+    their unicode representation.
+
+    :param s: Text
+    :return: Replaced symbols
+    """
+    for (code, val) in _TEX_TO_UNICODE['latex_symbols']:
+        s = s.replace(code, val)
+    return s
+
+
+def _process_starting_modifiers(s: str) -> str:
+    """
+    If s start with 'it ', 'cal ', etc. then make the whole string
+    italic, calligraphic, etc.
+
+    :param s: Text
+    :return: Modified text
+    """
+    s = re.sub('^bb ', r'\\bb{', s)
+    s = re.sub('^bf ', r'\\bf{', s)
+    s = re.sub('^it ', r'\\it{', s)
+    s = re.sub('^cal ', r'\\cal{', s)
+    s = re.sub('^frak ', r'\\frak{', s)
+    s = re.sub('^mono ', r'\\mono{', s)
+    return s
+
+
+def _apply_all_modifiers(s: str) -> str:
+    """
+    Applies all modifiers.
+
+    :param s: Text
+    :return: Text with replaced chars
+    """
+    s = _apply_modifier(s, '^', _TEX_TO_UNICODE['superscripts'])
+    s = _apply_modifier(s, '_', _TEX_TO_UNICODE['subscripts'])
+    s = _apply_modifier(s, '\\bb', _TEX_TO_UNICODE['textbb'])
+    s = _apply_modifier(s, '\\bf', _TEX_TO_UNICODE['textbf'])
+    s = _apply_modifier(s, '\\it', _TEX_TO_UNICODE['textit'])
+    s = _apply_modifier(s, '\\cal', _TEX_TO_UNICODE['textcal'])
+    s = _apply_modifier(s, '\\frak', _TEX_TO_UNICODE['textfrak'])
+    s = _apply_modifier(s, '\\mono', _TEX_TO_UNICODE['textmono'])
+    return s
+
+
+def _apply_modifier(text: str, modifier: str, d: Dict[Any, str]) -> str:
+    """
+    This will search for the ^ signs and replace the next
+    digit or (digits when {} is used) with its/their uppercase representation.
+
+    :param text: Text
+    :param modifier: Modifier command
+    :param d: Dict to look upon
+    :return: New text with replaced text.
+    """
+    text = text.replace(modifier, "^")
+    newtext = ""
+    mode_normal, mode_modified, mode_long = range(3)
+    mode = mode_normal
+    for ch in text:
+        if mode == mode_normal and ch == '^':
+            mode = mode_modified
+            continue
+        elif mode == mode_modified and ch == '{':
+            mode = mode_long
+            continue
+        elif mode == mode_modified:
+            newtext += d.get(ch, ch)
+            mode = mode_normal
+            continue
+        elif mode == mode_long and ch == '}':
+            mode = mode_normal
+            continue
+
+        if mode == mode_normal:
+            newtext += ch
+        else:
+            newtext += d.get(ch, ch)
+    return newtext
+
+
+def __load_unicode() -> None:
+    """
+    Loads the unicode data.
+    """
+    respath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/res/u_'
+    for j in _TEX_TO_UNICODE.keys():
+        if j == 'latex_symbols':
+            with open(f'{respath}symbols.txt', "r") as f:
+                line = f.readline()
+                while line != "":
+                    words = line.split()
+                    code = words[0]
+                    val = words[1]
+                    _TEX_TO_UNICODE['latex_symbols'].append((code, val))
+                    line = f.readline()
+        else:
+            with open(f'{respath}{j}.txt', 'r') as f:
+                line = f.readline()
+                while line != '':
+                    words = line.split()
+                    code = words[0]
+                    val = words[1]
+                    _TEX_TO_UNICODE[j][code] = val
+                    line = f.readline()
+
+
+def tex_to_unicode(s: str) -> str:
+    """
+    Transforms tex code to unicode.
+
+    :param s: Latex code
+    :return: Text in unicode
+    """
+    ss = _convert_single_symbol(s)
+    if ss is not None:
+        return ss
+
+    s = convert_latex_symbols(s)
+    s = _process_starting_modifiers(s)
+    s = _apply_all_modifiers(s)
+    return s
+
+
+# Loads the unicode data
+__load_unicode()
+
+print(tex_to_unicode('$\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7$'))

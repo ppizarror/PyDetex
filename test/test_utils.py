@@ -532,3 +532,19 @@ class UtilsTest(BaseTest):
         self.assertEqual(lang.get('en', 'multi_char_equ'), 'EQUATION_{0}')
         self.assertEqual(lang.get('it', 'multi_char_equ'), 'EQUATION_{0}')
         self.assertRaises(ValueError, lambda: lang.get('en', 'unknown_tag'))
+
+    def test_tex_to_unicode(self) -> None:
+        """
+        Test tex to unicode.
+        """
+        s = '\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7'
+        self.assertEqual(ut.tex_to_unicode(s), 'α² ⋅ α²⁺³ ≡ α⁷')
+        s = '\itA \in \\bbR^{nxn}, \\bfv \in \\bbR^n, \lambda_i \in \\bbR: \itA\\bfv = \lambda_i\\bfv'
+        self.assertEqual(ut.tex_to_unicode(s), '𝐴 ∈ ℝⁿˣⁿ, 𝐯 ∈ ℝⁿ, λᵢ ∈ ℝ: 𝐴𝐯 = λᵢ𝐯')
+        s = '\\bf{boldface} \it{italic} \\bb{blackboard} \cal{calligraphic} \\frak{fraktur} \mono{monospace}'
+        self.assertEqual(ut.tex_to_unicode(s),
+                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞 𝑖𝑡𝑎𝑙𝑖𝑐 𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕 𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬 𝔣𝔯𝔞𝔨𝔱𝔲𝔯 𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
+        s = 'bf This is all boldface'
+        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬 𝐢𝐬 𝐚𝐥𝐥 𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
+        s = '\\frac{a}{b}'
+        self.assertEqual(ut.tex_to_unicode(s), s)
