@@ -57,6 +57,9 @@ A python application that removes LaTeX code and transforms it to plain text for
 grammar checking or other things. Multiple language support (15+), detects repeated
 words, offers a dictionary (synonyms, antonyms, definitions), and many things more to come!
 
+Comprehensive documentation for the latest version (if you plan to use the API)
+is available at https://pydetex.readthedocs.io
+
 Install Instructions
 --------------------
 
@@ -77,11 +80,17 @@ Simply run this command anywhere to execute the application, or just import pyde
 
     $> python3 -m pydetex.gui
 
-.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_basic.png
+.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_simple.png
     :scale: 40%
     :align: center
 
-    Tadada... !!! A simple GUI to process your LaTex, and paste into Grammarly? ＼(^o^)／
+    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste into Grammarly? ＼(^o^)／
+
+.. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_strict.png
+    :scale: 40%
+    :align: center
+
+    **(Strict Pipeline)** The strict pipeline removes all commands, or replaces by some known tags.
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/pydetex_windows.png
     :scale: 40%
