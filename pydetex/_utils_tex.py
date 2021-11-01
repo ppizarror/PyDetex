@@ -13,6 +13,7 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'find_tex_environments',
     'get_tex_commands_args',
     'TEX_COMMAND_CHARS',
     'TEX_EQUATION_CHARS',
@@ -203,7 +204,7 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
              00000000001111111111222
              01234567890123456789012
                      a       b c  d
-    Example: This is \aCommand{nice}... => ((8,16,18,21), ...)
+    Example: This is \aCommand{nice}... => ((8, 16, 18, 21), ...)
 
     :param s: Latex string code
     :return: Tuple if found codes (a, b, c, d, command continues)
@@ -290,6 +291,68 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
         found[k] = tuple(found[k])
 
     return tuple(found)
+
+
+def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, int, int], ...]:
+    """
+    Find all tex commands within a code.
+
+             0000000000111111111122222222223333333333
+             0123456789012345678901234567890123456789
+                     a           b        c         d
+    Example: This is \begin{nice}[cmd]my...\end{nice} => (('nice', 8, 20, 29, 39, 'parentenv'), ...)
+
+    :param s: Latex string code
+    :return: Tuple if found environment (env_name, a, b, c, d, parent_env, env_depth, env_item_depth)
+    """
+
+    def _env_common(e: str) -> str:
+        """
+        Return the common environment for a given name.
+
+        :param e: Environment name
+        :return: Common environment
+        """
+        if 'itemize' in e or 'enumerate' in e:
+            return 'item_'
+        return ''
+
+    tags = find_tex_commands(s)
+    envs = []
+    env: Dict[str, List[Tuple[int, int, str, int]]] = {}
+    last_env = ''
+    env_depth = 0
+    cmds_cont = []
+    env_depths: Dict[str, int] = {}
+    for t in tags:
+        a, b, c, d, _ = t
+        if 'begin' in s[a:d]:
+            env_name = s[c:d + 1]
+            c_env_name = _env_common(env_name)  # Common environment name
+            if c_env_name not in env_depths.keys():
+                env_depths[c_env_name] = 0
+            else:
+                env_depths[c_env_name] += 1
+            env_i = (a, d + 2, last_env, env_depth)
+            # print(s[a:d + 1], t)
+            if env_name not in env:
+                env[env_name] = [env_i]
+            else:
+                env[env_name].append(env_i)
+            if a not in cmds_cont:
+                cmds_cont.append(a)
+                last_env = env_name
+                env_depth += 1
+        elif 'end' in s[a:d]:
+            env_name = s[c:d + 1]
+            if env_name in env.keys():
+                env_i = env[env_name].pop()
+                envs.append((env_name, env_i[0], env_i[1], a, d, env_i[2], env_i[3], env_depths.get('item_', -1)))
+                if len(env[env_name]) == 0:
+                    del env[env_name]
+                last_env = env_i[2]
+                env_depth -= 1
+    return tuple(envs)
 
 
 def get_tex_commands_args(
@@ -586,7 +649,7 @@ def __load_unicode() -> None:
     respath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/res/u_'
     for j in _TEX_TO_UNICODE.keys():
         if j == 'latex_symbols':
-            with open(f'{respath}symbols.txt', "r") as f:
+            with open(f'{respath}symbols.txt', 'r') as f:
                 line = f.readline()
                 while line != "":
                     words = line.split()
@@ -624,7 +687,7 @@ def tex_to_unicode(s: str) -> str:
 
     # Last filter
     s = s.replace('\n\n', '\n').replace('  ', ' ').replace('\t', ' ')
-    space_symbol = '⇱SPACESYMBOLPYDETEX⇲'
+    space_symbol = '⇱SPACE:PYDETEX⇲'
     s = s.replace(' ', space_symbol)
     s = _FLATLATEX.convert(s)
     s = s.replace(space_symbol, ' ')
