@@ -11,8 +11,8 @@ __all__ = [
     'FONT_FORMAT_SETTINGS',
     'process_chars_equations',
     'process_cite',
-    'process_cite_replace_tags',
     'process_inputs',
+    'process_items',
     'process_labels',
     'process_quotes',
     'process_ref',
@@ -23,6 +23,7 @@ __all__ = [
     'remove_common_tags',
     'remove_equations',
     'remove_tag',
+    'replace_pydetex_tags',
     'simple_replace',
     'strip_punctuation',
     'unicode_chars_equations'
@@ -37,9 +38,29 @@ from typing import List, Tuple, Union
 # Files
 _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
-_TAG_FILE_ERROR = '⇱FILEERROR⇲'
-_TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+
+# Tags
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
+_TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
+_TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
+_TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+
+# Others
+_ROMAN_DIGITS = [
+    (1000, 'M'),
+    (900, 'CM'),
+    (500, 'D'),
+    (400, 'CD'),
+    (100, 'C'),
+    (90, 'XC'),
+    (50, 'L'),
+    (40, 'XL'),
+    (10, 'X'),
+    (9, 'IX'),
+    (5, 'V'),
+    (4, 'IV'),
+    (1, 'I')
+]
 
 # Parser font format. This dict stores the font of some tex elements to be represented
 # in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
@@ -101,10 +122,7 @@ def _load_file(f: str, path: str) -> str:
     :return: File contents
     """
     try:
-        fo = open(path + f, 'r')
-        s = '\n'.join(fo.readlines())
-        fo.close()
-        return s
+        return ut.open_file(path + f)
     except FileNotFoundError:
         return _TAG_FILE_ERROR
 
@@ -176,11 +194,7 @@ def remove_common_tags(s: str) -> str:
         'subsubsubsection',
         'textbf',
         'textit',
-        'texttt',
-
-        # Enviroments
-        'begin{itemize}',
-        'end{itemize}'
+        'texttt'
     ]:
         s = remove_tag(s, tag)
     return s
@@ -218,9 +232,12 @@ def process_cite(s: str) -> str:
                 break
 
 
-def process_cite_replace_tags(s: str, cite_format: Tuple[str, str] = ('[', ']')) -> str:
+def replace_pydetex_tags(
+        s: str,
+        cite_format: Tuple[str, str] = ('[', ']')
+) -> str:
     """
-    Replaces cite tags to an specific format.
+    Replaces font tags to an specific format.
 
     :param s: Latex string code
     :param cite_format: Cite format
@@ -229,6 +246,7 @@ def process_cite_replace_tags(s: str, cite_format: Tuple[str, str] = ('[', ']'))
     assert len(cite_format) == 2
     s = s.replace(_TAG_OPEN_CITE, (cite_format[0]))
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
+    s = s.replace(_TAG_ITEM_SPACE, ' ')
     return s
 
 
@@ -295,8 +313,8 @@ def remove_comments(s: str) -> str:
     :param s: Latex string code
     :return: String without comments
     """
-    comment_symbol = '⇱COMMENTPERCENTAGESYMBOL⇲'
-    newline_symbol = '⇱NEWLINESYMBOL⇲'
+    comment_symbol = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
+    newline_symbol = '⇱NEWLINE_SYMBOL⇲'
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
     s = s.replace('\\%', comment_symbol)
@@ -411,7 +429,7 @@ def process_inputs(s: str) -> str:
     :return: Text copied with data from inputs
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
-    symbol = '⇱INPUTFILETAG⇲'
+    symbol = '⇱INPUT_FILE_TAG⇲'
     tx = ''
     while True:
         k = find_str(s, '\\input{')
@@ -708,3 +726,180 @@ def strip_punctuation(s: str) -> str:
     for j in [',', ':', '=', ';', '!', '?', '.']:  # Before
         s = s.replace(f' {j}', j)
     return s
+
+
+def process_items(s: str) -> str:
+    """
+    Process itemize and enumerate.
+
+    :param s: Latex string code
+    :return: Processed items
+    """
+    if not ('itemize' in s or 'enumerate' in s):
+        return s
+
+    def _get_name(e: str) -> str:
+        """
+        Get the environment name.
+
+        :param e: Environment name
+        :return: New name
+        """
+        if 'itemize' in e:
+            return 'itemize'
+        if 'enumerate' in e:
+            return 'enumerate'
+        return ''
+
+    def _are_item(e: str) -> bool:
+        """
+        Return true if both are enumerate.
+
+        :param e: Environment name
+        :return: True if item
+        """
+        return e == 'itemize' or e == 'enumerate'
+
+    # First, process the nested ones
+    while True:
+        equal = False
+        envs = ut.find_tex_environments(s)
+        for tag in envs:
+            t, a, b, c, d, t2, _, item_depth = tag
+            t, t2 = _get_name(t), _get_name(t2)
+            if t == '' or t2 == '':
+                continue
+            if t == t2 or _are_item(t) and _are_item(t2):
+                s = s[0:a] + _process_item(s[b:c].strip(), t, item_depth) + s[d + 2:]
+                equal = True
+                break
+        if not equal:
+            break
+
+    # Not nested
+    while True:
+        conv = False
+        envs = ut.find_tex_environments(s)
+        for tag in envs:
+            t, a, b, c, d, _, _, _ = tag
+            t = _get_name(t)
+            if t == '':
+                continue
+            s = s[0:a] + _process_item(s[b:c].strip(), t) + s[d + 2:]
+            conv = True
+        if not conv:
+            break
+
+    return s
+
+
+def _process_item(s: str, t: str, depth: int = 0) -> str:
+    """
+    Process the items.
+
+    :param s: Latex string code
+    :param t: Type (enumerate, itemize)
+    :param depth: Depth
+    :return: Processed items
+    """
+    assert t in ('enumerate', 'itemize')
+    line = '\n' + _TAG_ITEM_SPACE * (3 * depth)
+
+    def _num(x: int) -> str:
+        """
+        Get number based on the depth.
+
+        :param x: Number
+        :return: Number format by depth
+        """
+        if depth % 5 == 0:
+            return f'{line}{x}. '
+        elif depth % 5 == 1:
+            x = _int_to_alph(x).lower()
+            return f'{line}{x}) '
+        elif depth % 5 == 2:
+            x = _int_to_roman(x).lower()
+            return f'{line}{x}. '
+        elif depth % 5 == 3:
+            x = _int_to_alph(x).upper()
+            return f'{line}{x}) '
+        elif depth % 5 == 4:
+            x = _int_to_roman(x).upper()
+            return f'{line}{x}. '
+
+    def _itm() -> str:
+        """
+        :return: The item string based on depth.
+        """
+        char = ['-', '•', '◦', '■', '*']
+        x = char[depth % 5]
+        return f'{line}{x} '
+
+    # Remove optional arguments list
+    # print('old', [s])
+    if s[0] == '[':
+        sqd = 1
+        for j in range(1, len(s)):
+            if s[j] == '[':
+                sqd += 1
+            elif s[j] == ']':
+                sqd -= 1
+            if sqd == 0:
+                s = s[j + 1:len(s)].strip()
+                break
+
+    # Remove invalid newlines
+    s_ = []
+    for v in s.split('\n'):
+        v = v.strip()
+        if v != '':
+            s_.append(v)
+    s_ = '\n'.join(s_)
+    # print('new', [s_])
+    s = s_
+
+    if t == 'enumerate':
+        s += ' ' * 5
+        new_s = ''
+        k = 1
+        for j in range(len(s) - 5):
+            if s[j:j + 5] == '\\item':
+                new_s += _num(k)
+                j += 5
+                k += 1
+            else:
+                new_s += s[j]
+    else:
+        new_s = s.replace('\\item', _itm())
+
+    # Last operations
+    new_s = new_s.replace('\n\n', '\n').strip(' ')
+    return new_s
+
+
+def _int_to_roman(number: int) -> str:
+    """
+    Convert a arabic integer number to a roman.
+
+    :param number: Number
+    :return: Number in roman
+    """
+    result = ''
+    for (arabic, roman) in _ROMAN_DIGITS:
+        (factor, number) = divmod(number, arabic)
+        result += roman * factor
+    return result
+
+
+def _int_to_alph(n: int) -> str:
+    """
+    Integer to a..z.
+
+    :param n: Number
+    :return: Number in AABB..
+    """
+    string = ''
+    while n > 0:
+        n, remainder = divmod(n - 1, 26)
+        string = chr(65 + remainder) + string
+    return string

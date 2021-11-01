@@ -279,7 +279,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\invamp', '⅋'),
     ('\\Iota', 'Ι'),
     ('\\iota', 'ι'),
-    ('\\item', '-'),
     ('\\jmath', 'ȷ'),
     ('\\Join', '⨝'),
     ('\\Kappa', 'Κ'),

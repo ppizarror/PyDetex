@@ -55,14 +55,14 @@ class ParserTest(BaseTest):
         Removes cites from text.
         """
         s = 'hello \\cite{number1,number2} epic'
-        self.assertEqual(par.process_cite_replace_tags(par.process_cite(s)),
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)),
                          'hello [1,2] epic')
         s = 'this is \\cite{number1} epic \\cite{number2} and \\cite{number1}'
-        self.assertEqual(par.process_cite_replace_tags(par.process_cite(s)),
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)),
                          'this is [1] epic [2] and [1]')
         s = 'This is another example, \\cite*{Downson} et al. suggests that yes, but \\cite{Epic} not'
         self.assertEqual(
-            par.process_cite_replace_tags(par.process_cite(s)),
+            par.replace_pydetex_tags(par.process_cite(s)),
             'This is another example, [1] et al. suggests that yes, but [2] not')
 
     def test_process_ref(self) -> None:
@@ -116,7 +116,6 @@ class ParserTest(BaseTest):
         """
         Test simple replace format.
         """
-        self.assertEqual(par.simple_replace('This is an \\item a'), 'This is an - a')
         self.assertEqual(par.simple_replace('This is an \\itemBad a'), 'This is an \\itemBad a')
         self.assertEqual(par.simple_replace('This is a example formula $\\alpha\longrightarrow\\beta+1$'),
                          'This is a example formula $α⟶β+1$')
@@ -296,3 +295,43 @@ class ParserTest(BaseTest):
         Test strip punctuation.
         """
         self.assertEqual(par.strip_punctuation('Or , for example : yes !'), 'Or, for example: yes!')
+
+    def test_process_items(self) -> None:
+        """
+        Test process items.
+        """
+        s = '\\begin{itemize}\item a \item b\\begin{itemize}\item a \item b\end{itemize}\end{itemize}'
+        self.assertEqual(par.replace_pydetex_tags(par.process_items(s)),
+                         '\n-  a \n-  b\n   •  a\n   •  b')
+
+        s = """\\begin{itemize}[font=\\bfseries]
+           \item As shown in Figure \\ref{fignumber}
+           \item Proposed
+        \end{itemize}"""
+        self.assertEqual(par.replace_pydetex_tags(par.process_items(s)),
+                         '\n-  As shown in Figure \\ref{fignumber}\n-  Proposed')
+
+        s = """\\begin{enumerate}
+            \item a
+            \\begin{enumerate}
+                \item a
+                \item b
+                    \\begin{enumerate}
+                    \item a
+                    \item b
+                    \item c
+                    \\end{enumerate}
+            \\end{enumerate}
+            \item c
+            \\begin{itemize}
+                \item a
+                \item b
+                \item c
+            \\end{itemize}
+            \\item epic
+        \\end{enumerate}
+        """
+
+        t = par.replace_pydetex_tags(par.process_items(s))
+        self.assertEqual(t, '\n1. item a\n   a) item a\n   b) item b\n      i. item a\n      ii. item b\n      iii. ite'
+                            'm c\n2. item c\n   •  a\n   •  b\n   •  c\n3. item epic\n        ')
