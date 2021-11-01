@@ -154,12 +154,12 @@ class ParserTest(BaseTest):
         self.assertEqual(par.remove_commands_char(s, '$'), 'This is a !')
         s = 'This is a $command!'
         self.assertEqual(par.remove_commands_char(s, '$'), s)
-
         s = 'This is a$$ command!'
         self.assertEqual(par.remove_commands_char(s, '$'), 'This is a command!')
-
         s = 'This is a $comman$ and $this should be removed too$!'
         self.assertEqual(par.remove_commands_char(s, '$'), 'This is a  and !')
+        # s = 'This is a \(comman\) and \(this should be removed too\)!'
+        # self.assertEqual(par.remove_commands_char(s, ('\(', '\)')), 'This is a  and !')
 
     def test_remove_commands(self) -> None:
         """
@@ -253,3 +253,16 @@ class ParserTest(BaseTest):
         self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: legend')
         s = 'Nice\n\insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model.}'
         self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: A U-Net model.')
+        s = 'This is a \\href{https://google.com}{A link}'
+        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'LINK: A link')
+
+    def test_unicode_chars_equations(self) -> None:
+        """
+        Test unicode char equations.
+        """
+        s = 'This is my $\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7$ equation'
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my $α²⋅α²⁺³≡α⁷$ equation')
+        s = 'This is my $x$ equation'
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my $x$ equation')
+        s = 'This is my $$ equation'
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my $$ equation')

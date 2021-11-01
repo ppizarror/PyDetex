@@ -156,8 +156,12 @@ class UtilsTest(BaseTest):
         """
         s = '$aaa$'
         self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((0, 4),))
+        s = 'New $$ equation'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((4, 5),))
         s = 'This is a $formula$ and this is not.'
         self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 18),))
+        s = 'This is a $formula\$ and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 19),))
         s = 'This is a $formula\$ and this is not.'
         self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ())
         s = 'This is a $formula\$$ and this is not.'
@@ -168,23 +172,24 @@ class UtilsTest(BaseTest):
         Test apply tags between.
         """
         self.assertEqual(
-            ut.apply_tag_between_inside('This is a $formula$ and this is not', ('$', '$'), ('a', 'b', 'c', 'd')),
+            ut.apply_tag_between_inside_char_command('This is a $formula$ and this is not', ('$', '$'),
+                                                     ('a', 'b', 'c', 'd')),
             'This is a a$bformulac$d and this is not')
         self.assertEqual(
-            ut.apply_tag_between_inside('$formula$', ('$', '$'), ('X', '', '', 'X')),
+            ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), ('X', '', '', 'X')),
             'X$formula$X')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), ''), '$formula$')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), 'a'),
+        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), ''), '$formula$')
+        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
+        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$ jaja $x$', ('$', '$'), 'a'),
                          'a$aformulaa$a jaja a$axa$a')
         self.assertEqual(
-            ut.apply_tag_between_inside('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
+            ut.apply_tag_between_inside_char_command('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
             'X$form\\$ula$X')
         self.assertEqual(
-            ut.apply_tag_between_inside('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
+            ut.apply_tag_between_inside_char_command('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
             '\\$formula\\$')
 
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), ('a', '', '', 'b')),
+        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$ jaja $x$', ('$', '$'), ('a', '', '', 'b')),
                          'a$formula$b jaja a$x$b')
 
     def test_find_tex_commands(self) -> None:
@@ -290,6 +295,7 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.get_tex_commands_args(s), (('caption', ('epic', False)), ('caption', ('nice', False))))
         s = 'This is \\subfloat[a title]'
         self.assertEqual(ut.get_tex_commands_args(s), (('subfloat', ('a title', True)),))
+        self.assertEqual(ut.get_tex_commands_args(s, True), (('subfloat', ('a title', True), (8, 26)),))
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
@@ -538,13 +544,17 @@ class UtilsTest(BaseTest):
         Test tex to unicode.
         """
         s = '\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7'
-        self.assertEqual(ut.tex_to_unicode(s), 'α² ⋅ α²⁺³ ≡ α⁷')
+        self.assertEqual(ut.tex_to_unicode(s), 'α²⋅α²⁺³≡α⁷')
         s = '\itA \in \\bbR^{nxn}, \\bfv \in \\bbR^n, \lambda_i \in \\bbR: \itA\\bfv = \lambda_i\\bfv'
-        self.assertEqual(ut.tex_to_unicode(s), '𝐴 ∈ ℝⁿˣⁿ, 𝐯 ∈ ℝⁿ, λᵢ ∈ ℝ: 𝐴𝐯 = λᵢ𝐯')
+        self.assertEqual(ut.tex_to_unicode(s), '𝐴∈ℝⁿˣⁿ,𝐯∈ℝⁿ,λᵢ∈ℝ:𝐴𝐯=λᵢ𝐯')
         s = '\\bf{boldface} \it{italic} \\bb{blackboard} \cal{calligraphic} \\frak{fraktur} \mono{monospace}'
         self.assertEqual(ut.tex_to_unicode(s),
-                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞 𝑖𝑡𝑎𝑙𝑖𝑐 𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕 𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬 𝔣𝔯𝔞𝔨𝔱𝔲𝔯 𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
+                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞𝑖𝑡𝑎𝑙𝑖𝑐𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬𝔣𝔯𝔞𝔨𝔱𝔲𝔯𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
         s = 'bf This is all boldface'
-        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬 𝐢𝐬 𝐚𝐥𝐥 𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
+        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬𝐢𝐬𝐚𝐥𝐥𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
         s = '\\frac{a}{b}'
+        self.assertEqual(ut.tex_to_unicode(s), 'a/b')
+        s = '                 '
         self.assertEqual(ut.tex_to_unicode(s), s)
+        s = '\\sqrt{a+b}'
+        self.assertEqual(ut.tex_to_unicode(s), '√a+b')

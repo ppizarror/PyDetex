@@ -7,7 +7,7 @@ Several text utils.
 """
 
 __all__ = [
-    'apply_tag_between_inside',
+    'apply_tag_between_inside_char_command',
     'apply_tag_tex_commands',
     'apply_tag_tex_commands_no_argv',
     'Button',
@@ -166,7 +166,7 @@ def syntax_highlight(s: str) -> str:
     s = _FONT_TAGS['normal'] + s
 
     # Format equations
-    s = apply_tag_between_inside(
+    s = apply_tag_between_inside_char_command(
         s=s,
         symbols_char=('$', '$'),
         tags=(_FONT_TAGS['equation_char'], _FONT_TAGS['equation_inside'],
