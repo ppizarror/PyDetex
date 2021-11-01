@@ -9,7 +9,7 @@ Test utils.
 from test._base import BaseTest
 
 import pydetex.utils as ut
-from typing import Tuple
+from typing import Tuple, List
 
 
 class UtilsTest(BaseTest):
@@ -304,6 +304,70 @@ class UtilsTest(BaseTest):
         # Check continues
         t = [k[4] for k in ut.find_tex_commands(s)]
         self.assertEqual(t, [True, False, False, True, False, True, True, False])
+
+    def test_find_tex_environments(self) -> None:
+        """
+        Test find tex environments.
+        """
+
+        def _test(s: str, envname: List[str], envargs: List[str], parents: List[str], depths: List[int]) -> None:
+            k = ut.find_tex_environments(s)
+            lk = len(k)
+            if len(envargs) != 0:
+                self.assertEqual(lk, len(envargs))
+            self.assertEqual(lk, len(envname))
+            for j in range(lk):
+                self.assertEqual(k[j][0], envname[j])
+                a, b = k[j][2], k[j][3]
+                if len(envargs) != 0:
+                    self.assertEqual(s[a:b], envargs[j])
+                self.assertEqual(k[j][5], parents[j])
+                self.assertEqual(k[j][6], depths[j])
+
+        _test('This is \\begin{nice}[cmd]my...\end{nice}', ['nice'], ['[cmd]my...'], [''], [0])
+        _test('This is \\begin{itemize*}\end{itemize*}', ['itemize*'], [''], [''], [0])
+        _test('This is \\begin{enumerate*}\\begin{enumerate*}\item a\end{enumerate*}\end{enumerate*}',
+              ['enumerate*', 'enumerate*'], ['\item a', '\\begin{enumerate*}\item a\end{enumerate*}'],
+              ['enumerate*', ''], [1, 0])
+
+        t = """This is \\latex{command}
+        \\begin{minipage}[l][0][t]
+        New \\mycommand[\\texttt{epic}]{nice}
+            \\begin{itemize}[label=\\arabic]
+                \\item A
+                \\item B
+                \\item C
+                \\begin{itemize}
+                    \\item D
+                    \\item E
+                    \\item F
+                \\end{itemize}
+            \\end{itemize}
+        \\end{minipage}
+        """
+        _test(t, ['itemize', 'itemize', 'minipage'], [], ['itemize', 'minipage', ''], [2, 1, 0])
+
+        t = """This is \\latex{command}
+        \\begin{minipage}[l][0][t]
+        New \\mycommand[\\texttt{epic}]{nice}
+            \\begin{itemize}[label=\\arabic]
+                \\item A
+                \\item B
+                \\item C
+                \\begin{itemize}
+                    \\item D
+                    \\item E
+                    \\begin{itemize}
+                        \\item D
+                        \\item E
+                        \\item F
+                    \\end{itemize}
+                \\end{itemize}
+            \\end{itemize}
+        \\end{minipage}
+        """
+        _test(t, ['itemize', 'itemize', 'itemize', 'minipage'], [],
+              ['itemize', 'itemize', 'minipage', ''], [3, 2, 1, 0])
 
     def test_get_tex_commands_args(self) -> None:
         """

@@ -17,6 +17,7 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'find_tex_environments',
     'format_number_d',
     'get_diff_startend_word',
     'get_language_name',
