@@ -13,3 +13,5 @@ include requirements.txt
 recursive-include pydetex/res **.gif
 recursive-include pydetex/res **.ico
 recursive-include pydetex/res **.json
+recursive-include pydetex/res **.tex
+recursive-include pydetex/res **.txt
