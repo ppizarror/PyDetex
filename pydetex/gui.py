@@ -236,9 +236,7 @@ class PyDetexGUI(object):
         filename_dir = os.path.dirname(filename)
         self._cfg.set(self._cfg.CFG_LAST_OPENED_FOLDER, filename_dir)
         try:
-            f = open(filename, 'r')
-            text = ''.join(f.readlines())
-            f.close()
+            text = ut.open_file(filename)
             self._clear()
             self._insert_in(text)
             self._cfg.save()
