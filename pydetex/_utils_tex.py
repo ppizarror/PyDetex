@@ -7,7 +7,7 @@ Latex utils.
 """
 
 __all__ = [
-    'apply_tag_between_inside',
+    'apply_tag_between_inside_char_command',
     'apply_tag_tex_commands',
     'apply_tag_tex_commands_no_argv',
     'find_tex_command_char',
@@ -18,17 +18,14 @@ __all__ = [
     'VALID_TEX_COMMAND_CHARS'
 ]
 
+import flatlatex
 import os
 import re
 
 from typing import Tuple, Union, List, Dict, Optional, Any
 
-# Valid command chars
-VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-                           'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-                           'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                           'W', 'X', 'Y', 'Z']
+# Flat latex object
+_FLATLATEX = flatlatex.converter()
 
 # Tex to unicode
 _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
@@ -42,6 +39,13 @@ _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
     'textit': {},
     'textmono': {}
 }
+
+# Valid command chars
+VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+                           'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+                           'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                           'W', 'X', 'Y', 'Z']
 
 
 def find_tex_command_char(
@@ -74,18 +78,18 @@ def find_tex_command_char(
 
     for i in range(1, len(s)):
         # Open tag
-        if not r and s[i] == symbols_char[0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+        if not r and s[i] == symbols_char[0][0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
             a = i
             r = True
         # Close
-        elif r and s[i] == symbols_char[1] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+        elif r and s[i] == symbols_char[1][0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
             r = False
             found.append((a - 1, i - 1))
 
     return tuple(found)
 
 
-def apply_tag_between_inside(
+def apply_tag_between_inside_char_command(
         s: str,
         symbols_char: Tuple[str, str],
         tags: Union[Tuple[str, str, str, str], str],
@@ -228,7 +232,10 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     return tuple(found)
 
 
-def get_tex_commands_args(s: str) -> Tuple[Tuple[Union[str, Tuple[str, bool]], ...], ...]:
+def get_tex_commands_args(
+        s: str,
+        pos: bool = False
+) -> Tuple[Tuple[Union[str, Tuple[str, bool], Tuple[int, int]], ...], ...]:
     """
     Get all the arguments from a tex command. Each command argument has a boolean
     indicating if that is optional or not.
@@ -236,6 +243,7 @@ def get_tex_commands_args(s: str) -> Tuple[Tuple[Union[str, Tuple[str, bool]], .
     Example: This is \aCommand[\label{}]{nice} and... => (('aCommand', ('\label{}', True), ('nice', False)), ...)
 
     :param s: Latex code
+    :param pos: Add the numerical position of the original string at the last position
     :return: Arguments
     """
     tags = find_tex_commands(s)
@@ -249,6 +257,8 @@ def get_tex_commands_args(s: str) -> Tuple[Tuple[Union[str, Tuple[str, bool]], .
         optional = '[' in arg
         command.append((arg[1:-1], optional))
         if not cont:
+            if pos:
+                command.append((a, d + 2))
             commands.append(tuple(command))
             command = []
     return tuple(commands)
@@ -542,6 +552,8 @@ def tex_to_unicode(s: str) -> str:
     :param s: Latex code
     :return: Text in unicode
     """
+    if s.strip() == '':
+        return s
     ss = _convert_single_symbol(s)
     if ss is not None:
         return ss
@@ -549,10 +561,11 @@ def tex_to_unicode(s: str) -> str:
     s = convert_latex_symbols(s)
     s = _process_starting_modifiers(s)
     s = _apply_all_modifiers(s)
+
+    # Last filter
+    s = _FLATLATEX.convert(s)
     return s
 
 
 # Loads the unicode data
 __load_unicode()
-
-print(tex_to_unicode('$\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7$'))

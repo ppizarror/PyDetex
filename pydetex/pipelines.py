@@ -40,6 +40,7 @@ def simple(s: str, lang: str = 'en', cite_replace_tags: bool = True) -> str:
     s = par.process_quotes(s)
     s = par.process_inputs(s)
     s = par.process_chars_equations(s, lang, True)
+    s = par.unicode_chars_equations(s)
     if len(s) > 0 and s[-1] == '\\':
         s = s[0:len(s) - 1]
     if cite_replace_tags:

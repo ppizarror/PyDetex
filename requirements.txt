@@ -1,3 +1,4 @@
+flatlatex>=0.12
 langdetect
 nltk
 outdated
