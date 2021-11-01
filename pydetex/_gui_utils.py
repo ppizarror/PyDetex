@@ -723,7 +723,11 @@ class RichText(tk.Text):
             self.clear()
         for t in ut.split_tags(s, list(fonts.FONT_TAGS.values())):
             tag, text = t
-            self.insert('end', text, fonts.TAGS_FONT[tag] if font_format else 'normal')
+            try:
+                self.insert('end', text, fonts.TAGS_FONT[tag] if font_format else 'normal')
+            except tk.TclError:
+                chars = [text[j] for j in range(len(text)) if ord(text[j]) in range(65536)]
+                self.insert('end', ''.join(chars), fonts.TAGS_FONT[tag] if font_format else 'normal')
 
     def clear(self) -> None:
         """

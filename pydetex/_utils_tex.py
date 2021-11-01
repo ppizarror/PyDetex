@@ -679,7 +679,7 @@ def __load_unicode() -> None:
     respath = str(os.path.abspath(os.path.dirname(__file__))).replace('\\', '/') + '/res/u_'
     for j in _TEX_TO_UNICODE.keys():
         if j == 'latex_symbols':
-            with open(f'{respath}symbols.txt', 'r') as f:
+            with open(f'{respath}symbols.txt', 'r', encoding='utf-8') as f:
                 line = f.readline()
                 while line != "":
                     words = line.split()
@@ -688,7 +688,7 @@ def __load_unicode() -> None:
                     _TEX_TO_UNICODE['latex_symbols'].append((code, val))
                     line = f.readline()
         else:
-            with open(f'{respath}{j}.txt', 'r') as f:
+            with open(f'{respath}{j}.txt', 'r', encoding='utf-8') as f:
                 line = f.readline()
                 while line != '':
                     words = line.split()

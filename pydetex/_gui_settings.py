@@ -332,7 +332,7 @@ class Settings(object):
 
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
-            self.CFG_FONT_SIZE: (11, int, self._valid_font_sizes),
+            self.CFG_FONT_SIZE: (12 if ut.IS_OSX else 11, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
