@@ -45,6 +45,7 @@ def simple(s: str, lang: str = 'en', cite_replace_tags: bool = True) -> str:
         s = s[0:len(s) - 1]
     if cite_replace_tags:
         s = par.process_cite_replace_tags(s)
+    s = par.strip_punctuation(s)
     return s
 
 
@@ -63,4 +64,5 @@ def strict(s: str, lang: str = 'en') -> str:
     s = par.remove_commands_param_noargv(s)
     s = par.remove_comments(s)
     s = par.process_cite_replace_tags(s)
+    s = par.strip_punctuation(s)
     return s

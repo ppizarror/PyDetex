@@ -283,10 +283,16 @@ class ParserTest(BaseTest):
         Test unicode char equations.
         """
         s = 'This is my $\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7$ equation'
-        self.assertEqual(par.unicode_chars_equations(s), 'This is my $α²⋅α²⁺³≡α⁷$ equation')
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my $α² ⋅ α²⁺³ ≡ α⁷$ equation')
         s = 'This is my $x$ equation'
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $x$ equation')
         s = 'This is my $$ equation'
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $$ equation')
         s = 'This is my \\begin{align}\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7\\end{align} equation'
-        self.assertEqual(par.unicode_chars_equations(s), 'This is my \\begin{align}α²⋅α²⁺³≡α⁷\end{align} equation')
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my \\begin{align}α² ⋅ α²⁺³ ≡ α⁷\end{align} equation')
+
+    def test_strip_punctuation(self) -> None:
+        """
+        Test strip punctuation.
+        """
+        self.assertEqual(par.strip_punctuation('Or , for example : yes !'), 'Or, for example: yes!')

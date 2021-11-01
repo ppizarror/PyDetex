@@ -24,6 +24,7 @@ __all__ = [
     'remove_equations',
     'remove_tag',
     'simple_replace',
+    'strip_punctuation',
     'unicode_chars_equations'
 ]
 
@@ -696,9 +697,14 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
 
     return new_s
 
-def strip_punctuation(s:str) -> str:
+
+def strip_punctuation(s: str) -> str:
     """
-    Strips punctuation. For example, 'mycode :' to 'mycode:'
-    :param s:
-    :return:
+    Strips punctuation. For example, 'mycode :' to 'mycode:'.
+
+    :param s: Latex string code
+    :return: Stripped punctuation
     """
+    for j in [',', ':', '=', ';', '!', '?', '.']:  # Before
+        s = s.replace(f' {j}', j)
+    return s
