@@ -3,7 +3,8 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 UTILS
-Several text utils.
+Module that contain all util methods and classes used in parsers and pipelines,
+from tex, language, and low-level.
 """
 
 __all__ = [

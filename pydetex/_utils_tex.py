@@ -68,15 +68,19 @@ def find_tex_command_char(
         symbols_char: List[Tuple[str, str, bool]],
 ) -> Tuple[Tuple[int, int, int, int], ...]:
     """
-    Find symbols command positions. Example:
+    Find symbols command positions.
 
-           00000000001111111111....
-           01234567890123456789....
-    Input: This is a $formula$ and this is not.
-    Output: ((10, 11, 17, 18), ...)
+    Example:
+
+    .. code-block:: none
+
+               00000000001111111111....
+               01234567890123456789....
+        Input: This is a $formula$ and this is not.
+        Output: ((10, 11, 17, 18), ...)
 
     :param s: Latex string code
-    :param symbols_char: Symbols to check [(initial, final, ignore escape), ...]
+    :param symbols_char: Symbols to check ``[(initial, final, ignore escape), ...]``
     :return: Positions
     """
     assert isinstance(symbols_char, list)
@@ -148,13 +152,17 @@ def apply_tag_between_inside_char_command(
         tags: Union[Tuple[str, str, str, str], str]
 ) -> str:
     """
-    Apply tag between symbols. For example, if symbols are ($, $) and tag is [1,2,3,4]:
+    Apply tag between symbols.
 
-    Input: This is a $formula$ and this is not.
-    Output: This is a 1$2formula3$4 and this is not
+    For example, if symbols are ``($, $)`` and tag is ``[1,2,3,4]``:
+
+    .. code-block:: none
+
+        Input: This is a $formula$ and this is not.
+        Output: This is a 1$2formula3$4 and this is not
 
     :param s: Latex string code
-    :param symbols_char:  [(initial, final, ignore escape), ...]
+    :param symbols_char:  ``[(initial, final, ignore escape), ...]``
     :param tags: Tags to replace
     :return: String with tags
     """
@@ -201,13 +209,16 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     """
     Find all tex commands within a code.
 
-             00000000001111111111222
-             01234567890123456789012
-                     a       b c  d
-    Example: This is \aCommand{nice}... => ((8, 16, 18, 21), ...)
+    .. code-block:: none
+
+                 00000000001111111111222
+                 01234567890123456789012
+                         a       b c  d
+        Example: This is \\aCommand{nice}...
+        Output: ((8, 16, 18, 21), ...)
 
     :param s: Latex string code
-    :return: Tuple if found codes (a, b, c, d, command continues)
+    :return: Tuple if found codes ``(a, b, c, d, command continues)``
     """
     found: List = []
     is_cmd = False
@@ -297,13 +308,18 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
     """
     Find all tex commands within a code.
 
-             0000000000111111111122222222223333333333
-             0123456789012345678901234567890123456789
-                     a           b        c         d
-    Example: This is \begin{nice}[cmd]my...\end{nice} => (('nice', 8, 20, 29, 39, 'parentenv'), ...)
+    Example:
+
+    .. code-block:: none
+
+                 0000000000111111111122222222223333333333
+                 0123456789012345678901234567890123456789
+                         a           b        c         d
+        Example: This is \begin{nice}[cmd]my...\end{nice}
+        Output: (('nice', 8, 20, 29, 39, 'parentenv'), ...)
 
     :param s: Latex string code
-    :return: Tuple if found environment (env_name, a, b, c, d, parent_env, env_depth, env_item_depth)
+    :return: Tuple if found environment ``(env_name, a, b, c, d, parent_env, env_depth, env_item_depth)``
     """
 
     def _env_common(e: str) -> str:
@@ -363,7 +379,10 @@ def get_tex_commands_args(
     Get all the arguments from a tex command. Each command argument has a boolean
     indicating if that is optional or not.
 
-    Example: This is \aCommand[\label{}]{nice} and... => (('aCommand', ('\label{}', True), ('nice', False)), ...)
+    .. code-block:: none
+
+        Example: This is \aCommand[\label{}]{nice} and...
+        Output: (('aCommand', ('\label{}', True), ('nice', False)), ...)
 
     :param s: Latex string code
     :param pos: Add the numerical position of the original string at the last position
@@ -391,10 +410,13 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
     """
     Find all tex commands with no arguments within a code.
 
-             00000000001111111111222
-             01234567890123456789012
-                     x       x
-    Example: This is \aCommand ... => ((8,16), ...)
+    .. code-block:: none
+
+                 00000000001111111111222
+                 01234567890123456789012
+                         x       x
+        Example: This is \aCommand ...
+        Output: ((8,16), ...)
 
     :param s: Latex string code
     :return: Tuple if found codes
@@ -454,10 +476,14 @@ def apply_tag_tex_commands(
         tags: Union[Tuple[str, str, str, str, str], str]
 ) -> str:
     """
-    Apply tag to tex command. For example, if tag is [1,2,3,4,5]:
+    Apply tag to tex command.
 
-    Input: This is a \formula{epic} and this is not.
-    Output: This is a 1\formula2{3epic4}5 and this is not
+    For example, if tag is ``[1,2,3,4,5]``:
+
+    .. code-block:: none
+
+        Input: This is a \\formula{epic} and this is not
+        Output: This is a 1\\formula2{3epic4}5 and this is not
 
     :param s: Latex string code
     :param tags: Tags (length 5)
@@ -507,10 +533,14 @@ def apply_tag_tex_commands_no_argv(
         tags: Union[Tuple[str, str], str]
 ) -> str:
     """
-    Apply tag to tex command. For example, if tag is [1,2]:
+    Apply tag to tex command.
 
-    Input: This is a \formula and this is not.
-    Output: This is a 1\formula2 and this is not
+    For example, if tag is ``[1,2]``:
+
+    .. code-block:: none
+
+        Input: This is a \\formula and this is not.
+        Output: This is a 1\\formula2 and this is not
 
     :param s: Latex string code
     :param tags: Tags (length 5)
@@ -545,7 +575,7 @@ def apply_tag_tex_commands_no_argv(
 
 def _convert_single_symbol(s: str) -> Optional[str]:
     """
-    If s is just a latex code 'alpha' or 'beta' it converts it to its
+    If ``s`` is just a latex code ``'alpha'`` or ``'beta'`` it converts it to its
     unicode representation.
 
     :param s: Latex string code
@@ -560,7 +590,7 @@ def _convert_single_symbol(s: str) -> Optional[str]:
 
 def convert_latex_symbols(s: str) -> str:
     """
-    Replace each '\alpha', '\beta' and similar latex symbols with
+    Replace each ``'\alpha'``, ``'\beta'`` and similar latex symbols with
     their unicode representation.
 
     :param s: Latex string code
@@ -573,7 +603,7 @@ def convert_latex_symbols(s: str) -> str:
 
 def _process_starting_modifiers(s: str) -> str:
     """
-    If s start with 'it ', 'cal ', etc. then make the whole string
+    If s start with ``'it '``, ``'cal '``, etc. then make the whole string
     italic, calligraphic, etc.
 
     :param s: Latex string code

@@ -109,7 +109,7 @@ class LangTexTextTags(object):
 
 def complete_langs_dict(lang: Dict[str, Dict[str, str]]) -> None:
     """
-    Completes a language dict. Assumes 'en' is the main language.
+    Completes a language dict. Assumes ``'en'`` is the main language.
 
     :param lang: Language dict
     """
@@ -145,9 +145,11 @@ def get_diff_startend_word(original: str, new: str) -> Tuple[str, str]:
     """
     Return the difference of the word from start and end, for example:
 
-    original XXXwordYY
-    new         word
-    diff = (XXX, YY)
+    .. code-block:: none
+
+        original XXXwordYY
+        new         word
+        diff = (XXX, YY)
 
     :param original: Original word
     :param new: New word
@@ -198,7 +200,7 @@ def check_repeated_words(
     :param remove_tokens: Remove keys before verify repeat
     :param font_tag_format: Tag's format
     :param font_param_format: Param's format
-    :param font_normal_format. Normal's format
+    :param font_normal_format: Normal's format
     :param tag: Tag's name
     :return: Text with repeated words marked
     """

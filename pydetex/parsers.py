@@ -79,7 +79,7 @@ LANG_TEX_TEXT_TAGS = ut.LangTexTextTags()
 
 def _find_str(s: str, char: str) -> int:
     """
-    Finds a sequence within a string, and returns the position. If not exists, returns -1.
+    Finds a sequence within a string, and returns the position. If not exists, returns ``-1``.
 
     :param s: Latex string code
     :param char: Sequence
@@ -129,7 +129,7 @@ def _load_file(f: str, path: str) -> str:
 
 def find_str(s: str, char: Union[str, List[str], Tuple[str, ...]]) -> int:
     """
-    Finds a sequence within a string, and returns the position. If not exists, returns -1.
+    Finds a sequence within a string, and returns the position. If not exists, returns ``-1``.
 
     :param s: Latex string code
     :param char: Sequence or List of sequences
@@ -202,8 +202,8 @@ def remove_common_tags(s: str) -> str:
 
 def process_cite(s: str) -> str:
     """
-    Transforms all cites to a text-based with numbers. For example,
-    'This is from \\cite{Pizarro}' to 'This is from [1].
+    Transforms all cites to a text-based with numbers. For example:
+    ``'This is from \\cite{Pizarro}'`` to ``'This is from [1]'``.
 
     :param s: Latex string code
     :return: Latex with cite as numbers
@@ -639,7 +639,7 @@ def remove_commands_param_noargv(s: str) -> str:
 
 def unicode_chars_equations(s: str) -> str:
     """
-    Converts all $equations$ to unicode.
+    Converts all ecuations to unicode.
 
     :param s: Latex string code
     :return: Latex with unicode converted
@@ -718,7 +718,7 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
 
 def strip_punctuation(s: str) -> str:
     """
-    Strips punctuation. For example, 'mycode :' to 'mycode:'.
+    Strips punctuation. For example, ``'mycode :'`` to ``'mycode:'``.
 
     :param s: Latex string code
     :return: Stripped punctuation
