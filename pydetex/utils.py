@@ -27,6 +27,7 @@ __all__ = [
     'IS_OSX',
     'LangTexTextTags',
     'make_stemmer',
+    'open_file',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
@@ -214,3 +215,16 @@ def get_number_of_day() -> int:
     :return: Day number
     """
     return datetime.datetime.now().timetuple().tm_yday
+
+
+def open_file(f: str) -> str:
+    """
+    Open file and return its string.
+
+    :param f: Filename
+    :return: File content
+    """
+    o = open(f, 'r', encoding='utf-8')
+    text = ''.join(o.readlines())
+    o.close()
+    return text
