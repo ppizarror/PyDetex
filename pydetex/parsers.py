@@ -21,6 +21,7 @@ __all__ = [
     'remove_commands_param_noargv',
     'remove_comments',
     'remove_common_tags',
+    'remove_equations',
     'remove_tag',
     'simple_replace',
     'unicode_chars_equations'
@@ -58,7 +59,7 @@ def _find_str(s: str, char: str) -> int:
     """
     Finds a sequence within a string, and returns the position. If not exists, returns -1.
 
-    :param s: String
+    :param s: Latex string code
     :param char: Sequence
     :return: Position
     """
@@ -111,7 +112,7 @@ def find_str(s: str, char: Union[str, List[str], Tuple[str, ...]]) -> int:
     """
     Finds a sequence within a string, and returns the position. If not exists, returns -1.
 
-    :param s: String
+    :param s: Latex string code
     :param char: Sequence or List of sequences
     :return: Position
     """
@@ -129,7 +130,7 @@ def remove_tag(s: str, tagname: str) -> str:
     """
     Removes a latex tag code.
 
-    :param s: String
+    :param s: Latex string code
     :param tagname: Tag code
     :return: String without tags
     """
@@ -161,7 +162,7 @@ def remove_common_tags(s: str) -> str:
     """
     Remove common tags from string.
 
-    :param s: Text
+    :param s: Latex string code
     :return: Text without tags
     """
     for tag in [
@@ -189,8 +190,8 @@ def process_cite(s: str) -> str:
     Transforms all cites to a text-based with numbers. For example,
     'This is from \\cite{Pizarro}' to 'This is from [1].
 
-    :param s: String
-    :return:
+    :param s: Latex string code
+    :return: Latex with cite as numbers
     """
     cites = {}
     look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{']
@@ -220,7 +221,7 @@ def process_cite_replace_tags(s: str, cite_format: Tuple[str, str] = ('[', ']'))
     """
     Replaces cite tags to an specific format.
 
-    :param s: String
+    :param s: Latex string code
     :param cite_format: Cite format
     :return: String with no cites
     """
@@ -234,7 +235,7 @@ def process_labels(s: str) -> str:
     """
     Removes labels.
 
-    :param s: String
+    :param s: Latex string code
     :return: String with no labels
     """
     while True:
@@ -251,7 +252,7 @@ def process_ref(s) -> str:
     """
     Process references, same as cites, replaces by numbers.
 
-    :param s: String
+    :param s: Latex string code
     :return: String with numbers instead of references.
     """
     r = 1
@@ -270,7 +271,7 @@ def process_quotes(s) -> str:
     """
     Process quotes.
 
-    :param s: String
+    :param s: Latex string code
     :return: String with "quotes"
     """
     while True:
@@ -290,8 +291,8 @@ def remove_comments(s: str) -> str:
     """
     Remove comments from text.
 
-    :param s: Text
-    :return: Text without comments
+    :param s: Latex string code
+    :return: String without comments
     """
     comment_symbol = '⇱COMMENTPERCENTAGESYMBOL⇲'
     newline_symbol = '⇱NEWLINESYMBOL⇲'
@@ -351,7 +352,7 @@ def simple_replace(s: str) -> str:
     """
     Replace simple tokens.
 
-    :param s: String
+    :param s: Latex string code
     :return: String with replaced items
     """
     for w in REPLACE_SYMBOLS_LIBRARY:
@@ -366,30 +367,33 @@ def simple_replace(s: str) -> str:
             k = s.find(word)
             if k == -1:
                 break
-            if s[k + len(word)] not in ut.VALID_TEX_COMMAND_CHARS:
+            if s[k + len(word)] not in ut.TEX_COMMAND_CHARS:
                 s = s[0:k] + repl + s[k + len(word):]
             else:
                 s = s[0:k + 1] + invalid_tag + s[k + 1:]  # format ...\\INVALID_TAG...
     s = s[0:len(s) - 1].replace(invalid_tag, '')
 
     # Replace equation symbols
-    tex_tags = ut.find_tex_command_char(s, '$', True)
+    tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     new_s = ''
     k = 0  # Moves through tags
     added_s = False
     for i in range(len(s)):
         if k < len(tex_tags):
-            if i <= tex_tags[k][0]:
+            if i < tex_tags[k][1]:
                 new_s += s[i]
-            elif i < tex_tags[k][1]:
+            elif tex_tags[k][1] <= i < tex_tags[k][2] and not added_s or tex_tags[k][1] == i == tex_tags[k][2]:
                 if not added_s:
-                    k_s: str = s[tex_tags[k][0] + 1:tex_tags[k][1] + 1]
+                    k_s: str = s[tex_tags[k][1]:tex_tags[k][2] + 1]
                     # Replace
                     for j in REPLACE_EQUATION_SYMBOLS_LIBRARY:
                         k_s = k_s.replace(j[0], j[1])
                     new_s += k_s
                 added_s = True
-            else:  # Advance to other tag
+            elif tex_tags[k][2] < i < tex_tags[k][3]:
+                new_s += s[i]
+            elif i == tex_tags[k][3]:  # Advance to other tag
+                new_s += s[i]
                 k += 1
                 added_s = False
         else:
@@ -402,8 +406,8 @@ def process_inputs(s: str) -> str:
     """
     Process inputs, and try to copy the content.
 
-    :param s: Text with inputs
-    :return: Text copied with data
+    :param s: Latex string code with inputs
+    :return: Text copied with data from inputs
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
     symbol = '⇱INPUTFILETAG⇲'
@@ -447,16 +451,15 @@ def process_inputs(s: str) -> str:
                 break
 
 
-def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_escape: bool = True) -> str:
+def remove_commands_char(s: str, chars: List[Tuple[str, str, bool]]) -> str:
     """
     Remove all char commands.
 
-    :param s: String
-    :param chars: Chars (start, end)
-    :param ignore_escape: Ignores \char
+    :param s: Latex string code
+    :param chars: Char that define equations [(initial, final, ignore escape), ...]
     :return: Code with removed chars
     """
-    tex_tags = ut.find_tex_command_char(s, chars, ignore_escape)
+    tex_tags = ut.find_tex_command_char(s, symbols_char=chars)
     if len(tex_tags) == 0:
         return s
     new_s = ''
@@ -466,14 +469,24 @@ def remove_commands_char(s: str, chars: Union[Tuple[str, str], str], ignore_esca
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
                 new_s += s[i]
-            elif i < tex_tags[k][1]:
+            elif tex_tags[k][0] <= i < tex_tags[k][3]:
                 pass
-            else:  # Advance to other tag
+            elif i == tex_tags[k][3]:  # Advance to other tag
                 k += 1
         else:
             new_s += s[i]
 
     return new_s
+
+
+def remove_equations(s: str) -> str:
+    """
+    Remove all equations from a string.
+
+    :param s: Latex string code
+    :return: Latex without equation
+    """
+    return remove_commands_char(s, chars=ut.TEX_EQUATION_CHARS)
 
 
 def output_text_for_some_commands(s: str, lang: str) -> str:
@@ -536,7 +549,7 @@ def remove_commands_param(s: str, lang: str) -> str:
     """
     Remove all commands with params.
 
-    :param s: String
+    :param s: Latex string code
     :param lang: Language tag of the code
     :return: Code with removed chars
     """
@@ -582,7 +595,7 @@ def remove_commands_param_noargv(s: str) -> str:
     """
     Remove all commands without arguments.
 
-    :param s: String
+    :param s: Latex string code
     :return: Code with removed chars
     """
     tex_tags = ut.find_tex_commands_noargv(s)
@@ -609,26 +622,26 @@ def unicode_chars_equations(s: str) -> str:
     """
     Converts all $equations$ to unicode.
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Latex with unicode converted
     """
-    # Replace equation symbols
-    tex_tags = ut.find_tex_command_char(s, '$', True)
+    tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     new_s = ''
     k = 0  # Moves through tags
     added_s = False
     for i in range(len(s)):
         if k < len(tex_tags):
-            if i <= tex_tags[k][0]:
+            if i < tex_tags[k][1]:
                 new_s += s[i]
-                if i == tex_tags[k][0] and tex_tags[k][1] - tex_tags[k][0] == 1:
-                    k += 1
-            elif i < tex_tags[k][1]:
+            elif tex_tags[k][1] <= i < tex_tags[k][2] and not added_s or tex_tags[k][1] == i == tex_tags[k][2]:
                 if not added_s:
-                    k_s: str = s[tex_tags[k][0] + 1:tex_tags[k][1] + 1]
+                    k_s: str = s[tex_tags[k][1]:tex_tags[k][2] + 1]
                     new_s += ut.tex_to_unicode(k_s)
                 added_s = True
-            else:  # Advance to other tag
+            elif tex_tags[k][2] < i < tex_tags[k][3]:
+                new_s += s[i]
+            elif i == tex_tags[k][3]:  # Advance to other tag
+                new_s += s[i]
                 k += 1
                 added_s = False
         else:
@@ -639,37 +652,53 @@ def unicode_chars_equations(s: str) -> str:
 
 def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
     """
-    Process single char equations, removing the $ symbols.
+    Process single char equations, removing the symbols.
 
-    :param s: Latex code
+    :param s: Latex string code
     :param lang: Language tag of the code
     :param single_only: Only process single char equations. If False, replaces the equation by a text-label
     :return: Code without symbols
     """
-    tex_tags = ut.find_tex_command_char(s, '$', True)
+    tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     if len(tex_tags) == 0:
         return s
     new_s = ''
     k = 0  # Moves through tags
     eqn_number = 0
+    added_equ = False
 
     for i in range(len(s)):
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
                 new_s += s[i]
-            elif i < tex_tags[k][1]:
-                if i == tex_tags[k][0] + 1 and tex_tags[k][1] - tex_tags[k][0] == 2:
+            elif tex_tags[k][0] <= i < tex_tags[k][1]:
+                continue
+            elif tex_tags[k][1] <= i <= tex_tags[k][2] and not added_equ:
+                equ = s[tex_tags[k][1]:tex_tags[k][2] + 1]
+                if len(equ) == 1:
                     new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
-            else:  # Advance to other tag
-                if tex_tags[k][1] - tex_tags[k][0] > 2:
+                else:
+                    equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
                         new_s += LANG_TEX_TEXT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
                         eqn_number += 1
                     else:
-                        new_s += s[tex_tags[k][0]:tex_tags[k][1] + 1]
+                        new_s += equ
+                added_equ = True
+            elif tex_tags[k][2] < i < tex_tags[k][3]:
+                continue
+            elif tex_tags[k][3] == i:
                 k += 1
-
+                added_equ = False
+                continue
         else:
             new_s += s[i]
 
     return new_s
+
+def strip_punctuation(s:str) -> str:
+    """
+    Strips punctuation. For example, 'mycode :' to 'mycode:'
+    :param s:
+    :return:
+    """

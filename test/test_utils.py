@@ -155,42 +155,62 @@ class UtilsTest(BaseTest):
         Test find tex command char.
         """
         s = '$aaa$'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((0, 4),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((0, 1, 3, 4),))
         s = 'New $$ equation'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((4, 5),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((4, 5, 4, 5),))
         s = 'This is a $formula$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 18),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((10, 11, 17, 18),))
         s = 'This is a $formula\$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 19),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((10, 11, 18, 19),))
         s = 'This is a $formula\$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ())
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ())
         s = 'This is a $formula\$$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ((10, 20),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ((10, 11, 19, 20),))
+        s = 'This is a \(formula\) and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, [('\(', '\)', False)]), ((10, 12, 18, 20),))
+        s = 'This is a \($formula$\) and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, [('\(', '\)', False), ('$', '$', False)]), ((10, 12, 20, 22),))
+        s = 'This is a \\begin{math}fo$\$rmula\end{math} and I like it'
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ())
+        self.assertEqual(ut.find_tex_command_char(s, [('\\begin{math}', '\end{math}', False)]), ((10, 22, 31, 41),))
 
     def test_apply_tag_between(self) -> None:
         """
         Test apply tags between.
         """
-        self.assertEqual(
-            ut.apply_tag_between_inside_char_command('This is a $formula$ and this is not', ('$', '$'),
-                                                     ('a', 'b', 'c', 'd')),
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'This is a $formula$ and this is not', [('$', '$', False)], ('a', 'b', 'c', 'd')),
             'This is a a$bformulac$d and this is not')
-        self.assertEqual(
-            ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), ('X', '', '', 'X')),
-            'X$formula$X')
-        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), ''), '$formula$')
-        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
-        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$ jaja $x$', ('$', '$'), 'a'),
-                         'a$aformulaa$a jaja a$axa$a')
-        self.assertEqual(
-            ut.apply_tag_between_inside_char_command('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
-            'X$form\\$ula$X')
-        self.assertEqual(
-            ut.apply_tag_between_inside_char_command('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
-            '\\$formula\\$')
 
-        self.assertEqual(ut.apply_tag_between_inside_char_command('$formula$ jaja $x$', ('$', '$'), ('a', '', '', 'b')),
-                         'a$formula$b jaja a$x$b')
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], ('X', '', '', 'X')), 'X$formula$X')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], ''), '$formula$')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], 'a'), 'a$aformulaa$a')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$ jaja $x$', [('$', '$', False)], 'a'), 'a$aformulaa$a jaja a$axa$a')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$form\\$ula$', [('$', '$', True)], ('X', '', '', 'X')), 'X$form\\$ula$X')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '\\$formula\\$', [('$', '$', True)], ('X', '', '', 'X')), '\\$formula\\$')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$ jaja $x$', [('$', '$', False)], ('a', '', '', 'b')), 'a$formula$b jaja a$x$b')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'a formula $$', [('$', '$', False)], ('a', 'b', 'c', 'd')), 'a formula a$$d')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'a formula \(xx+yy\)', [('\(', '\)', False)], ('a', 'b', 'c', 'd')), 'a formula a\(bxx+yyc\)d')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$x$$y$$z$', [('$', '$', False)], ('a', '', '', 'b')), 'a$x$ba$y$ba$z$b')
 
     def test_find_tex_commands(self) -> None:
         """
@@ -544,14 +564,14 @@ class UtilsTest(BaseTest):
         Test tex to unicode.
         """
         s = '\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7'
-        self.assertEqual(ut.tex_to_unicode(s), 'α²⋅α²⁺³≡α⁷')
+        self.assertEqual(ut.tex_to_unicode(s), 'α² ⋅ α²⁺³ ≡ α⁷')
         s = '\itA \in \\bbR^{nxn}, \\bfv \in \\bbR^n, \lambda_i \in \\bbR: \itA\\bfv = \lambda_i\\bfv'
-        self.assertEqual(ut.tex_to_unicode(s), '𝐴∈ℝⁿˣⁿ,𝐯∈ℝⁿ,λᵢ∈ℝ:𝐴𝐯=λᵢ𝐯')
+        self.assertEqual(ut.tex_to_unicode(s), '𝐴 ∈ ℝⁿˣⁿ, 𝐯 ∈ ℝⁿ, λᵢ ∈ ℝ: 𝐴𝐯 = λᵢ𝐯')
         s = '\\bf{boldface} \it{italic} \\bb{blackboard} \cal{calligraphic} \\frak{fraktur} \mono{monospace}'
         self.assertEqual(ut.tex_to_unicode(s),
-                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞𝑖𝑡𝑎𝑙𝑖𝑐𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬𝔣𝔯𝔞𝔨𝔱𝔲𝔯𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
+                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞 𝑖𝑡𝑎𝑙𝑖𝑐 𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕 𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬 𝔣𝔯𝔞𝔨𝔱𝔲𝔯 𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
         s = 'bf This is all boldface'
-        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬𝐢𝐬𝐚𝐥𝐥𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
+        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬 𝐢𝐬 𝐚𝐥𝐥 𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
         s = '\\frac{a}{b}'
         self.assertEqual(ut.tex_to_unicode(s), 'a/b')
         s = '                 '

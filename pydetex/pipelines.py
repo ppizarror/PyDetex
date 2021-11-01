@@ -29,7 +29,7 @@ def simple(s: str, lang: str = 'en', cite_replace_tags: bool = True) -> str:
     """
     if len(s) == 0:
         return s
-    s = '\n'.join(s.splitlines())
+    s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.remove_comments(s)
     s = par.simple_replace(s)
     s = par.remove_common_tags(s)
@@ -58,7 +58,7 @@ def strict(s: str, lang: str = 'en') -> str:
     """
     s = simple(s, lang, cite_replace_tags=False)
     s = par.process_chars_equations(s, lang, False)
-    s = par.remove_commands_char(s, '$')
+    s = par.remove_equations(s)
     s = par.remove_commands_param(s, lang)
     s = par.remove_commands_param_noargv(s)
     s = par.remove_comments(s)

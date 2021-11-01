@@ -29,9 +29,10 @@ __all__ = [
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
+    'TEX_COMMAND_CHARS',
+    'TEX_EQUATION_CHARS',
     'tex_to_unicode',
     'tokenize',
-    'VALID_TEX_COMMAND_CHARS',
     'validate_float',
     'validate_int'
 ]
@@ -159,7 +160,7 @@ def syntax_highlight(s: str) -> str:
     """
     Syntax highlighter.
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Code with format
     """
     # Add initial normal
@@ -168,10 +169,9 @@ def syntax_highlight(s: str) -> str:
     # Format equations
     s = apply_tag_between_inside_char_command(
         s=s,
-        symbols_char=('$', '$'),
+        symbols_char=TEX_EQUATION_CHARS,
         tags=(_FONT_TAGS['equation_char'], _FONT_TAGS['equation_inside'],
-              _FONT_TAGS['equation_char'], _FONT_TAGS['normal']),
-        ignore_escape=True
+              _FONT_TAGS['equation_char'], _FONT_TAGS['normal'])
     )
 
     # Format commands with {arguments}

@@ -14,8 +14,9 @@ __all__ = [
     'find_tex_commands',
     'find_tex_commands_noargv',
     'get_tex_commands_args',
-    'tex_to_unicode',
-    'VALID_TEX_COMMAND_CHARS'
+    'TEX_COMMAND_CHARS',
+    'TEX_EQUATION_CHARS',
+    'tex_to_unicode'
 ]
 
 import flatlatex
@@ -25,7 +26,7 @@ import re
 from typing import Tuple, Union, List, Dict, Optional, Any
 
 # Flat latex object
-_FLATLATEX = flatlatex.converter()
+_FLATLATEX = flatlatex.converter(ignore_newlines=False)
 
 # Tex to unicode
 _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
@@ -41,59 +42,109 @@ _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
 }
 
 # Valid command chars
-VALID_TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-                           'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-                           'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                           'W', 'X', 'Y', 'Z']
+TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+                     'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+                     'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                     'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                     'W', 'X', 'Y', 'Z']
+TEX_EQUATION_CHARS = [
+    ('$', '$', True),
+    ('\(', '\)', False),
+    ('\[', '\]', False),
+    ('\\begin{align*}', '\end{align*}', False),
+    ('\\begin{align}', '\end{align}', False),
+    ('\\begin{displaymath}', '\end{displaymath}', False),
+    ('\\begin{equation*}', '\\end{equation*}', False),
+    ('\\begin{equation}', '\\end{equation}', False),
+    ('\\begin{gather*}', '\\end{gather*}', False),
+    ('\\begin{gather}', '\\end{gather}', False),
+    ('\\begin{math}', '\end{math}', False)
+]
 
 
 def find_tex_command_char(
         s: str,
-        symbols_char: Union[Tuple[str, str], str],
-        ignore_escape: bool = False
-) -> Tuple[Tuple[int, int], ...]:
+        symbols_char: List[Tuple[str, str, bool]],
+) -> Tuple[Tuple[int, int, int, int], ...]:
     """
     Find symbols command positions. Example:
 
            00000000001111111111....
            01234567890123456789....
     Input: This is a $formula$ and this is not.
-    Output: ((10, 18), ...)
+    Output: ((10, 11, 17, 18), ...)
 
-    :param s: String
-    :param symbols_char: Symbols to check
-    :param ignore_escape: Ignores \\char
+    :param s: Latex string code
+    :param symbols_char: Symbols to check [(initial, final, ignore escape), ...]
     :return: Positions
     """
-    if isinstance(symbols_char, str):
-        symbols_char = (symbols_char, symbols_char)
-    assert len(symbols_char) == 2
-    assert len(symbols_char[0]) == 1 and len(symbols_char[1]) == 1
+    assert isinstance(symbols_char, list)
+    max_len = 0
+    for j in symbols_char:
+        assert len(j) == 3, f'Format is (initial, final, ignore escape); but received {j}'
+        assert isinstance(j[0], str) and len(j[0]) > 0 and ' ' not in j[0]
+        assert isinstance(j[1], str) and len(j[1]) > 0 and ' ' not in j[1]
+        assert isinstance(j[2], bool)
+        max_len = max(max_len, len(j[0]), len(j[1]))
 
-    s = '_' + s
+    def _find(k: int, y: int, p: bool = True) -> bool:
+        """
+        Returns true if from k char (in s) the symbols-char-y element is present.
+
+        :param k: Position to start
+        :param y: Indes of the symbol within the list
+        :param p: Reads the first (True) or last element
+        :return: True if exist
+        """
+        if y < 0:
+            return False
+        n, m, ignore_escape = symbols_char[y]
+        nm = n if p else m
+        total = 0
+        for z in range(len(nm)):
+            if s[k + z] == nm[z] and (z == 0 and (not ignore_escape or ignore_escape and s[k - 1] != '\\') or z > 0):
+                total += 1
+        return total == len(nm)
+
+    def _find_initial(k: int) -> int:
+        """
+        Find which symbol is contained.
+
+        :param k: Position to start from
+        :return: The index of the symbol within the list
+        """
+        for y in range(len(symbols_char)):
+            if _find(k, y):
+                return y
+        return -1
+
+    s = '_' + s + ' ' * max_len
     r = False  # Inside tag
+    r_u = -1
     a = 0
     found = []
 
-    for i in range(1, len(s)):
+    for i in range(1, len(s) - max_len):
+        u = _find_initial(i)
+        v = _find(i, r_u, False)
         # Open tag
-        if not r and s[i] == symbols_char[0][0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+        if not r and u >= 0:
             a = i
             r = True
+            r_u = u
         # Close
-        elif r and s[i] == symbols_char[1][0] and (not ignore_escape or ignore_escape and s[i - 1] != '\\'):
+        elif r and v:
             r = False
-            found.append((a - 1, i - 1))
+            f, g = a - 1, i - 1
+            found.append((f, f + len(symbols_char[r_u][0]), g - 1, g + len(symbols_char[r_u][1]) - 1))
 
     return tuple(found)
 
 
 def apply_tag_between_inside_char_command(
         s: str,
-        symbols_char: Tuple[str, str],
-        tags: Union[Tuple[str, str, str, str], str],
-        ignore_escape: bool = False
+        symbols_char: List[Tuple[str, str, bool]],
+        tags: Union[Tuple[str, str, str, str], str]
 ) -> str:
     """
     Apply tag between symbols. For example, if symbols are ($, $) and tag is [1,2,3,4]:
@@ -101,14 +152,11 @@ def apply_tag_between_inside_char_command(
     Input: This is a $formula$ and this is not.
     Output: This is a 1$2formula3$4 and this is not
 
-    :param s: String
-    :param symbols_char: Symbols to check
+    :param s: Latex string code
+    :param symbols_char:  [(initial, final, ignore escape), ...]
     :param tags: Tags to replace
-    :param ignore_escape: Ignores \\char
     :return: String with tags
     """
-    assert len(symbols_char) == 2
-    assert len(symbols_char[0]) == 1 and len(symbols_char[1]) == 1
     if isinstance(tags, str):
         if tags == '':
             return s
@@ -116,22 +164,34 @@ def apply_tag_between_inside_char_command(
 
     assert len(tags) == 4
     a, b, c, d = tags
-    tex_tags = find_tex_command_char(s, symbols_char, ignore_escape)
+    tex_tags = find_tex_command_char(s, symbols_char)
 
     if len(tex_tags) == 0:
         return s
     new_s = ''
     k = 0  # Moves through tags
-
     for i in range(len(s)):
-        if k < len(tex_tags) and i in tex_tags[k]:
+        if k < len(tex_tags):
             if i == tex_tags[k][0]:
-                new_s += a + s[i] + b
-            else:
-                new_s += c + s[i] + d
+                new_s += a + s[i]
+                continue
+            elif tex_tags[k][0] < i < tex_tags[k][1]:
+                pass
+            elif i == tex_tags[k][1] and tex_tags[k][1] != tex_tags[k][3]:
+                new_s += b + s[i]
+                if tex_tags[k][2] - tex_tags[k][1] == 0:
+                    new_s += c
+                continue
+            elif i == tex_tags[k][2] and tex_tags[k][2] != tex_tags[k][0]:
+                new_s += s[i] + c
+                continue
+            elif tex_tags[k][2] < i < tex_tags[k][3]:
+                pass
+            elif i == tex_tags[k][3]:
+                new_s += s[i] + d
                 k += 1
-        else:
-            new_s += s[i]
+                continue
+        new_s += s[i]
 
     return new_s
 
@@ -145,7 +205,7 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
                      a       b c  d
     Example: This is \aCommand{nice}... => ((8,16,18,21), ...)
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Tuple if found codes (a, b, c, d, command continues)
     """
     found: List = []
@@ -162,19 +222,19 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
         # print(i, s[i], depth_0, depth_1, is_cmd, is_argv)
 
         # Start a command
-        if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+        if not is_cmd and s[i] == '\\' and s[i + 1] in TEX_COMMAND_CHARS:
             a, b, is_cmd, is_argv = i, -1, True, False
             cmd_idx += 1
 
         # If command before args encounter an invalid chad, disables the command
-        elif is_cmd and not is_argv and s[i] not in cont_chars and s[i] not in VALID_TEX_COMMAND_CHARS:
+        elif is_cmd and not is_argv and s[i] not in cont_chars and s[i] not in TEX_COMMAND_CHARS:
             is_cmd = False
-            if s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+            if s[i] == '\\' and s[i + 1] in TEX_COMMAND_CHARS:
                 a, b, is_cmd, is_argv = i, -1, True, False
                 cmd_idx += 1
 
         # If command has a new line, but following chars are not space
-        elif is_cmd and not is_argv and s[i] == '\n' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+        elif is_cmd and not is_argv and s[i] == '\n' and s[i + 1] in TEX_COMMAND_CHARS:
             is_cmd = False
 
         # If command, not arg, but an invalid char follows the space, disables the command
@@ -242,7 +302,7 @@ def get_tex_commands_args(
 
     Example: This is \aCommand[\label{}]{nice} and... => (('aCommand', ('\label{}', True), ('nice', False)), ...)
 
-    :param s: Latex code
+    :param s: Latex string code
     :param pos: Add the numerical position of the original string at the last position
     :return: Arguments
     """
@@ -273,7 +333,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
                      x       x
     Example: This is \aCommand ... => ((8,16), ...)
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Tuple if found codes
     """
     found = []
@@ -284,7 +344,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
 
     for i in range(len(s) - 1):
 
-        if not is_cmd and s[i] == '\\' and s[i + 1] in VALID_TEX_COMMAND_CHARS:
+        if not is_cmd and s[i] == '\\' and s[i + 1] in TEX_COMMAND_CHARS:
             if i > 0 and s[i - 1] == '⇲':
                 continue
             a = i
@@ -303,7 +363,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
             is_cmd = False
             found.append([a, i - 1])
 
-        elif is_cmd and s[i] not in VALID_TEX_COMMAND_CHARS and s[i] not in cont_chars:
+        elif is_cmd and s[i] not in TEX_COMMAND_CHARS and s[i] not in cont_chars:
             is_cmd = False
             found.append([a, i - 1])
 
@@ -336,7 +396,7 @@ def apply_tag_tex_commands(
     Input: This is a \formula{epic} and this is not.
     Output: This is a 1\formula2{3epic4}5 and this is not
 
-    :param s: Code
+    :param s: Latex string code
     :param tags: Tags (length 5)
     :return: Code with tags
     """
@@ -389,7 +449,7 @@ def apply_tag_tex_commands_no_argv(
     Input: This is a \formula and this is not.
     Output: This is a 1\formula2 and this is not
 
-    :param s: Code
+    :param s: Latex string code
     :param tags: Tags (length 5)
     :return: Code with tags
     """
@@ -425,8 +485,8 @@ def _convert_single_symbol(s: str) -> Optional[str]:
     If s is just a latex code 'alpha' or 'beta' it converts it to its
     unicode representation.
 
-    :param s:
-    :return:
+    :param s: Latex string code
+    :return: Latex with converted single symbols
     """
     ss = '\\' + s
     for (code, val) in _TEX_TO_UNICODE['latex_symbols']:
@@ -440,7 +500,7 @@ def convert_latex_symbols(s: str) -> str:
     Replace each '\alpha', '\beta' and similar latex symbols with
     their unicode representation.
 
-    :param s: Text
+    :param s: Latex string code
     :return: Replaced symbols
     """
     for (code, val) in _TEX_TO_UNICODE['latex_symbols']:
@@ -453,7 +513,7 @@ def _process_starting_modifiers(s: str) -> str:
     If s start with 'it ', 'cal ', etc. then make the whole string
     italic, calligraphic, etc.
 
-    :param s: Text
+    :param s: Latex string code
     :return: Modified text
     """
     s = re.sub('^bb ', r'\\bb{', s)
@@ -469,7 +529,7 @@ def _apply_all_modifiers(s: str) -> str:
     """
     Applies all modifiers.
 
-    :param s: Text
+    :param s: Latex string code
     :return: Text with replaced chars
     """
     s = _apply_modifier(s, '^', _TEX_TO_UNICODE['superscripts'])
@@ -483,21 +543,21 @@ def _apply_all_modifiers(s: str) -> str:
     return s
 
 
-def _apply_modifier(text: str, modifier: str, d: Dict[Any, str]) -> str:
+def _apply_modifier(s: str, modifier: str, d: Dict[Any, str]) -> str:
     """
     This will search for the ^ signs and replace the next
     digit or (digits when {} is used) with its/their uppercase representation.
 
-    :param text: Text
+    :param s: Latex string code
     :param modifier: Modifier command
     :param d: Dict to look upon
     :return: New text with replaced text.
     """
-    text = text.replace(modifier, "^")
+    s = s.replace(modifier, "^")
     newtext = ""
     mode_normal, mode_modified, mode_long = range(3)
     mode = mode_normal
-    for ch in text:
+    for ch in s:
         if mode == mode_normal and ch == '^':
             mode = mode_modified
             continue
@@ -549,7 +609,7 @@ def tex_to_unicode(s: str) -> str:
     """
     Transforms tex code to unicode.
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Text in unicode
     """
     if s.strip() == '':
@@ -563,7 +623,12 @@ def tex_to_unicode(s: str) -> str:
     s = _apply_all_modifiers(s)
 
     # Last filter
+    s = s.replace('\n\n', '\n').replace('  ', ' ').replace('\t', ' ')
+    space_symbol = '⇱SPACESYMBOLPYDETEX⇲'
+    s = s.replace(' ', space_symbol)
     s = _FLATLATEX.convert(s)
+    s = s.replace(space_symbol, ' ')
+
     return s
 
 

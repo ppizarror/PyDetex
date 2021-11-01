@@ -9,6 +9,7 @@ Test several parsers which perform a single operation.
 from test._base import BaseTest
 import pydetex
 import pydetex.parsers as par
+import pydetex.utils as ut
 
 
 class ParserTest(BaseTest):
@@ -124,6 +125,8 @@ class ParserTest(BaseTest):
         self.assertEqual(par.simple_replace('This is a $x_0$ and $x^2$'), 'This is a $x₀$ and $x²$')
         self.assertEqual(par.simple_replace('The following example $\\alpha_0+\\beta^2=0$'),
                          'The following example $α₀+β²=0$')
+        self.assertEqual(par.simple_replace('This is a $x_0$ and \(x^2\)'), 'This is a $x₀$ and \(x²\)')
+        self.assertEqual(par.simple_replace('This is $\\alpha$'), 'This is $α$')
 
     def test_process_quotes(self) -> None:
         """
@@ -149,17 +152,21 @@ class ParserTest(BaseTest):
         Remove commands char.
         """
         s = 'This is a $command$!'
-        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a !')
+        self.assertEqual(par.remove_equations(s), 'This is a !')
         s = 'This is a $command\$ but this does not delete$!'
-        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a !')
+        self.assertEqual(par.remove_equations(s), 'This is a !')
         s = 'This is a $command!'
-        self.assertEqual(par.remove_commands_char(s, '$'), s)
+        self.assertEqual(par.remove_commands_char(s, chars=ut.TEX_EQUATION_CHARS), s)
         s = 'This is a$$ command!'
-        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a command!')
+        self.assertEqual(par.remove_equations(s), 'This is a command!')
         s = 'This is a $comman$ and $this should be removed too$!'
-        self.assertEqual(par.remove_commands_char(s, '$'), 'This is a  and !')
-        # s = 'This is a \(comman\) and \(this should be removed too\)!'
-        # self.assertEqual(par.remove_commands_char(s, ('\(', '\)')), 'This is a  and !')
+        self.assertEqual(par.remove_equations(s), 'This is a  and !')
+        s = 'This is a \(comman\) and \(this should be removed too\)!'
+        self.assertEqual(par.remove_equations(s), 'This is a  and !')
+        s = 'This is a \(\) and $X$!'
+        self.assertEqual(par.remove_equations(s), 'This is a  and !')
+        s = '$X$\(y\)$alpha$$$$$$key$'
+        self.assertEqual(par.remove_equations(s), '')
 
     def test_remove_commands(self) -> None:
         """
@@ -217,14 +224,29 @@ class ParserTest(BaseTest):
                          'Because x no lower needs any other supervision as y or z in \$30 or \$40')
         s = 'This code $with several chars$ should not be removed'
         self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), s)
+        s = 'This code must be $$ processed!!'
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), 'This code must be  processed!!')
+        s = 'an $x$$y$$z$'
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), 'an xyz')
 
         # Test multiple
         s = 'This code $with several chars$ should not be removed'
         self.assertEqual(par.process_chars_equations(s, 'en', single_only=False),
                          'This code EQUATION_0 should not be removed')
+        s = 'This code \(with several chars\) should not be removed'
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=False),
+                         'This code EQUATION_0 should not be removed')
         s = 'This $equation 0$ and \$equation $equation 1$ must by replaced'
         self.assertEqual(par.process_chars_equations(s, '-', single_only=False),
                          'This EQUATION_0 and \$equation EQUATION_1 must by replaced')
+
+        # Test environments
+        s = """My new equation:
+        \\begin{equation}
+        a+b
+        \\end{equation}"""
+        self.assertEqual(par.process_chars_equations(s, '-', single_only=False),
+                         'My new equation:\n        EQUATION_0')
 
     def test_output_text_for_some_commands(self) -> None:
         """
@@ -266,3 +288,5 @@ class ParserTest(BaseTest):
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $x$ equation')
         s = 'This is my $$ equation'
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $$ equation')
+        s = 'This is my \\begin{align}\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7\\end{align} equation'
+        self.assertEqual(par.unicode_chars_equations(s), 'This is my \\begin{align}α²⋅α²⁺³≡α⁷\end{align} equation')
