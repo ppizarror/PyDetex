@@ -27,7 +27,7 @@ class GuiTest(BaseTest):
         """
         Gui test.
         """
-        if 'TRAVIS' in os.environ:
+        if 'GITHUB' in os.environ:
             return
         gui = PyDetexGUI()
         cfg = gui._cfg
