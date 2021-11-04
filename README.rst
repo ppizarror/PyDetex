@@ -18,7 +18,7 @@ PyDetex
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
-.. image:: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml/badge.svg
+.. image:: https://img.shields.io/github/workflow/status/ppizarror/PyDetex/Run%20Tests
     :target: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml
     :alt: Build status
 
