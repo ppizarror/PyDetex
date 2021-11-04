@@ -18,9 +18,9 @@ PyDetex
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
-.. image:: https://travis-ci.com/ppizarror/PyDetex.svg?branch=master
-    :target: https://app.travis-ci.com/github/ppizarror/PyDetex
-    :alt: Travis
+.. image:: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml
+    :alt: Build status
 
 .. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/ppizarror/PyDetex/alerts
