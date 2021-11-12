@@ -91,7 +91,10 @@ class PyDetexGUI(object):
         # noinspection PyProtectedMember
         self._root.tk.call('wm', 'iconphoto', self._root._w, img)
         if not ut.IS_OSX:
-            self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
+            try:
+                self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
+            except tk.TclError:
+                pass
 
         self._root.minsize(width=window_size[0], height=window_size[1])
         self._root.resizable(width=False, height=False)
