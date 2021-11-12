@@ -50,6 +50,9 @@ PyDetex
     :target: https://ko-fi.com/ppizarror
     :alt: Buy me a Ko-fi
 
+Source repo on `GitHub <https://github.com/ppizarror/PyDetex>`_, 
+and run it on `Repl.it <https://repl.it/github/ppizarror/PyDetex>`_
+
 Introduction
 ------------
 

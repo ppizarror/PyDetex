@@ -1,0 +1,2 @@
+onBoot = "python3 setup.py install; clear"
+run = "python3 pydetex/gui.py"
