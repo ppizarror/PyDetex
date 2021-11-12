@@ -56,7 +56,7 @@ class ParserTest(BaseTest):
         """
         s = 'hello \\cite{number1,number2} epic'
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)),
-                         'hello [1,2] epic')
+                         'hello [1, 2] epic')
         s = 'this is \\cite{number1} epic \\cite{number2} and \\cite{number1}'
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)),
                          'this is [1] epic [2] and [1]')
@@ -64,6 +64,13 @@ class ParserTest(BaseTest):
         self.assertEqual(
             par.replace_pydetex_tags(par.process_cite(s)),
             'This is another example, [1] et al. suggests that yes, but [2] not')
+        # Test multiple cites
+        s = 'This is an example \\cite{b} \\cite{a,    b,    c    , d, e}'
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)), 'This is an example [1] [1–5]')
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, compress_cites=False)),
+                         'This is an example [1] [1, 2, 3, 4, 5]')
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, sort_cites=False)),
+                         'This is an example [1] [2, 1, 3–5]')
 
     def test_process_ref(self) -> None:
         """

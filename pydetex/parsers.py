@@ -200,33 +200,83 @@ def remove_common_tags(s: str) -> str:
     return s
 
 
-def process_cite(s: str) -> str:
+def process_cite(
+        s: str,
+        sort_cites: bool = True,
+        compress_cites: bool = True,
+        cite_separator: str = ', '
+) -> str:
     """
     Transforms all cites to a text-based with numbers. For example:
     ``'This is from \\cite{Pizarro}'`` to ``'This is from [1]'``.
 
     :param s: Latex string code
+    :param sort_cites: Sort the cite numbers
+    :param compress_cites: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
+    :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
     """
     cites = {}
     look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{']
     k = -1
     while True:
+        run_j = ''
         for j in look.copy():
             k = find_str(s, j)
             if k == -1:
                 look.remove(j)
             else:
+                run_j = j
                 break
         if k == -1:
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
-                c = s[k + 6:k + j]
+                c = s[k + len(run_j):k + j]
+
+                # Create the number of the cites
+                cite_nums: List[int] = []
                 for w in c.split(','):
+                    w = w.strip()
                     if w not in cites.keys():
                         cites[w] = len(cites.keys()) + 1
+                    cite_nums.append(cites[w])
                     c = c.replace(w, str(cites[w]))
+
+                # Sort the cites
+                if sort_cites:
+                    cite_nums.sort()
+
+                new_cites: List[str] = []
+
+                # Compress
+                if compress_cites:
+                    cont = False  # Cite number continues
+                    prev_c = -1  # Previous cite
+                    compr_range = -1  # First compress
+                    for w in cite_nums:
+                        if w - prev_c != 1 or w == cite_nums[-1]:
+                            if cont:
+                                # Find if the first is present in the list
+                                for m in range(len(new_cites)):
+                                    if new_cites[m] == str(compr_range):
+                                        new_cites.pop(m)
+                                        break
+                                new_cites.append(f'{compr_range}–{w}')
+                            else:
+                                new_cites.append(str(w))
+                            cont = False
+                            compr_range = w
+                        else:
+                            cont = True
+                        prev_c = w
+
+                else:
+                    for w in cite_nums:
+                        new_cites.append(str(w))
+
+                c = ', '.join(new_cites)
+
                 s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
                     _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break

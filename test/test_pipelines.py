@@ -118,5 +118,5 @@ Concerning the recognition and generation of floor plans, Huang and Zheng \cite{
 
 FIGURE_CAPTION: Pix2Pix model, which translates the rasterized floor plan image style into a segmented format.
 
-Concerning the recognition and generation of floor plans, Huang and Zheng [2] introduced an application of Pix2PixHD [3] to detect rooms from 8 classes, which were colorized to generate a new image. In this example, the conditional GANs lead to translate the raster plan to a segmented style using annotated pairs, classifying each pixel while also preserving the underlying structure of the image. Pix2Pix was also adopted by Kim et al. [4,5] to transform plans into"""
+Concerning the recognition and generation of floor plans, Huang and Zheng [2] introduced an application of Pix2PixHD [3] to detect rooms from 8 classes, which were colorized to generate a new image. In this example, the conditional GANs lead to translate the raster plan to a segmented style using annotated pairs, classifying each pixel while also preserving the underlying structure of the image. Pix2Pix was also adopted by Kim et al. [4, 5] to transform plans into"""
         self.assertEqual(pip.strict(s), t)
