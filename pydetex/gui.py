@@ -261,6 +261,7 @@ class PyDetexGUI(object):
         :param clear: Clear after time
         :param clear_time: Clear time in miliseconds
         """
+        assert clear_time > 0
         if self._status_clear_event_id != '':
             self._root.after_cancel(self._status_clear_event_id)
         self._status_bar_status['text'] = text
@@ -534,6 +535,7 @@ class PyDetexGUI(object):
         """
         Copy results to clip.
         """
+        self._status(self._cfg.lang('status_copy_to_clip'), clear=True)
         text = self._text_out.get(0.0, tk.END)
         pyperclip.copy(text)
 
