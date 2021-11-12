@@ -47,12 +47,13 @@ class PyDetexGUI(object):
     """
 
     _cfg: 'Settings'
+    _clip: bool
     _copy_clip: 'tk.Button'
     _detect_language_event_id: str
     _detected_lang_tag: str
     _dictionary: 'MultiDictionary'
-    _dictionary_window: Optional['gui_ut.DictionaryGUI']
     _dictionary_btn: 'tk.Button'
+    _dictionary_window: Optional['gui_ut.DictionaryGUI']
     _paste_timeout_error: int
     _ready: bool
     _root: 'tk.Tk'
@@ -71,7 +72,6 @@ class PyDetexGUI(object):
         """
         Constructor.
         """
-
         # ----------------------------------------------------------------------
         # Creates the window
         # ----------------------------------------------------------------------
@@ -93,7 +93,7 @@ class PyDetexGUI(object):
         if not ut.IS_OSX:
             try:
                 self._root.iconbitmap(ut.RESOURCES_PATH + 'icon.ico')
-            except tk.TclError:
+            except tk.TclError:  # Linux
                 pass
 
         self._root.minsize(width=window_size[0], height=window_size[1])
@@ -159,12 +159,13 @@ class PyDetexGUI(object):
                   bg='#475aff' if ut.IS_OSX else '#6388ff').pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Process clip
-        tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')), command=self._process_clip,
-                  relief=tk.GROOVE).pack(side=tk.LEFT, padx=(0, command_btn_packx))
+        process_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')),
+                                 command=self._process_clip, relief=tk.GROOVE)
+        process_clip.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Copy to clip
-        self._copy_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')), command=self._copy_to_clip,
-                                    relief=tk.GROOVE)
+        self._copy_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')),
+                                    command=self._copy_to_clip, relief=tk.GROOVE)
         self._copy_clip.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Clear
@@ -211,6 +212,16 @@ class PyDetexGUI(object):
         self._status_clear_event_id = ''
         self._clear()  # This also changes states
 
+        # Check if pyperclip is enabled
+        self._clip = True
+        try:
+            pyperclip.paste()
+            self._clip = False
+        except pyperclip.PyperclipException:
+            warn('pyperclip is not available on your system (copy/paste mechanism). GUI buttons were disabled')
+            process_clip['state'] = tk.DISABLED
+            self._copy_clip['state'] = tk.DISABLED
+
         # Set variables
         self._detect_language_event_id = ''
         self._detected_lang_tag = '–'
@@ -236,7 +247,10 @@ class PyDetexGUI(object):
             filetypes=[(self._cfg.lang('open_file_latex_file'), '*.tex')])
         if filename == '':
             return self._status_clear()
-        filename_dir = os.path.dirname(filename)
+        try:
+            filename_dir = os.path.dirname(filename)
+        except TypeError:  # Linux
+            return
         self._cfg.set(self._cfg.CFG_LAST_OPENED_FOLDER, filename_dir)
         try:
             text = ut.open_file(filename)
@@ -450,7 +464,8 @@ class PyDetexGUI(object):
         self._status(self._cfg.lang('status_processing'), True)
 
         self._text_out['state'] = tk.NORMAL
-        self._copy_clip['state'] = tk.NORMAL
+        if self._clip:
+            self._copy_clip['state'] = tk.NORMAL
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
@@ -503,6 +518,8 @@ class PyDetexGUI(object):
         """
         Process from clipboard. Tries with pooling.
         """
+        if not self._clip:
+            return
 
         def _paste():
             return pyperclip.paste()
@@ -542,6 +559,8 @@ class PyDetexGUI(object):
         """
         Copy results to clip.
         """
+        if not self._clip:
+            return
         self._status(self._cfg.lang('status_copy_to_clip'), clear=True)
         text = self._text_out.get(0.0, tk.END)
         pyperclip.copy(text)
