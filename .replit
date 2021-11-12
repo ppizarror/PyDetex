@@ -1,3 +1,2 @@
 run = "python3 pydetex/gui.py"
-language = "bash"
 onBoot = "python3 setup.py install; clear"
