@@ -78,7 +78,10 @@ class SettingsWindow(object):
         center_window(self.root, window_size)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if not ut.IS_OSX:
-            self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
+            try:
+                self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
+            except tk.TclError:  # Linux
+                pass
 
         # Registers
         reg_int = self.root.register(ut.validate_int)
@@ -383,7 +386,10 @@ class DictionaryGUI(object):
         center_window(self.root, window_size)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if not ut.IS_OSX:
-            self.root.iconbitmap(ut.RESOURCES_PATH + 'dictionary.ico')
+            try:
+                self.root.iconbitmap(ut.RESOURCES_PATH + 'dictionary.ico')
+            except tk.TclError:  # Linux
+                pass
 
         # Main frame
         f0 = tk.Frame(self.root, border=5)
