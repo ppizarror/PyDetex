@@ -60,6 +60,7 @@ class _LangManager(object):
                 'about_ver_latest': 'Software version up-to-date',
                 'about_ver_upgrade': 'Note: You are using an outdated version, consider upgrading to v{0}',
                 'cfg_check': 'Check',
+                'cfg_error_auto_copy': 'Invalid auto copy process value',
                 'cfg_error_font_size': 'Invalid font size value',
                 'cfg_error_lang': 'Invalid lang value',
                 'cfg_error_output_format': 'Invalid output font format value',
@@ -75,6 +76,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Font size',
                 'cfg_lang': 'Language',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
@@ -153,6 +155,7 @@ class _LangManager(object):
                 'about_ver_latest': 'Software actualizado a la última versión',
                 'about_ver_upgrade': 'Nota: Estás usando una versión desactualizada, considera actualizar a la v{0}',
                 'cfg_check': 'Activar',
+                'cfg_error_auto_copy': 'Valor auto copiado al procesar incorrecto',
                 'cfg_error_font_size': 'Tamaño fuente incorrecta',
                 'cfg_error_lang': 'Valor idioma incorrecto',
                 'cfg_error_output_format': 'Valor formato output incorrecto',
@@ -168,6 +171,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
                 'cfg_window_size': 'Tamaño de ventana',
                 'cfg_words_repetition': 'Repetición de palabras',
@@ -314,6 +318,7 @@ class Settings(object):
         self.CFG_LAST_OPENED_FOLDER = 'LAST_OPENED_FOLDER'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
         # Words repetition
@@ -340,6 +345,7 @@ class Settings(object):
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
+            self.CFG_PROCESS_AUTO_COPY: (False, bool, [True, False]),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
             self.CFG_REPETITION_IGNORE_WORDS: ('ignored_word_1, ignored_word_2', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),

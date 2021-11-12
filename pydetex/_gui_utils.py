@@ -51,6 +51,7 @@ class SettingsWindow(object):
     _var_lang: 'tk.StringVar'
     _var_output_font_format: 'tk.BooleanVar'
     _var_pipeline: 'tk.StringVar'
+    _var_process_auto_copy: 'tk.BooleanVar'
     _var_repetition_distance: 'tk.Entry'
     _var_repetition_ignore_words: 'tk.Text'
     _var_repetition_min_char: 'tk.Entry'
@@ -148,7 +149,7 @@ class SettingsWindow(object):
 
         # Check repetition
         f_repetition = tk.LabelFrame(f0, text=self._cfg.lang('cfg_words_repetition'), bd=1, relief=tk.GROOVE)
-        f_repetition.pack(fill='both')
+        f_repetition.pack(fill='both', pady=(0, 5))
 
         f = tk.Frame(f_repetition, border=0)
         f.pack(fill='both')
@@ -218,12 +219,16 @@ class SettingsWindow(object):
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
         self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS).strip())
 
-        # End repetition
-        f = tk.Frame(f_repetition, border=0, height=3 if ut.IS_OSX else 5)
-        f.pack()
-        f.pack_propagate(0)
+        # Process copy auto
+        f = tk.Frame(f0, border=0, relief=tk.GROOVE)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=label_w,
+                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_process_auto_copy = tk.BooleanVar(self.root)
+        self._var_process_auto_copy.set(cfg.get(cfg.CFG_PROCESS_AUTO_COPY))
+        tk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
-        # Font format
+        # Output font format
         f = tk.Frame(f0, border=0, relief=tk.GROOVE)
         f.pack(fill='both')
         tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w,
@@ -307,7 +312,9 @@ class SettingsWindow(object):
             (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
              self._cfg.lang('cfg_error_output_format')),
             (self._cfg.CFG_FONT_SIZE, fontsize_value,
-             self._cfg.lang('cfg_error_font_size'))
+             self._cfg.lang('cfg_error_font_size')),
+            (self._cfg.CFG_PROCESS_AUTO_COPY, self._var_process_auto_copy.get(),
+             self._cfg.lang('cfg_error_auto_copy'))
         )
 
         # Set values

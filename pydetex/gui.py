@@ -492,6 +492,10 @@ class PyDetexGUI(object):
         self._text_out['state'] = tk.DISABLED
         self._detect_language()
 
+        # If auto copy
+        if self._cfg.get(self._cfg.CFG_PROCESS_AUTO_COPY):
+            self._copy_to_clip()
+
     def _process_clip(self) -> None:
         """
         Process from clipboard. Tries with pooling.
@@ -547,7 +551,7 @@ class PyDetexGUI(object):
             self._settings_window.root.lift()
             return
         delta_h = 0 if ut.IS_OSX else 21
-        self._settings_window = gui_ut.SettingsWindow((375, 465 + delta_h), self._cfg)
+        self._settings_window = gui_ut.SettingsWindow((375, 490 + delta_h), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
