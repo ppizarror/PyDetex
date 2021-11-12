@@ -912,13 +912,17 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         s += ' ' * 5
         new_s = ''
         k = 1
-        for j in range(len(s) - 5):
+        j = -1
+        while True:
+            j += 1
             if s[j:j + 5] == '\\item':
                 new_s += _num(k)
                 j += 5
                 k += 1
             else:
                 new_s += s[j]
+            if j == len(s) - 5:
+                break
     else:
         new_s = s.replace('\\item', _itm())
 

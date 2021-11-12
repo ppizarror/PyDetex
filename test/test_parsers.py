@@ -319,26 +319,26 @@ class ParserTest(BaseTest):
                          '\n-  As shown in Figure \\ref{fignumber}\n-  Proposed')
 
         s = """\\begin{enumerate}
-            \item a
+            \\item a
             \\begin{enumerate}
-                \item a
-                \item b
+                \\item a
+                \\item b
                     \\begin{enumerate}
-                    \item a
-                    \item b
-                    \item c
+                    \\item a
+                    \\item b
+                    \\item c
                     \\end{enumerate}
             \\end{enumerate}
-            \item c
+            \\item c
             \\begin{itemize}
-                \item a
-                \item b
-                \item c
+                \\item a
+                \\item b
+                \\item c
             \\end{itemize}
             \\item epic
         \\end{enumerate}
         """
 
         t = par.replace_pydetex_tags(par.process_items(s))
-        self.assertEqual(t, '\n1. item a\n   a) item a\n   b) item b\n      i. item a\n      ii. item b\n      iii. ite'
-                            'm c\n2. item c\n   •  a\n   •  b\n   •  c\n3. item epic\n        ')
+        self.assertEqual(t, '\n1. a\n   a) a\n   b) b\n      i. a\n      ii. b\n      iii. '
+                            'c\n2. c\n   •  a\n   •  b\n   •  c\n3. epic\n        ')
