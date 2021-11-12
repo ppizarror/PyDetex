@@ -216,9 +216,10 @@ class PyDetexGUI(object):
         self._clip = True
         try:
             pyperclip.paste()
-            self._clip = False
         except pyperclip.PyperclipException:
-            warn('pyperclip is not available on your system (copy/paste mechanism). GUI buttons were disabled')
+            self._clip = False
+            error = 'pyperclip is not available on your system (copy/paste mechanism). GUI buttons were disabled'
+            warn(error)
             process_clip['state'] = tk.DISABLED
             self._copy_clip['state'] = tk.DISABLED
 
