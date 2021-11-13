@@ -37,12 +37,12 @@ About PyDetex
 This project does not have a mailing list and so the issues tab should be the first
 point of contact if wishing to discuss the project. If you have questions that you
 do not feel are relevant to the issues tab or just want to let me know what you
-think about the library, feel free to email me at pablo@ppizarror.com
+think about the software, feel free to email me at pablo@ppizarror.com
 
 .. toctree::
     :maxdepth: 2
     :hidden:
-    :caption: About pygame-menu
+    :caption: About PyDetex
 
     _source/license
     _source/contributors
