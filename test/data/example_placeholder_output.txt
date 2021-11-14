@@ -1,0 +1,10 @@
+Write or paste here your LaTeX code. It simply removes all tex-things and returns a friendly plain text!
+
+PyDetex can process equation, lists, cites, references, and many more:
+
+EQUATION_0
+
+Or:
+
+- As shown in Figure 1
+- Proposed by α-Feltes [1] because EQUATION_1

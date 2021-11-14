@@ -1,0 +1,13 @@
+Yamasaki et al. \cite{Yamasaki2018} also presented a fully convolutional end-to-end FCN network to label pixels in apartment floor plans by performing a general semantic segmentation, ignoring spatial relations between elements and room boundary. The classified pixels from 12 classes formed a graph to model the structure and measure the structural similarity for apartment retrieval. % \\% 1
+
+        \insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model which segments the walls from a rasterized floor plan image. Layer legend: \textit{(yellow)} convolutional block, \textit{(orange)} max-pool, \textit{(blue)} up-sampling, and \textit{(purple)} softmax.}% The encoder, comprised of several de-convolutions, captures the context and finer grain structures. Conversely, the decoder reconstruct the output segmented image, combining spatial information from the encoder.}
+
+        % U-NET
+        A U-Net approach was introduced by Yang \eta \etal \cite{Yang2018}, alongside the pixel deconvolutional layers PixelDCL \cite{Gao2017} to avoid checkerboard artifacts while segmenting walls and doors.
+
+Discriminator architectures \cite{Dong2021}.
+
+
+\insertimage[\label{pix2pix2model}]{pix2pix_compressed}{width=\linewidth}{Pix2Pix model, which translates the rasterized floor plan image style into a segmented format.}
+
+Concerning the recognition and generation of floor plans, Huang and Zheng \cite{Huang2018} introduced an application of Pix2PixHD \cite{Wang2018} to detect rooms from 8 classes, which were colorized to generate a new image. In this example, the conditional GANs lead to translate the raster plan to a segmented style using annotated pairs, classifying each pixel while also preserving the underlying structure of the image. Pix2Pix was also adopted by Kim et al. \cite{Kim2021, Kim2018} to transform plans into

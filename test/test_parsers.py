@@ -390,3 +390,49 @@ class ParserTest(BaseTest):
             'The following is a tikz figure, and must be removed:\n        \n   '
             '     and it was removed!!\n        \n        \\begin{epic}\n       '
             ' But this should not be removed!\n        \\end{epic}')
+
+    def test_process_def(self) -> None:
+        """
+        Process defs test.
+        """
+        par._DEFS.clear()
+
+        s = 'This is my \\def\\code {epic!} but yes \\def\\a{} epic'
+        self.assertEqual(par.process_def(s), 'This is my  but yes  epic   ')
+        self.assertEqual(len(par._DEFS), 2)
+        self.assertEqual(par._DEFS['\\code'], 'epic!')
+
+        s = """
+        \def\\underline#1{\\relax\ifmmode\@@underline{#1}\else $\@@underline{\hbox{#1}}\m@th$\\relax\\fi}
+        \def\@greek#1{%
+            \ifcase#1%
+                \or $\\alpha$%
+                \or $\\beta$%
+                \or $\gamma$%
+                \or $\delta$%
+                \or $\epsilon$%
+                \or $\zeta$%
+                \or $\eta$%
+                \or $\\theta$%
+                \or $\iota$%
+                \or $\kappa$%
+                \or $\lambda$%
+                \or $\mu$%
+                \or $\\nu$%
+                \or $\\xi$%
+                \or $o$%
+                \or $\pi$%
+                \or $\\rho$%
+                \or $\sigma$%
+                \or $\\tau$%
+                \or $\\upsilon$%
+                \or $\phi$%
+                \or $\chi$%
+                \or $\psi$%
+                \or $\omega$%
+            \\fi%
+        }
+        not epic
+        """
+        self.assertEqual(par.process_def(s).strip(), 'not epic')
+        self.assertEqual(len(par._DEFS), 0)
