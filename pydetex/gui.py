@@ -19,6 +19,7 @@ import pyperclip
 import requests
 import string
 import sys
+import traceback
 
 from nltk.tokenize import RegexpTokenizer
 from outdated import check_outdated
@@ -469,12 +470,12 @@ class PyDetexGUI(object):
         Process and call the pipeline.
         """
         self._status(self._cfg.lang('status_processing'), True)
-        self._root.after(50, lambda: self._process_inner())
         for btn in (self._process_button, self._process_clip_button,
                     self._copy_clip_button, self._clear_button):
             btn['state'] = tk.DISABLED
+        self._root.after(50, lambda: self.__process_inner())
 
-    def _process_inner(self) -> None:
+    def __process_inner(self) -> None:
         """
         Process called after.
         """
@@ -485,15 +486,26 @@ class PyDetexGUI(object):
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
+        PARSER_FONT_FORMAT['bold'] = FONT_TAGS['bold'] if font_format else ''
         PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
         PARSER_FONT_FORMAT['equation'] = FONT_TAGS['italic'] if font_format else ''
+        PARSER_FONT_FORMAT['italic'] = FONT_TAGS['italic'] if font_format else ''
         PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
         PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
         PARSER_FONT_FORMAT['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
         PARSER_FONT_FORMAT['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
 
         # Process the text and get the language
-        out = self.pipeline(text, self._detected_lang_tag)
+        # noinspection PyBroadException
+        try:
+            out = self.pipeline(text, self._detected_lang_tag)
+        except Exception:
+            err = self._cfg.lang('process_error').format(
+                pydetex.__url_bug_tracker__,
+                FONT_TAGS['error'] + traceback.format_exc()
+            )
+            self._text_out.insert_highlighted_text(FONT_TAGS['normal'] + err, True)
+            return self.__process_final()
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
@@ -520,6 +532,15 @@ class PyDetexGUI(object):
         # Insert the text
         self._text_out.insert_highlighted_text(out, True, font_format)
 
+        # Final
+        self.__process_final(words)
+
+    def __process_final(self, words: int = 0) -> None:
+        """
+        Function executed after process finished.
+
+        :param words: Total processed words
+        """
         # Configure status
         self._process_button['state'] = tk.NORMAL
         self._clear_button['state'] = tk.NORMAL
