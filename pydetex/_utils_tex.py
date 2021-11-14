@@ -372,7 +372,7 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
         :param e: Environment name
         :return: Common environment
         """
-        if 'itemize' in e or 'enumerate' in e:
+        if 'itemize' in e or 'enumerate' in e or 'tablenotes' in e:
             return 'item_'
         return ''
 
