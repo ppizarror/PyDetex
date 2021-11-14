@@ -266,6 +266,7 @@ class PyDetexGUI(object):
             self._clear()
             self._insert_in(text)
             self._cfg.save()
+            os.chdir(filename_dir)
         except PermissionError:
             pass
 
@@ -468,7 +469,7 @@ class PyDetexGUI(object):
         Process and call the pipeline.
         """
         self._status(self._cfg.lang('status_processing'), True)
-        self._root.after(10, lambda: self._process_inner())
+        self._root.after(50, lambda: self._process_inner())
         for btn in (self._process_button, self._process_clip_button,
                     self._copy_clip_button, self._clear_button):
             btn['state'] = tk.DISABLED
