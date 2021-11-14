@@ -29,6 +29,7 @@ __all__ = [
     'LangTexTextTags',
     'make_stemmer',
     'open_file',
+    'ProgressBar',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
@@ -43,8 +44,10 @@ __all__ = [
 import datetime
 import os
 import platform
+import sys
+import time
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
 from pydetex._utils_lang import *
@@ -229,3 +232,81 @@ def open_file(f: str) -> str:
     text = ''.join(o.readlines())
     o.close()
     return text
+
+
+class ProgressBar(object):
+    """
+    Basic progress bar implementation.
+    """
+
+    _current: int
+    _last_step: float
+    _size: int
+    _step_times: Dict[str, float]
+    _steps: int
+    _t0: float
+
+    def __init__(self, steps: int, size: int = 10) -> None:
+        """
+        Constructor.
+
+        :param steps: How many steps have the procedure
+        :param size: Bar size
+        """
+        assert isinstance(steps, int) and steps >= 1
+        assert isinstance(size, int) and size >= 1
+        self._current = 0
+        self._last_step = time.time()
+        self._size = size  # Bar size
+        self._step_times = {}
+        self._steps = steps - 1
+        self._t0 = time.time()
+
+    def _print_progress_bar(self, i: int, max_: int, post_text: str) -> None:
+        """
+        Prints a progress bar.
+
+        :param i: Progress bar
+        :param max_: Max steps
+        :param post_text: Status
+        """
+        j = i / max_
+        sys.stdout.write('\r')
+        sys.stdout.write(f"[{'=' * int(self._size * j):{self._size}s}] {int(100 * j)}%  {post_text}")
+        sys.stdout.flush()
+
+    def update(self, status: str = '', print_total_time: bool = True) -> None:
+        """
+        Update the current status to a new step.
+
+        :param status: Status text
+        :param print_total_time: Prints total computing time
+        """
+        if self._current > self._steps:
+            return
+        self._print_progress_bar(self._current, self._steps, status)
+        dt = time.time() - self._last_step
+        self._last_step = time.time()
+        self._step_times[status] = dt
+        self._current += 1
+        if self._current == self._steps + 1:
+            print('')
+            sys.stdout.flush()
+            if print_total_time:
+                print(f'Process finished in {time.time() - self._t0:.3f} seconds')
+
+    def detail_times(self) -> None:
+        """
+        Print times.
+        """
+        for k in self._step_times.keys():
+            print(f'{self._step_times[k]:.3f}s\t{k}')
+
+    def reset(self) -> None:
+        """
+        Reset the steps.
+        """
+        self._current = 0
+        self._t0 = time.time()
+        self._last_step = time.time()
+        self._step_times.clear()
