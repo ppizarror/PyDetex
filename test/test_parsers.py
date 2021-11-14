@@ -82,7 +82,8 @@ class ParserTest(BaseTest):
         """
         Removes comments.
         """
-        self.assertEqual(par.remove_comments('This is a \% percentage, and % a comment'), 'This is a % percentage, and')
+        self.assertEqual(par.remove_comments('This is a \% percentage, and % a comment'),
+                         'This is a ⇱COMMENT_PERCENTAGE_SYMBOL⇲ percentage, and')
         s = """
         This is a multi-line file, typical from latex% comment
         
@@ -342,3 +343,5 @@ class ParserTest(BaseTest):
         t = par.replace_pydetex_tags(par.process_items(s))
         self.assertEqual(t, '\n1. a\n   a) a\n   b) b\n      i. a\n      ii. b\n      iii. '
                             'c\n2. c\n   •  a\n   •  b\n   •  c\n3. epic\n        ')
+
+        self.assertEqual(par._process_item('', ''), '')
