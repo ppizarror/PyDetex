@@ -9,6 +9,7 @@ Test the pipelines.
 from test._base import BaseTest
 import pydetex.pipelines as pip
 import pydetex.parsers as par
+import os
 
 
 class ParserTest(BaseTest):
@@ -97,6 +98,16 @@ class ParserTest(BaseTest):
             ('data/example_placeholder.txt', 'data/example_placeholder_output.txt'),
             ('data/example_simple_figure_caption.txt', 'data/example_simple_figure_caption_output.txt'),
             ('data/example_simple_cite.txt', 'data/example_simple_cite_output.txt'),
+            ('data/example_complex_template.txt', 'data/example_complex_template_output.txt')
+        ]
+        for f in example_files:
+            self.assertEqual(pip.strict(par._load_file_search(f[0])),
+                             par._load_file_search(f[1]))
+
+        # Exclusive tests
+        if 'GITHUB' in os.environ:
+            return
+        example_files = [
             ('data/example_complex_template.txt', 'data/example_complex_template_output.txt')
         ]
         for f in example_files:
