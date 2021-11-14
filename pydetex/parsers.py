@@ -21,6 +21,7 @@ __all__ = [
     'remove_commands_param_noargv',
     'remove_comments',
     'remove_common_tags',
+    'remove_environments',
     'remove_equations',
     'remove_tag',
     'replace_pydetex_tags',
@@ -33,7 +34,7 @@ import os
 import pydetex.utils as ut
 
 from pydetex._symbols import *
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 # Files
 _NOT_FOUND_FILES = []
@@ -471,6 +472,26 @@ def simple_replace(s: str) -> str:
     return new_s
 
 
+def _load_file_search(tex_file: str) -> str:
+    """
+    Search and load a file.
+
+    :param tex_file: Name of the file
+    :return: Loaded file or tag error
+    """
+    tx = _TAG_FILE_ERROR
+    folders = _os_listfolder()
+    folders.insert(0, '../')
+    folders.insert(0, './')
+    for f in folders:
+        tx = _load_file(tex_file, f)
+        if tx == _TAG_FILE_ERROR:
+            print(f'\tFile not found in {f}')
+        else:
+            break
+    return tx
+
+
 def process_inputs(s: str) -> str:
     """
     Process inputs, and try to copy the content.
@@ -498,17 +519,7 @@ def process_inputs(s: str) -> str:
                         print(f'Current path location: {os.getcwd()}')
                         _PRINT_LOCATION = True
                     print(f'Detected file {tex_file}:')
-
-                    # Get folder locations
-                    folders = _os_listfolder()
-                    folders.insert(0, '../')
-                    folders.insert(0, './')
-                    for f in folders:
-                        tx = _load_file(tex_file, f)
-                        if tx == _TAG_FILE_ERROR:
-                            print(f'\tFile not found in {f}')
-                        else:
-                            break
+                    tx = _load_file_search(tex_file)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
@@ -614,12 +625,61 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     return new_s
 
 
-def remove_commands_param(s: str, lang: str) -> str:
+def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
+    """
+    Remove a selection of environments.
+
+    :param s: Latex code
+    :param env_list: Environment list, if not defined, use the default from PyDetex
+    :return: Code without given environments
+    """
+    if not env_list:
+        env_list = ['tikzpicture', 'tabular']
+    tex_tags = ut.find_tex_environments(s)
+    if len(tex_tags) == 0 or len(env_list) == 0:
+        return s
+    new_s = ''
+
+    new_tex_tags = []
+    # Remove all the environments not in env_list
+    for t in tex_tags:
+        is_removed = False
+        for j in env_list:
+            if j in t[0]:
+                is_removed = True
+                break
+        if is_removed:
+            new_tex_tags.append(t)
+
+    # If tex tags is empty
+    if len(new_tex_tags) == 0:
+        return s
+
+    def is_in_tags(v: int) -> bool:
+        """
+        Check if a position is within tags.
+
+        :param v: Position
+        :return: True if in tags range
+        """
+        for j_ in new_tex_tags:
+            if j_[1] <= v <= j_[4] + 1:
+                return True
+        return False
+
+    for i in range(len(s)):
+        if not is_in_tags(i):
+            new_s += s[i]
+    return new_s
+
+
+def remove_commands_param(s: str, lang: str, invalid_commands: Optional[List[str]] = None) -> str:
     """
     Remove all commands with params.
 
     :param s: Latex string code
     :param lang: Language tag of the code
+    :param invalid_commands: Invalid commands that will not call output_text_for_some_commands. If ``None`` use defaults
     :return: Code with removed chars
     """
     tex_tags = ut.find_tex_commands(s)
@@ -628,10 +688,12 @@ def remove_commands_param(s: str, lang: str) -> str:
     new_s = ''
     k = 0  # Moves through tags
 
-    # invalid commands that will not output text
-    invalid_commands = [
-        'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter', 'newenvironment'
-    ]
+    # invalid commands that will not call output_text_for_some_commands
+    if not invalid_commands:
+        invalid_commands = [
+            'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter',
+            'newenvironment'
+        ]
 
     for i in range(len(s)):
         if k < len(tex_tags):
@@ -808,7 +870,7 @@ def process_items(s: str) -> str:
     :param s: Latex string code
     :return: Processed items
     """
-    if not ('itemize' in s or 'enumerate' in s):
+    if not ('itemize' in s or 'enumerate' in s or 'tablenotes' in s):
         return s
 
     def _get_name(e: str) -> str:
@@ -818,20 +880,24 @@ def process_items(s: str) -> str:
         :param e: Environment name
         :return: New name
         """
+        # This is due to itemize can contain other symbols or spaces, thus,
+        # itemize*    .. is converted to itemize
         if 'itemize' in e:
             return 'itemize'
         if 'enumerate' in e:
             return 'enumerate'
+        if 'tablenotes' in e:
+            return 'tablenotes'
         return ''
 
     def _are_item(e: str) -> bool:
         """
-        Return true if both are enumerate.
+        Return true if both are enumerate. Used to check recursive enumerates.
 
         :param e: Environment name
         :return: True if item
         """
-        return e == 'itemize' or e == 'enumerate'
+        return e == 'itemize' or e == 'enumerate' or e == 'tablenotes'
 
     # First, process the nested ones
     while True:
@@ -877,7 +943,6 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
     """
     if len(s) == 0:
         return ''
-    assert t in ('enumerate', 'itemize')
     line = '\n' + _TAG_ITEM_SPACE * (3 * depth)
 
     def _num(x: int) -> str:
