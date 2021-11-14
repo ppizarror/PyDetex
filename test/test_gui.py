@@ -48,7 +48,7 @@ class GuiTest(BaseTest):
         self.assertFalse(gui._ready)
 
         # Check clip
-        gui._process_clip_button()
+        gui._process_clip()
         gui._copy_to_clip()
 
         # Test gui settings
