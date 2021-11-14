@@ -31,11 +31,11 @@ _PIPELINES = {
     'pipeline_strict': pip.strict
 }
 
-# Store the window sizes (w, h, height_richtext, type)
+# Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin_botttom)
 _WINDOW_SIZE = {
-    'window_size_small': [700, 425, 140],
-    'window_size_medium': [900, 513, 183],
-    'window_size_large': [1200, 613, 233]
+    'window_size_small': [640, 360, 115, 3, 6],
+    'window_size_medium': [960, 540, 200, 5, 10],
+    'window_size_large': [1280, 720, 285, 5, 15]
 }
 
 
@@ -243,6 +243,12 @@ class _LangManager(object):
 
         # Extend languages if not defined
         ut.complete_langs_dict(self._lang)
+
+        # Update window sizes
+        for la in self._lang.keys():
+            for tok in self._lang[la].keys():
+                if tok in _WINDOW_SIZE.keys():
+                    self._lang[la][tok] += f' ({_WINDOW_SIZE[tok][0]}x{_WINDOW_SIZE[tok][1]})'
 
     def get_available(self) -> List[str]:
         """
