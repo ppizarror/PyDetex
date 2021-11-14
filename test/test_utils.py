@@ -410,6 +410,9 @@ class UtilsTest(BaseTest):
           \caption{Upper Riemann Sum}
           \label{epic}
         \end{figure}
+        
+        % Environments inside newenvironment should be ignored
+        \\
         """
         self.assertEqual(
             ut.find_tex_environments(_s),

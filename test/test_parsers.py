@@ -346,6 +346,27 @@ class ParserTest(BaseTest):
 
         self.assertEqual(par._process_item('', ''), '')
 
+        s = """
+        \\begin{enumerate}
+        \item b
+        \end{enumerate}
+        
+        \\begin{itemize}
+        \item a
+        \\end{itemize}
+        
+        \\begin{tablenotes}
+        Note: Res - Resolution in pixels (px).
+        \\end{tablenotes}
+        
+        epic
+        """
+        self.assertEqual(
+            par.replace_pydetex_tags(par.process_items(s)),
+            '\n        \n1. b\n        \n        \n-  a\n        \n        Note:'
+            ' Res - Resolution in pixels (px).\n        \n        epic\n        '
+        )
+
     def test_remove_environments(self) -> None:
         """
         Remove environment test.

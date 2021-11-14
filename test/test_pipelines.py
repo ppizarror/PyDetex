@@ -104,7 +104,7 @@ class ParserTest(BaseTest):
                              par._load_file_search(f[1]))
 
         # Exclusive tests
-        if 'GITHUB' in os.environ or False:
+        if 'GITHUB' in os.environ:
             return
         example_files = [
             ('data/example_complex_template.txt', 'data/example_complex_template_output.txt')
