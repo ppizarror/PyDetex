@@ -566,7 +566,7 @@ class PyDetexGUI(object):
         """
         # Configure status
         try:
-            self._root['cursor'] = 'arrow'
+            self._root['cursor'] = ''
         except tk.TclError:
             pass
         self._process_button['state'] = tk.NORMAL
