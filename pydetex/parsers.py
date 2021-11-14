@@ -38,6 +38,7 @@ from pydetex._symbols import *
 from typing import List, Tuple, Union, Optional
 
 # Files
+_LAST_NOT_FOUND_FILES_PATH = [os.getcwd()]
 _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
 
@@ -72,15 +73,17 @@ _DEFS = {}
 # in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
 # they are empty, and are updated in the PyDetexGUI._process() method
 FONT_FORMAT_SETTINGS = {
+    'bold': '',
     'cite': '',
     'equation': '',
+    'italic': '',
     'normal': '',
     'ref': '',
     'tex_text_tag': '',
     'tex_text_tag_content': ''
 }
 
-LANG_TEX_TEXT_TAGS = ut.LangTexTextTags()
+LANG_TT_TAGS = ut.LangTexTextTags()
 
 
 def _find_str(s: str, char: str) -> int:
@@ -183,25 +186,27 @@ def remove_tag(s: str, tagname: str) -> str:
                 break
 
 
-def remove_common_tags(s: str) -> str:
+def remove_common_tags(s: str, replace_tags: Optional[List] = None) -> str:
     """
     Remove common tags from string.
 
     :param s: Latex string code
+    :param replace_tags: List to replace. If ``None``, default will be used
     :return: Text without tags
     """
-    for tag in [
-        'bigp',
-        'chapter',
-        'emph',
-        'section',
-        'subsection',
-        'subsubsection',
-        'subsubsubsection',
-        'textbf',
-        'textit',
-        'texttt'
-    ]:
+    if replace_tags is None:
+        replace_tags = [
+            'chapter',
+            'emph',
+            'section',
+            'subsection',
+            'subsubsection',
+            'subsubsubsection',
+            'textbf',
+            'textit',
+            'texttt'
+        ]
+    for tag in replace_tags:
         s = remove_tag(s, tag)
     return s
 
@@ -496,15 +501,20 @@ def _load_file_search(tex_file: str) -> str:
     return tx
 
 
-def process_inputs(s: str) -> str:
+def process_inputs(s: str, clear_not_found_files: bool = False) -> str:
     """
     Process inputs, and try to copy the content.
 
     :param s: Latex string code with inputs
+    :param clear_not_found_files: Clear the not found files. Used when changing the path
     :return: Text copied with data from inputs
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
+    if os.getcwd() != _LAST_NOT_FOUND_FILES_PATH[0] or clear_not_found_files:
+        _LAST_NOT_FOUND_FILES_PATH[0] = os.getcwd()
+        _NOT_FOUND_FILES.clear()
     symbol = '⇱INPUT_FILE_TAG⇲'
+    s = remove_comments(s)
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
@@ -588,17 +598,32 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     #   [(argument number, argument is optional), ...],
     #   tag to be replaced,
     #   total commands,
-    #   add new line
+    #   font_tag ('tex_text_tag' if None),
+    #   font_content ('tex_text_tag_content' if None),
+    #   add new line (before, after)
     # )
+    # The font format is like .... [font tag]YOUR TAG {[font content]YOUR CONTENT} ...[font normal]. In that case, tag to be
+    # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
-    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, bool]] = [
-        ('caption', [(1, False)], LANG_TEX_TEXT_TAGS.get(lang, 'caption'), 1, True),
-        ('href', [(2, False)], LANG_TEX_TEXT_TAGS.get(lang, 'link'), 2, False),
-        ('insertimage', [(3, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 3, True),
-        ('insertimage', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
-        ('insertimageboxed', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
-        ('insertimageboxed', [(5, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 5, True),
-        ('subfloat', [(1, True)], LANG_TEX_TEXT_TAGS.get(lang, 'sub_figure_title'), 1, True)
+    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
+        ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
+        ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
+        ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
+        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
+        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),
+        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),
+        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
+        ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
+        ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
+        ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
+        ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''
 
@@ -607,7 +632,11 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     for c in cmd_args:
         for cmd in commands:
             if c[0] == cmd[0]:
-                _, cmd_args, cmd_tag, total_commands, cmd_newline = cmd
+                _, cmd_args, cmd_tag, total_commands, font_tag, font_content, cmd_newline = cmd
+                if font_tag is None:
+                    font_tag = 'tex_text_tag'
+                if font_content is None:
+                    font_content = 'tex_text_tag_content'
                 if len(c) - 1 == total_commands:
                     args = []
                     for j in cmd_args:
@@ -619,15 +648,20 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
                             if argv != '':
                                 args.append(argv)
                     if len(args) == len(cmd_args):
-                        args.insert(0, FONT_FORMAT_SETTINGS['tex_text_tag_content'])  # Add format text
+                        # Add format text
+                        for a in range(len(args)):
+                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + \
+                                      FONT_FORMAT_SETTINGS[font_tag]
                         text = cmd_tag.format(*args)
-                        new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal']
-                        if cmd_newline:
+                        text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
+                        if cmd_newline[0]:
+                            text = '\n' + text
+                        new_s += text
+                        if cmd_newline[1]:
                             new_s += '\n'
-
                         break
 
-    return new_s
+    return new_s.strip()
 
 
 def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
@@ -839,7 +873,7 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
                 else:
                     equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
-                        new_s += LANG_TEX_TEXT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        new_s += LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
                         eqn_number += 1
                     else:
                         new_s += equ
@@ -1097,3 +1131,12 @@ def _int_to_alph(n: int) -> str:
         n, remainder = divmod(n - 1, 26)
         string = chr(65 + remainder) + string
     return string
+
+
+def process_begin_document(s: str) -> str:
+    """
+    Removes all code outside begin document, if found.
+
+    :param s: Latex code
+    :return: Removes all data outside the document
+    """

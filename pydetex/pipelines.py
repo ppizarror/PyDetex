@@ -18,22 +18,29 @@ from typing import Callable
 PipelineType = Callable[[str, str], str]
 
 
-def simple(s: str, lang: str = 'en', replace_pydetex_tags: bool = True) -> str:
+def simple(
+        s: str,
+        lang: str = 'en',
+        replace_pydetex_tags: bool = True,
+        remove_common_tags: bool = True
+) -> str:
     """
     The most simple pipeline ever.
 
     :param s: String latex
     :param lang: Language tag of the code
     :param replace_pydetex_tags: Replace cite tags
+    :param remove_common_tags: Call ``remove_common_tags`` parser
     :return: String with no latex!
     """
     if len(s) == 0:
         return s
     s = '\n'.join(s.splitlines())  # Removes \r\n
-    s = par.remove_comments(s)
     s = par.process_inputs(s)
+    s = par.remove_comments(s)
     s = par.simple_replace(s)
-    s = par.remove_common_tags(s)
+    if remove_common_tags:
+        s = par.remove_common_tags(s)
     s = par.process_cite(s)
     s = par.process_ref(s)
     s = par.process_labels(s)
@@ -58,7 +65,7 @@ def strict(s: str, lang: str = 'en') -> str:
     :param lang: Language tag of the code
     :return: String with no latex!
     """
-    s = simple(s, lang, replace_pydetex_tags=False)
+    s = simple(s, lang, replace_pydetex_tags=False, remove_common_tags=False)
     s = par.process_chars_equations(s, lang, False)
     s = par.remove_equations(s)
     s = par.process_def(s)
