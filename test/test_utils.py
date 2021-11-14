@@ -709,6 +709,6 @@ class UtilsTest(BaseTest):
         self.assertEqual(pb._current, 3)
         pb.update('none')
         self.assertEqual(pb._current, 3)
+        pb.detail_times()
         pb.reset()
         self.assertEqual(pb._current, 0)
-        pb.detail_times()

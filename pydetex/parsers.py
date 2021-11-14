@@ -939,8 +939,8 @@ def process_chars_equations(
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
                 new_s += s[i]
-            elif tex_tags[k][0] <= i < tex_tags[k][1]:
-                continue
+            # elif tex_tags[k][0] <= i < tex_tags[k][1]:
+            #     continue
             elif tex_tags[k][1] <= i <= tex_tags[k][2] and not added_equ:
                 equ = s[tex_tags[k][1]:tex_tags[k][2] + 1]
                 if len(equ) == 1:
@@ -953,8 +953,8 @@ def process_chars_equations(
                     else:
                         new_s += equ
                 added_equ = True
-            elif tex_tags[k][2] < i < tex_tags[k][3]:
-                continue
+            # elif tex_tags[k][2] < i < tex_tags[k][3]:
+            #     continue
             elif tex_tags[k][3] == i:
                 k += 1
                 added_equ = False
@@ -1254,12 +1254,9 @@ def process_begin_document(s: str, **kwargs) -> str:
             w = k
         elif is_document_begin and is_end and s[k] == '{' and s[k - 1] != '\\':
             if s[k:k + 10] == '{document}':
-                j = k
                 break
 
     # If document has been found
     if kwargs.get('pb'):
         kwargs.get('pb').update('Processing {document} environment')
-    if i != -1 and j != -1 and i <= j:
-        return s[i:w]
-    return s
+    return s[i:w]

@@ -483,6 +483,11 @@ class ParserTest(BaseTest):
         """
         s = '\\begin{document}:end_\\end{document}'
         self.assertEqual(par.process_begin_document(s), ':end_')
+
+        # Others
+        s = '\\end{document}\\begin{document}:end_\\begin{document}\\end{document}\\begin{document}'
+        self.assertEqual(par.process_begin_document(s), ':end_\\begin{document}')
+
         s = """
         % Document
         \input{epic}
