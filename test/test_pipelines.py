@@ -37,6 +37,9 @@ class ParserTest(BaseTest):
         # Empty
         self.assertEqual(pip.simple(''), '')
 
+        # Test with invalid last char
+        self.assertEqual(pip.simple('This is epic\\\nThis is epic\\'), 'This is epic\nThis is epic')
+
         # Test replacers
         s = 'This is a \\Thetamagic but also \\Theta is not or \\Theta\\Epic or \\Theta\n sad'
         t = 'This is a \\Thetamagic but also Θ is not or Θ\Epic or Θ\nsad'

@@ -693,3 +693,7 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.tex_to_unicode(s), s)
         s = '\\sqrt{a+b}'
         self.assertEqual(ut.tex_to_unicode(s), '√a+b')
+        s = '\\alpha'
+        self.assertEqual(ut.tex_to_unicode(s), 'α')
+        s = 'alpha'
+        self.assertEqual(ut.tex_to_unicode(s), 'α')

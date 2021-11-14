@@ -331,9 +331,19 @@ class ParserTest(BaseTest):
                 \\item a
                 \\item b
                     \\begin{enumerate}
-                    \\item a
-                    \\item b
-                    \\item c
+                        \\item a
+                        \\item b
+                        \\item c
+                        \\begin{enumerate}[font=\\bfseries]
+                            \\item a
+                            \\item b
+                            \\item c
+                            \\begin{enumerate}[[font=\\bfseries]]
+                                \\item a
+                                \\item b
+                                \\item c
+                            \\end{enumerate}
+                        \\end{enumerate}
                     \\end{enumerate}
             \\end{enumerate}
             \\item c
@@ -347,8 +357,11 @@ class ParserTest(BaseTest):
         """
 
         t = par.replace_pydetex_tags(par.process_items(s))
-        self.assertEqual(t, '\n1. a\n   a) a\n   b) b\n      i. a\n      ii. b\n      iii. '
-                            'c\n2. c\n   •  a\n   •  b\n   •  c\n3. epic\n        ')
+        self.assertEqual(
+            t, '\n1. a\n   a) a\n   b) b\n      i. a\n      ii. b\n      iii. c\n'
+               '         A) a\n         B) b\n         C) c\n            I. a\n '
+               '           II. b\n            III. c\n2. c\n   •  a\n   •  b\n  '
+               ' •  c\n3. epic\n        ')
 
         self.assertEqual(par._process_item('', ''), '')
 
