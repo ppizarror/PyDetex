@@ -38,6 +38,7 @@ def simple(
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s)
     s = par.remove_comments(s)
+    s = par.process_begin_document(s)
     s = par.simple_replace(s)
     if remove_common_tags:
         s = par.remove_common_tags(s)
