@@ -188,7 +188,11 @@ def remove_tag(s: str, tagname: str) -> str:
                 break
 
 
-def remove_common_tags(s: str, replace_tags: Optional[List] = None) -> str:
+def remove_common_tags(
+        s: str,
+        replace_tags: Optional[List] = None,
+        **kwargs
+) -> str:
     """
     Remove common tags from string.
 
@@ -208,8 +212,12 @@ def remove_common_tags(s: str, replace_tags: Optional[List] = None) -> str:
             'textit',
             'texttt'
         ]
+
     for tag in replace_tags:
         s = remove_tag(s, tag)
+
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing common tags')
     return s
 
 
@@ -217,7 +225,8 @@ def process_cite(
         s: str,
         sort_cites: bool = True,
         compress_cites: bool = True,
-        cite_separator: str = ', '
+        cite_separator: str = ', ',
+        **kwargs
 ) -> str:
     """
     Transforms all cites to a text-based with numbers. For example:
@@ -243,6 +252,8 @@ def process_cite(
                 run_j = j
                 break
         if k == -1:
+            if kwargs.get('pb'):
+                kwargs.get('pb').update('Processing cites')
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
@@ -297,7 +308,8 @@ def process_cite(
 
 def replace_pydetex_tags(
         s: str,
-        cite_format: Tuple[str, str] = ('[', ']')
+        cite_format: Tuple[str, str] = ('[', ']'),
+        **kwargs
 ) -> str:
     """
     Replaces font tags to an specific format.
@@ -312,10 +324,12 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     s = s.replace(_TAG_NEW_LINE, '\n')
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Replacing pydetex tags')
     return s
 
 
-def process_labels(s: str) -> str:
+def process_labels(s: str, **kwargs) -> str:
     """
     Removes labels.
 
@@ -325,6 +339,8 @@ def process_labels(s: str) -> str:
     while True:
         k = find_str(s, '\\label{')
         if k == -1:
+            if kwargs.get('pb'):
+                kwargs.get('pb').update('Processing labels')
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
@@ -332,7 +348,7 @@ def process_labels(s: str) -> str:
                 break
 
 
-def process_ref(s) -> str:
+def process_ref(s: str, **kwargs) -> str:
     """
     Process references, same as cites, replaces by numbers.
 
@@ -343,6 +359,8 @@ def process_ref(s) -> str:
     while True:
         k = find_str(s, '\\ref{')
         if k == -1:
+            if kwargs.get('pb'):
+                kwargs.get('pb').update('Processing references')
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
@@ -351,7 +369,7 @@ def process_ref(s) -> str:
                 break
 
 
-def process_quotes(s) -> str:
+def process_quotes(s: str, **kwargs) -> str:
     """
     Process quotes.
 
@@ -361,6 +379,8 @@ def process_quotes(s) -> str:
     while True:
         k = find_str(s, ['\\quotes{', '\\doublequotes{'])
         if k == -1:
+            if kwargs.get('pb'):
+                kwargs.get('pb').update('Processing quotes')
             return s
         m = 0
         for j in range(len(s)):
@@ -371,7 +391,7 @@ def process_quotes(s) -> str:
                 break
 
 
-def remove_comments(s: str) -> str:
+def remove_comments(s: str, **kwargs) -> str:
     """
     Remove comments from text.
 
@@ -384,6 +404,7 @@ def remove_comments(s: str) -> str:
     s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
     s = s.replace('\\\n', '\n')
     k = s.split('\n')
+
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
     line_merge: List[bool] = []
@@ -402,6 +423,7 @@ def remove_comments(s: str) -> str:
     new_k = []
     j = 0
     merged_str = ''
+
     while True:  # Merge comment lines
         if not line_merge[j]:
             if merged_str != '':  # Add current merged str
@@ -416,6 +438,7 @@ def remove_comments(s: str) -> str:
     if merged_str != '':
         new_k.append(merged_str)
     k = new_k
+
     w = []  # Removes duplicates '' lines to single ''
     last = ''
     for j in k:
@@ -424,14 +447,18 @@ def remove_comments(s: str) -> str:
         else:
             w.append(j)
         last = j
+
     if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
     s = '\n'.join(w).strip()
     s = s.replace(newline_symbol, '\\\\')
+
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing comments')
     return s
 
 
-def simple_replace(s: str) -> str:
+def simple_replace(s: str, **kwargs) -> str:
     """
     Replace simple tokens.
 
@@ -482,6 +509,8 @@ def simple_replace(s: str) -> str:
         else:
             new_s += s[i]
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Replacing simple tokens')
     return new_s
 
 
@@ -505,7 +534,11 @@ def _load_file_search(tex_file: str) -> str:
     return tx
 
 
-def process_inputs(s: str, clear_not_found_files: bool = False) -> str:
+def process_inputs(
+        s: str,
+        clear_not_found_files: bool = False,
+        **kwargs
+) -> str:
     """
     Process inputs, and try to copy the content.
 
@@ -517,11 +550,14 @@ def process_inputs(s: str, clear_not_found_files: bool = False) -> str:
     if os.getcwd() != _LAST_NOT_FOUND_FILES_PATH[0] or clear_not_found_files:
         _LAST_NOT_FOUND_FILES_PATH[0] = os.getcwd()
         _NOT_FOUND_FILES.clear()
+        _PRINT_LOCATION = False
     symbol = '⇱INPUT_FILE_TAG⇲'
     s = remove_comments(s)
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
+            if kwargs.get('pb'):
+                kwargs.get('pb').update('Processing \\input')
             return s.replace(symbol, '\\input{')
         m = 0
         for j in range(len(s)):
@@ -531,17 +567,17 @@ def process_inputs(s: str, clear_not_found_files: bool = False) -> str:
                 tex_file = s[k + m + 1:k + j]
                 if '.tex' not in tex_file:
                     tex_file += '.tex'
-                if tex_file not in _NOT_FOUND_FILES:
+                if tex_file not in _NOT_FOUND_FILES and '\jobname' not in tex_file:
                     if not _PRINT_LOCATION:
-                        print(f'Current path location: {os.getcwd()}')
+                        # print(f'Current path location: {os.getcwd()}')
                         _PRINT_LOCATION = True
-                    print(f'Detected file {tex_file}:')
+                    # print(f'Detected file {tex_file}:')
                     tx = _load_file_search(tex_file)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
-                        print('\tFile found and loaded')
+                        # print('\tFile found and loaded')
                         tx = '\n'.join(tx.splitlines())
                         tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
@@ -578,14 +614,17 @@ def remove_commands_char(s: str, chars: List[Tuple[str, str, bool]]) -> str:
     return new_s
 
 
-def remove_equations(s: str) -> str:
+def remove_equations(s: str, **kwargs) -> str:
     """
     Remove all equations from a string.
 
     :param s: Latex string code
     :return: Latex without equation
     """
-    return remove_commands_char(s, chars=ut.TEX_EQUATION_CHARS)
+    s = remove_commands_char(s, chars=ut.TEX_EQUATION_CHARS)
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing equations')
+    return s
 
 
 def output_text_for_some_commands(s: str, lang: str) -> str:
@@ -668,7 +707,11 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     return new_s.strip()
 
 
-def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
+def remove_environments(
+        s: str,
+        env_list: Optional[List[str]] = None,
+        **kwargs
+) -> str:
     """
     Remove a selection of environments.
 
@@ -677,9 +720,11 @@ def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
     :return: Code without given environments
     """
     if not env_list:
-        env_list = ['tikzpicture', 'tabular']
+        env_list = ['tikzpicture', 'tabular', 'thebibiliography', 'references']
     tex_tags = ut.find_tex_environments(s)
     if len(tex_tags) == 0 or len(env_list) == 0:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No environment found in code')
         return s
     new_s = ''
 
@@ -713,10 +758,18 @@ def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
     for i in range(len(s)):
         if not is_in_tags(i):
             new_s += s[i]
+
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing environments')
     return new_s
 
 
-def remove_commands_param(s: str, lang: str, invalid_commands: Optional[List[str]] = None) -> str:
+def remove_commands_param(
+        s: str,
+        lang: str,
+        invalid_commands: Optional[List[str]] = None,
+        **kwargs
+) -> str:
     """
     Remove all commands with params.
 
@@ -727,6 +780,8 @@ def remove_commands_param(s: str, lang: str, invalid_commands: Optional[List[str
     """
     tex_tags = ut.find_tex_commands(s)
     if len(tex_tags) == 0:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No parameter commands found in code')
         return s
     new_s = ''
     k = 0  # Moves through tags
@@ -785,10 +840,12 @@ def remove_commands_param(s: str, lang: str, invalid_commands: Optional[List[str
     new_s = new_s.replace(parenthesis_sq_open_symbol, '\\[')
     new_s = new_s.replace(parenthesis_sq_close_symbol, '\\]')
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing command with parameters')
     return new_s
 
 
-def remove_commands_param_noargv(s: str) -> str:
+def remove_commands_param_noargv(s: str, **kwargs) -> str:
     """
     Remove all commands without arguments.
 
@@ -797,6 +854,8 @@ def remove_commands_param_noargv(s: str) -> str:
     """
     tex_tags = ut.find_tex_commands_noargv(s)
     if len(tex_tags) == 0:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No command without arguments were found in code')
         return s
     new_s = ''
     k = 0  # Moves through tags
@@ -812,12 +871,14 @@ def remove_commands_param_noargv(s: str) -> str:
         else:
             new_s += s[i]
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Removing command without arguments')
     return new_s
 
 
-def unicode_chars_equations(s: str) -> str:
+def unicode_chars_equations(s: str, **kwargs) -> str:
     """
-    Converts all ecuations to unicode.
+    Converts all equations to unicode.
 
     :param s: Latex string code
     :return: Latex with unicode converted
@@ -844,10 +905,17 @@ def unicode_chars_equations(s: str) -> str:
         else:
             new_s += s[i]
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Processing unicode equations')
     return new_s
 
 
-def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
+def process_chars_equations(
+        s: str,
+        lang: str,
+        single_only: bool,
+        **kwargs
+) -> str:
     """
     Process single char equations, removing the symbols.
 
@@ -858,7 +926,10 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
     """
     tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     if len(tex_tags) == 0:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No char equtions found')
         return s
+
     new_s = ''
     k = 0  # Moves through tags
     eqn_number = 0
@@ -891,10 +962,12 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
         else:
             new_s += s[i]
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Processing char equations')
     return new_s
 
 
-def strip_punctuation(s: str) -> str:
+def strip_punctuation(s: str, **kwargs) -> str:
     """
     Strips punctuation. For example, ``'mycode :'`` to ``'mycode:'``.
 
@@ -905,10 +978,12 @@ def strip_punctuation(s: str) -> str:
         s = s.replace(f' {j}', j)
     s = s.replace('\n\n\n', '\n\n')
     s = s.strip()
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Stripping punctuation')
     return s
 
 
-def process_def(s: str, clear_learned: bool = True) -> str:
+def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
     """
     Process \defs. Store the definition, among others.
 
@@ -917,6 +992,8 @@ def process_def(s: str, clear_learned: bool = True) -> str:
     :return: Latex without definitions
     """
     if '\\def' not in s:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No definitions found in code')
         return s
     if clear_learned:
         _DEFS.clear()
@@ -951,10 +1028,12 @@ def process_def(s: str, clear_learned: bool = True) -> str:
         else:
             new_s += s[i]
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Processing definitions')
     return new_s
 
 
-def process_items(s: str) -> str:
+def process_items(s: str, **kwargs) -> str:
     """
     Process itemize and enumerate.
 
@@ -962,6 +1041,8 @@ def process_items(s: str) -> str:
     :return: Processed items
     """
     if not ('itemize' in s or 'enumerate' in s or 'tablenotes' in s):
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No item found')
         return s
 
     def _get_name(e: str) -> str:
@@ -1021,6 +1102,8 @@ def process_items(s: str) -> str:
         if not conv:
             break
 
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Processing item/enumerate environments')
     return s
 
 
@@ -1139,13 +1222,18 @@ def _int_to_alph(n: int) -> str:
     return string
 
 
-def process_begin_document(s: str) -> str:
+def process_begin_document(s: str, **kwargs) -> str:
     """
     Removes all code outside begin document, if found.
 
     :param s: Latex code
     :return: Removes all data outside the document
     """
+    if '{document}' not in s:
+        if kwargs.get('pb'):
+            kwargs.get('pb').update('No document environment found')
+        return s
+
     s += '          '
     is_env = False
     is_end = False
@@ -1170,6 +1258,8 @@ def process_begin_document(s: str) -> str:
                 break
 
     # If document has been found
+    if kwargs.get('pb'):
+        kwargs.get('pb').update('Processing {document} environment')
     if i != -1 and j != -1 and i <= j:
         return s[i:w]
     return s
