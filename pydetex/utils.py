@@ -246,7 +246,7 @@ class ProgressBar(object):
     _steps: int
     _t0: float
 
-    def __init__(self, steps: int, size: int = 10) -> None:
+    def __init__(self, steps: int, size: int = 15) -> None:
         """
         Constructor.
 
