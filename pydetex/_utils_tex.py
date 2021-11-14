@@ -622,9 +622,10 @@ def _convert_single_symbol(s: str) -> Optional[str]:
     :param s: Latex string code
     :return: Latex with converted single symbols
     """
-    ss = '\\' + s
+    if '\\' not in s[0]:
+        s = '\\' + s
     for (code, val) in _TEX_TO_UNICODE['latex_symbols']:
-        if code == ss:
+        if code == s:
             return val
     return None
 
