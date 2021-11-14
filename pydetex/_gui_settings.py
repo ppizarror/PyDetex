@@ -33,7 +33,7 @@ _PIPELINES = {
 
 # Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin_botttom)
 _WINDOW_SIZE = {
-    'window_size_small': [640, 360, 115, 3, 6],
+    'window_size_small': [720, 480, 175, 3, 6],
     'window_size_medium': [960, 540, 200, 5, 10],
     'window_size_large': [1280, 720, 285, 5, 15]
 }
