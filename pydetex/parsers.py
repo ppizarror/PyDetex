@@ -9,6 +9,7 @@ Defines parsers, which perform a single task for removal LaTex things.
 __all__ = [
     'find_str',
     'FONT_FORMAT_SETTINGS',
+    'process_begin_document',
     'process_chars_equations',
     'process_cite',
     'process_def',
@@ -46,6 +47,7 @@ _PRINT_LOCATION = False
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
 _TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
+_TAG_NEW_LINE = '⇱NEW_LINE⇲'
 _TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
 _TAG_PERCENTAGE_SYMBOL = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
 
@@ -309,6 +311,7 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
+    s = s.replace(_TAG_NEW_LINE, '\n')
     return s
 
 
@@ -375,7 +378,7 @@ def remove_comments(s: str) -> str:
     :param s: Latex string code
     :return: String without comments
     """
-    newline_symbol = '⇱NEWLINE_SYMBOL⇲'
+    newline_symbol = '⇱NEWLINE_SYMBOL_REMOVE_COMMENTS⇲'
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
     s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
@@ -655,10 +658,10 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
                         text = cmd_tag.format(*args)
                         text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
                         if cmd_newline[0]:
-                            text = '\n' + text
+                            text = _TAG_NEW_LINE + text
                         new_s += text
                         if cmd_newline[1]:
-                            new_s += '\n'
+                            new_s += _TAG_NEW_LINE
                         break
 
     return new_s.strip()
@@ -899,6 +902,8 @@ def strip_punctuation(s: str) -> str:
     """
     for j in [',', ':', '=', ';', '!', '?', '.']:  # Before
         s = s.replace(f' {j}', j)
+    s = s.replace('\n\n\n', '\n\n')
+    s = s.strip()
     return s
 
 
@@ -1140,3 +1145,30 @@ def process_begin_document(s: str) -> str:
     :param s: Latex code
     :return: Removes all data outside the document
     """
+    s += '          '
+    is_env = False
+    is_end = False
+    is_document_begin = False
+    i, j, w = -1, -1, -1  # Init and start of the begin document, w indicates the start of \end
+    # Find if begin document exists
+    for k in range(len(s) - 10):
+        if s[k:k + 6] == '\\begin':
+            is_env = True
+        elif s[k] == '{' and s[k - 1] != '\\' and is_env and not is_document_begin:
+            if s[k:k + 10] == '{document}':
+                is_document_begin = True
+                i = k + 10
+            else:
+                is_env = False
+        elif is_document_begin and s[k:k + 4] == '\\end':
+            is_end = True
+            w = k
+        elif is_document_begin and is_end and s[k] == '{' and s[k - 1] != '\\':
+            if s[k:k + 10] == '{document}':
+                j = k
+                break
+
+    # If document has been found
+    if i != -1 and j != -1 and i <= j:
+        return s[i:w]
+    return s

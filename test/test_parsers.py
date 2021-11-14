@@ -151,7 +151,7 @@ class ParserTest(BaseTest):
         self.assertEqual(par._NOT_FOUND_FILES, ['latex.tex', '.tex'])
         self.assertEqual(par.process_inputs('This loads a \\input{latex} or \\input{} epic'),
                          'This loads a \\input{latex} or \\input{} epic')
-        self.assertEqual(par.process_inputs('This loads a \\input{data/simple} epic'),
+        self.assertEqual(par.process_inputs('This loads a \\input{data/simple} epic', clear_not_found_files=True),
                          'This loads a this is a simple file epic')
 
     def test_remove_commands_char(self) -> None:
@@ -195,7 +195,7 @@ class ParserTest(BaseTest):
         s = 'Ni\\f   \n    [][][]{}ce'
         self.assertEqual(par.remove_commands_param(s, 'en'), 'Nice')
         s = '\caption {thus, the analysis \{cannot\} be based \mycommand{only} using {nice} symbols}'
-        self.assertEqual(par.remove_commands_param(s, 'en').strip(),
+        self.assertEqual(par.replace_pydetex_tags(par.remove_commands_param(s, 'en')).strip(),
                          'CAPTION: thus, the analysis \{cannot\} be based  using nice symbols')
 
     def test_remove_commands_noargv(self) -> None:
@@ -259,6 +259,13 @@ class ParserTest(BaseTest):
         """
         Test output text for some commands, like caption or subfigure.
         """
+
+        def out(s_: str) -> str:
+            """
+            Call method.
+            """
+            return par.replace_pydetex_tags(par.output_text_for_some_commands(s_, 'en')).strip()
+
         s = """
         \\begin{figure}
             \centering
@@ -268,22 +275,21 @@ class ParserTest(BaseTest):
             \caption[invalid]
         \end{figure}
         """
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(),
-                         'CAPTION: A picture of the same gull looking the other way!')
+        self.assertEqual(out(s), 'CAPTION: A picture of the same gull looking the other way!')
 
         # Custom template
         s = '\\insertimage[]{imagefile}{width=5cm}{}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), '')
+        self.assertEqual(out(s), '')
         s = '\\insertimage[]{imagefile}{width=5cm}{e}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: e')
+        self.assertEqual(out(s), 'FIGURE_CAPTION: e')
         s = '\\insertimage{imagefile}{width=5cm}{e}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: e')
+        self.assertEqual(out(s), 'FIGURE_CAPTION: e')
         s = '\\insertimageboxed{imagefile}{width=5cm}{0.5}{legend}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: legend')
+        self.assertEqual(out(s), 'FIGURE_CAPTION: legend')
         s = 'Nice\n\insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model.}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'FIGURE_CAPTION: A U-Net model.')
+        self.assertEqual(out(s), 'FIGURE_CAPTION: A U-Net model.')
         s = 'This is a \\href{https://google.com}{A link}'
-        self.assertEqual(par.output_text_for_some_commands(s, 'en').strip(), 'LINK: A link')
+        self.assertEqual(out(s), 'LINK: A link')
 
     def test_unicode_chars_equations(self) -> None:
         """
@@ -457,3 +463,24 @@ class ParserTest(BaseTest):
         """
         self.assertEqual(par.process_def(s).strip(), 'not epic')
         self.assertEqual(len(par._DEFS), 0)
+
+    def test_begin_document(self) -> None:
+        """
+        Test begin document parser.
+        """
+        s = '\\begin{document}:end_\\end{document}'
+        self.assertEqual(par.process_begin_document(s), ':end_')
+        s = """
+        % Document
+        \input{epic}
+        This line of code should not be included
+        \\begin{figure}
+        This figure should not be included
+        \\end{figure}
+        \let\\a\\b
+        \\begin    {document}
+        Test
+        \\end      {document}
+        Removed as well!!
+        """
+        self.assertEqual(par.process_begin_document(s).strip(), 'Test')
