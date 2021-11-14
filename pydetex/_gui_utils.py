@@ -665,6 +665,7 @@ class RichText(tk.Text):
 
     def __init__(self, cfg: '_Settings', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
+        scrollbar_y = kwargs.pop('scrollbar_y', None)
         editable = kwargs.pop('editable', False)
         copy = kwargs.pop('copy', False)
         if editable:
@@ -693,6 +694,13 @@ class RichText(tk.Text):
             if style is None:
                 continue
             self._add_font(tag, **style)
+
+        # Add a scrollbar in the given frame
+        scroll_hthick = kwargs.get('highlightthickness', 0)
+        if scrollbar_y:
+            sy = tk.Scrollbar(scrollbar_y, command=self.yview)
+            sy.pack(side=tk.RIGHT, fill='y', pady=(scroll_hthick, scroll_hthick), padx=0)
+            self['yscrollcommand'] = sy.set
 
     def _add_font(self, tag: str, **kwargs) -> None:
         font = tkfont.Font(**self._default_font.configure())
