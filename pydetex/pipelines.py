@@ -18,13 +18,13 @@ from typing import Callable
 PipelineType = Callable[[str, str], str]
 
 
-def simple(s: str, lang: str = 'en', cite_replace_tags: bool = True) -> str:
+def simple(s: str, lang: str = 'en', replace_pydetex_tags: bool = True) -> str:
     """
     The most simple pipeline ever.
 
     :param s: String latex
     :param lang: Language tag of the code
-    :param cite_replace_tags: Replace cite tags
+    :param replace_pydetex_tags: Replace cite tags
     :return: String with no latex!
     """
     if len(s) == 0:
@@ -44,7 +44,7 @@ def simple(s: str, lang: str = 'en', cite_replace_tags: bool = True) -> str:
     if len(s) > 0 and s[-1] == '\\':
         s = s[0:len(s) - 1]
     s = par.remove_comments(s)  # comments, replace tags, strip
-    if cite_replace_tags:
+    if replace_pydetex_tags:
         s = par.replace_pydetex_tags(s)
     s = par.strip_punctuation(s)
     return s
@@ -58,7 +58,7 @@ def strict(s: str, lang: str = 'en') -> str:
     :param lang: Language tag of the code
     :return: String with no latex!
     """
-    s = simple(s, lang, cite_replace_tags=False)
+    s = simple(s, lang, replace_pydetex_tags=False)
     s = par.process_chars_equations(s, lang, False)
     s = par.remove_equations(s)
     s = par.remove_commands_param(s, lang)
