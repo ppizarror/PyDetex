@@ -58,6 +58,7 @@ class SettingsWindow(object):
     _var_window_size: 'tk.StringVar'
     on_destroy: Optional[Callable[[], None]]
     root: 'tk.Tk'
+    saved: bool
 
     # noinspection PyProtectedMember
     def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
@@ -259,6 +260,7 @@ class SettingsWindow(object):
                   relief=tk.GROOVE).pack(pady=(12 if ut.IS_OSX else 8, 0))
 
         # Update
+        self.saved = False
         self.root.update()
 
     # noinspection PyUnusedLocal
@@ -336,6 +338,7 @@ class SettingsWindow(object):
                                 message=self._cfg.lang('reload_message_message'))
 
         # Save
+        self.saved = True
         self._cfg.save()
         if do_close:
             self.close()
