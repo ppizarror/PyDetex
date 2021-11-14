@@ -31,6 +31,7 @@ def simple(s: str, lang: str = 'en', replace_pydetex_tags: bool = True) -> str:
         return s
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.remove_comments(s)
+    s = par.process_inputs(s)
     s = par.simple_replace(s)
     s = par.remove_common_tags(s)
     s = par.process_cite(s)
@@ -38,7 +39,6 @@ def simple(s: str, lang: str = 'en', replace_pydetex_tags: bool = True) -> str:
     s = par.process_labels(s)
     s = par.process_items(s)
     s = par.process_quotes(s)
-    s = par.process_inputs(s)
     s = par.process_chars_equations(s, lang, True)
     s = par.unicode_chars_equations(s)
     if len(s) > 0 and s[-1] == '\\':
