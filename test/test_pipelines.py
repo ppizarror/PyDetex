@@ -68,8 +68,10 @@ class ParserTest(BaseTest):
         """
         s = 'This contains \\insertimageanother{\label{1}}{2}{3}commands, but must be removed!\\'
         self.assertEqual(pip.strict(s), 'This contains commands, but must be removed!')
+
         s = 'This \\quoteepic{code removed!}is removed\\totally. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed. Not epic [1]')
+
         s = 'This \\quoteepic{code removed!}is removed \\totally nice. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed nice. Not epic [1]')
 
@@ -120,3 +122,6 @@ FIGURE_CAPTION: Pix2Pix model, which translates the rasterized floor plan image 
 
 Concerning the recognition and generation of floor plans, Huang and Zheng [2] introduced an application of Pix2PixHD [3] to detect rooms from 8 classes, which were colorized to generate a new image. In this example, the conditional GANs lead to translate the raster plan to a segmented style using annotated pairs, classifying each pixel while also preserving the underlying structure of the image. Pix2Pix was also adopted by Kim et al. [4, 5] to transform plans into"""
         self.assertEqual(pip.strict(s), t)
+
+        s = '\DeclareUnicodeCharacter{2292}{\ensuremath{\ensuremath{\\to}}}'
+        self.assertEqual(pip.strict(s), '')

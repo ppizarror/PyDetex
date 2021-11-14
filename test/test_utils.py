@@ -283,7 +283,7 @@ class UtilsTest(BaseTest):
 
         # Test with two parethesis format
         _test('This is \\aCommand   [  nice} ')
-        _test('This is \\aCommand   {  nice]  This is \\aCommand[nice2]', ('nice2',))
+        _test('This is \\aCommand[nice2]', ('nice2',))
 
         # Test multi-command
         _test('This is \\aCommand{nice}{nice2}', ('nice', 'nice2'))
@@ -295,15 +295,22 @@ class UtilsTest(BaseTest):
         _test('This is \\aCommand[1]{2} nice', ('1', '2'))
         _test('This is \\aCommand [1] {2} nice', ('1', '2'))
         _test('This is \\aCommand [1]\n {2} nice', ('1', '2'))
-        s = 'This is \\f[1]{2} \\g{3} \\h[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
-        _test(s, ('1', '2', '3', '6', '7', '9', '10', '11'))
 
         # Test corrupt
         _test('This is a \\caption {epic \\caption{nice} sad')
 
         # Check continues
+        s = 'This is \\f[1]{2} \\g{3} \\h{[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
+        _test(s, ('1', '2', '3', '[', '4', '5', '6', '7', '9', '10', '11'))
         t = [k[4] for k in ut.find_tex_commands(s)]
-        self.assertEqual(t, [True, False, False, True, False, True, True, False])
+        self.assertEqual(t, [True, False, False, True, True, False, True, False, True, True, False])
+
+        # Test empty
+        s = '\DeclareUnicodeCharacter{2292}{\ensuremath{\ensuremath{}}}j nice \\f{g}'
+        w = ut.find_tex_commands(s)
+        self.assertEqual(len(w), 3)
+        self.assertEqual(s[w[1][2]:w[1][3] + 1], '\\ensuremath{\\ensuremath{}}')
+        self.assertEqual(s[w[2][2]:w[2][3] + 1], 'g')
 
     def test_find_tex_environments(self) -> None:
         """
@@ -368,6 +375,47 @@ class UtilsTest(BaseTest):
         """
         _test(t, ['itemize', 'itemize', 'itemize', 'minipage'], [],
               ['itemize', 'itemize', 'minipage', ''], [3, 2, 1, 0])
+
+        _s = """
+        \\begin{figure}
+            \\begin{animateinline}[poster = first, controls]{5}
+            \whiledo{\\thehigher<30}{
+             \\begin{tikzpicture}[line cap=round, line join=round, >=triangle 45,
+                     x=4.0cm, y=1.0cm, scale=1]
+              \draw [->,color=black] (-0.1,0) -- (2.5,0);
+              \\foreach \\x in {1,2}
+              \draw [shift={(\\x,0)}, color=black] (0pt,2pt)
+                  -- (0pt,-2pt) node [below] {\\footnotesize $\\x$};
+              \draw [color=black] (2.5,0) node [below] {$x$};
+              \draw [->,color=black] (0,-0.1) -- (0,4.5);
+               \\foreach \y in {1,2,3,4}
+              \draw [shift={(0,\y)}, color=black] (2pt,0pt)
+                  -- (-2pt,0pt) node[left] {\\footnotesize $\y$};
+              \draw [color=black] (0,4.5) node [right] {$y$};
+              \draw [color=black] (0pt,-10pt) node [left] {\\footnotesize $0$};
+              \draw [domain=0:2.2, line width=1.0pt] plot (\\x,{(\\x)^2});
+              \clip(0,-0.5) rectangle (3,5);
+              \draw (2,0) -- (2,4);
+              \\foreach \i in {1,...,\\thehigher}
+              \draw [fill=black,fill opacity=0.3, smooth,samples=50] ({1+(\i-1)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                      --({1+(\i)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                      --  ({1+(\i)/\thehigher},0)
+                      -- ({1+(\i-1)/\\thehigher},0)
+                      -- cycle;
+               \end{tikzpicture}
+            %
+            \stepcounter{higher}
+            \ifthenelse{\\thehigher<30}{ \\newframe }{\end{animateinline} }
+          }
+          \caption{Upper Riemann Sum}
+          \label{epic}
+        \end{figure}
+        """
+        self.assertEqual(
+            ut.find_tex_environments(_s),
+            (('tikzpicture', 137, 156, 1435, 1450, 'animateinline', 2, -1),
+             ('animateinline', 36, 57, 1552, 1569, 'figure', 1, -1),
+             ('figure', 9, 23, 1655, 1665, '', 0, -1)))
 
     def test_get_tex_commands_args(self) -> None:
         """
