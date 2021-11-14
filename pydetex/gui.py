@@ -127,6 +127,7 @@ class PyDetexGUI(object):
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
         fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
         show_lnum = self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS)
+        self._tab_spaces = 4
 
         # In text
         f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
@@ -142,6 +143,9 @@ class PyDetexGUI(object):
         self._text_in.bind('<FocusIn>', self._process_focusin_in)
         self._text_in.bind('<FocusOut>', self._process_focusout_in)
         self._text_in.bind('<Key>', self._process_in_key, add='+')
+        self._text_in.bind('<Key-Tab>', self._text_in.tab_selected)
+        self._text_in.bind('<Shift-KeyPress-Tab>', self._text_in.undo_tab_selected)
+        self._text_in.tab_spaces = self._tab_spaces
 
         # Out text
         f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
@@ -151,7 +155,7 @@ class PyDetexGUI(object):
         self._text_out = gui_ut.RichText(self._cfg, self._root, f2, wrap='word', highlightthickness=hthick,
                                          highlightcolor=hcolor, font_size=fsize, copy=True,
                                          scrollbar_y=f2, add_line_numbers=f2 if show_lnum else None)
-        self._text_out.bind('<Key>', self._process_out_key)
+        self._text_out.bind('<Key>', self._process_out_key, add='+')
         self._text_out.pack(fill='both')
 
         # ----------------------------------------------------------------------
@@ -275,12 +279,16 @@ class PyDetexGUI(object):
         except PermissionError:
             pass
 
-    def _insert_in(self, text: str) -> None:
+    def _insert_in(self, text: str, clear: bool = False) -> None:
         """
         Insert text to in widget.
 
         :param text: Text
+        :param clear: Clear the text
         """
+        if clear:
+            self._text_in.clear()
+        text = text.replace('\t', ' ' * self._tab_spaces)
         self._text_in.insert(tk.END, text)
         self._text_in.redraw()
         self._detect_language()
@@ -605,9 +613,7 @@ class PyDetexGUI(object):
         text = text.strip()
         if text == '':
             return self._status(self._cfg.lang('clip_empty'), True)
-        self._text_in.delete(0.0, tk.END)
-        self._text_in.insert(0.0, text)
-        self._text_in.redraw()
+        self._insert_in(text, True)
         self._process()
 
     def _get_pipeline_results(self) -> str:

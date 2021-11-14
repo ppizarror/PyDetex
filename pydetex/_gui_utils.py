@@ -677,6 +677,7 @@ class RichText(tk.Text):
     _default_size: int
     _em: int
     _lnums: Optional['TextLineNumbers']
+    tab_spaces: int
 
     def __init__(self, cfg: '_Settings', root: 'tk.Tk', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
@@ -696,6 +697,7 @@ class RichText(tk.Text):
 
         self._em = self._default_font.measure('m')
         self._default_size = self._default_font.cget('size')
+        self.tab_spaces = 4
 
         # Editable gui
         if editable:
@@ -780,6 +782,57 @@ class RichText(tk.Text):
         """
         if self._lnums:
             self._lnums.redraw()
+
+    # noinspection PyUnusedLocal
+    def tab_selected(self, *args) -> str:
+        """
+        Tab the selected text.
+        """
+        try:
+            last = self.index('sel.last linestart')
+            index = self.index('sel.first linestart')
+        except tk.TclError:
+            self.insert(self.index(tk.INSERT), ' ' * self.tab_spaces)
+            return 'break'
+        while self.compare(index, '<=', last):
+            self.insert(index, ' ' * self.tab_spaces)
+            index = self.index('%s + 1 line' % index)
+        return 'break'
+
+    # noinspection PyUnusedLocal
+    def undo_tab_selected(self, *args) -> str:
+        """
+        Undo-Tab the selected text.
+        """
+        try:
+            last = self.index('sel.last linestart')
+            index = self.index('sel.first linestart')
+        except tk.TclError:
+            index = self.index('insert linestart')
+            last = self.index('insert lineend')
+            line = self.get(index, last)
+            i = 0
+            for j in range(self.tab_spaces):
+                if line[j] == ' ':
+                    i += 1
+                else:
+                    break
+            line = line[i:]
+            self.replace(index, last, line)
+            return 'break'
+        while self.compare(index, '<=', last):
+            index2 = self.index('%s lineend' % index)
+            line = self.get(index, index2)
+            i = 0
+            for j in range(self.tab_spaces):
+                if line[j] == ' ':
+                    i += 1
+                else:
+                    break
+            line = line[i:]
+            self.replace(index, index2, line)
+            index = self.index('%s + 1 line' % index)
+        return 'break'
 
     def insert_bullet(self, index: float, text: str) -> None:
         """
