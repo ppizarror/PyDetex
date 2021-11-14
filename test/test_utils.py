@@ -697,3 +697,18 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.tex_to_unicode(s), 'α')
         s = 'alpha'
         self.assertEqual(ut.tex_to_unicode(s), 'α')
+
+    def test_progress_bar(self) -> None:
+        """
+        Tests the progress bar.
+        """
+        pb = ut.ProgressBar(3)
+        pb.update('A')
+        pb.update('B')
+        pb.update('C')
+        self.assertEqual(pb._current, 3)
+        pb.update('none')
+        self.assertEqual(pb._current, 3)
+        pb.reset()
+        self.assertEqual(pb._current, 0)
+        pb.detail_times()
