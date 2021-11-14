@@ -468,7 +468,7 @@ class PyDetexGUI(object):
         Process and call the pipeline.
         """
         self._status(self._cfg.lang('status_processing'), True)
-        self._root.after(10, self._process_inner)
+        self._root.after(10, lambda: self._process_inner())
         for btn in (self._process_button, self._process_clip_button,
                     self._copy_clip_button, self._clear_button):
             btn['state'] = tk.DISABLED
@@ -478,8 +478,6 @@ class PyDetexGUI(object):
         Process called after.
         """
         text = self._text_in.get(0.0, tk.END)
-        if text.strip() == '':
-            return self._clear()
         self._text_out['state'] = tk.NORMAL
         if self._clip:
             self._copy_clip_button['state'] = tk.NORMAL
