@@ -44,6 +44,7 @@ _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
 _TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
 _TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+_TAG_PERCENTAGE_SYMBOL = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
 
 # Others
 _ROMAN_DIGITS = [
@@ -216,6 +217,7 @@ def process_cite(
     :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
     """
+    assert isinstance(cite_separator, str)
     cites = {}
     look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{']
     k = -1
@@ -275,8 +277,7 @@ def process_cite(
                     for w in cite_nums:
                         new_cites.append(str(w))
 
-                c = ', '.join(new_cites)
-
+                c = cite_separator.join(new_cites)
                 s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
                     _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
@@ -297,6 +298,7 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_OPEN_CITE, (cite_format[0]))
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
     s = s.replace(_TAG_ITEM_SPACE, ' ')
+    s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     return s
 
 
@@ -363,11 +365,10 @@ def remove_comments(s: str) -> str:
     :param s: Latex string code
     :return: String without comments
     """
-    comment_symbol = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
     newline_symbol = '⇱NEWLINE_SYMBOL⇲'
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
-    s = s.replace('\\%', comment_symbol)
+    s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
     k = s.split('\n')
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
@@ -411,8 +412,7 @@ def remove_comments(s: str) -> str:
         last = j
     if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
-    s = '\n'.join(w)
-    s = s.replace(comment_symbol, '%').strip()
+    s = '\n'.join(w).strip()
     s = s.replace(newline_symbol, '\\\\')
     return s
 
@@ -628,6 +628,11 @@ def remove_commands_param(s: str, lang: str) -> str:
     new_s = ''
     k = 0  # Moves through tags
 
+    # invalid commands that will not output text
+    invalid_commands = [
+        'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter', 'newenvironment'
+    ]
+
     for i in range(len(s)):
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
@@ -636,8 +641,26 @@ def remove_commands_param(s: str, lang: str) -> str:
                 pass
             else:  # Advance to other tag
                 sub_s = s[tex_tags[k][0]:tex_tags[k][3] + 2]
-                if not tex_tags[k][4]:  # If the command does not continue
-                    new_s += output_text_for_some_commands(sub_s, lang)
+
+                # If the command does not continue, write the text for such
+                # command, if this does not continue (for example, that happens
+                # when calling for \mycommand{1}{2}{3}. In that case, only tex_tags
+                # [\mycommand .... {3}] will be called, thus, sub_s will contain
+                # all the parameters of the command ({1}{2}{3})
+                if not tex_tags[k][4]:
+                    cmd_name = s[tex_tags[k][0]:tex_tags[k][1] + 1].strip()
+
+                    # Check if the invalid_commands are not within command name
+                    is_invalid = False
+                    for c in invalid_commands:
+                        if c in cmd_name:
+                            is_invalid = True
+                            break
+
+                    # If not invalid, call the analysis for its commands, check that
+                    # it can be recursive
+                    if not is_invalid:
+                        new_s += output_text_for_some_commands(sub_s, lang)
                 k += 1
         else:
             new_s += s[i]
@@ -852,6 +875,8 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
     :param depth: Depth
     :return: Processed items
     """
+    if len(s) == 0:
+        return ''
     assert t in ('enumerate', 'itemize')
     line = '\n' + _TAG_ITEM_SPACE * (3 * depth)
 
@@ -886,7 +911,6 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         return f'{line}{x} '
 
     # Remove optional arguments list
-    # print('old', [s])
     if s[0] == '[':
         sqd = 1
         for j in range(1, len(s)):
@@ -905,7 +929,6 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         if v != '':
             s_.append(v)
     s_ = '\n'.join(s_)
-    # print('new', [s_])
     s = s_
 
     if t == 'enumerate':
