@@ -77,7 +77,7 @@ Also, there're compiled binaries for Windows (x64) and macOS available through G
 Launch the GUI, or use the library
 ----------------------------------
 
-Simply run this command anywhere to execute the application, or just import pydetex and play.
+Simply run this command anywhere to execute the application.
 
 .. code-block:: bash
 
@@ -102,12 +102,23 @@ Simply run this command anywhere to execute the application, or just import pyde
 
     Multiple options to configure: Check repeated words, highlight undetected code, or use different pipelines.
 
+You can also import the library, and use the parsers (methods that take latex code
+and perform a single task) or the pipelines (combination of parsers). For more
+information, visit the `documentation <pydetex.readthedocs.io>`_
+
+.. code-block:: python
+
+    import pydetex.pipelines as pip
+    text = "This is a \\textbf{LaTex} code..."
+    out = pip.simple(text)
+
 TO-DOs
 ------
 
 Currently, many things must be improved:
 
-- Custom support for environments, such as *figure*, *table*, etc..
+- Add synthax checking for several languages, like `language-check <https://github.com/myint/language-check>`_.
+- Custom support for environments, such as *table*.
 
 Author
 ------

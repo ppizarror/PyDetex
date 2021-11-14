@@ -492,7 +492,10 @@ class PyDetexGUI(object):
         for btn in (self._process_button, self._process_clip_button,
                     self._copy_clip_button, self._clear_button):
             btn['state'] = tk.DISABLED
-        self._root['cursor'] = 'wait'
+        try:
+            self._root['cursor'] = 'wait'
+        except tk.TclError:
+            pass
         self._root.after(50, lambda: self._process_inner())
 
     def _process_inner(self) -> None:
@@ -562,7 +565,10 @@ class PyDetexGUI(object):
         :param words: Total processed words
         """
         # Configure status
-        self._root['cursor'] = 'arrow'
+        try:
+            self._root['cursor'] = 'arrow'
+        except tk.TclError:
+            pass
         self._process_button['state'] = tk.NORMAL
         self._clear_button['state'] = tk.NORMAL
         if self._clip:
