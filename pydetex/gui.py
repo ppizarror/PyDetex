@@ -121,35 +121,36 @@ class PyDetexGUI(object):
                                          command=self._open_dictionary, relief=tk.GROOVE)
         self._dictionary_btn.pack(side=tk.RIGHT, padx=(0, 7 if ut.IS_OSX else 11))
 
-        hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
-        fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
-
         # ----------------------------------------------------------------------
         # Input texts
         # ----------------------------------------------------------------------
+        hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
+        fsize = self._cfg.get(self._cfg.CFG_FONT_SIZE)
+        show_lnum = self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS)
+
         # In text
         f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f1.pack(fill='both', padx=10)
         f1.pack_propagate(0)
 
-        self._text_in = gui_ut.RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
+        self._text_in = gui_ut.RichText(self._cfg, self._root, f1, wrap='word', highlightthickness=hthick,
                                         highlightcolor=hcolor, font_size=fsize, editable=True,
-                                        scrollbar_y=f1)
+                                        scrollbar_y=f1, add_line_numbers=f1 if show_lnum else None)
         self._text_in.pack(fill='both')
         self._text_in.bind('<Button>', self._process_cursor_in)
         self._text_in.bind('<ButtonRelease>', self._process_cursor_in)
         self._text_in.bind('<FocusIn>', self._process_focusin_in)
         self._text_in.bind('<FocusOut>', self._process_focusout_in)
-        self._text_in.bind('<Key>', self._process_in_key)
+        self._text_in.bind('<Key>', self._process_in_key, add='+')
 
         # Out text
         f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f2.pack(fill='both', padx=10, pady=(window_size[3], 0))
         f2.pack_propagate(0)
 
-        self._text_out = gui_ut.RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
+        self._text_out = gui_ut.RichText(self._cfg, self._root, f2, wrap='word', highlightthickness=hthick,
                                          highlightcolor=hcolor, font_size=fsize, copy=True,
-                                         scrollbar_y=f2)
+                                         scrollbar_y=f2, add_line_numbers=f2 if show_lnum else None)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
@@ -242,6 +243,9 @@ class PyDetexGUI(object):
 
         # Inserts the placeholder text
         self._insert_in(self._cfg.lang('placeholder'))
+
+        # Finals
+        self._text_out['state'] = tk.DISABLED
         self._root.update()
 
     def _open_file(self) -> None:
@@ -278,6 +282,7 @@ class PyDetexGUI(object):
         :param text: Text
         """
         self._text_in.insert(tk.END, text)
+        self._text_in.redraw()
         self._detect_language()
         self._process_cursor_in(None)
 
@@ -438,6 +443,8 @@ class PyDetexGUI(object):
         if self._cfg._last_opened_day_diff >= 7:
             self._root.after(1000, self._check_version_event)
         self._root.after(100, lambda: self._root.lift())
+        self._text_in.redraw()
+        self._text_out.redraw()
         self._root.mainloop()
 
     def _clear(self) -> None:
@@ -449,12 +456,16 @@ class PyDetexGUI(object):
         self._text_out.delete(0.0, tk.END)
         self._text_out['state'] = tk.DISABLED
         self._copy_clip_button['state'] = tk.DISABLED
+
         self._ready = False
         self._detect_language()
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(0)
+
         self._status_clear()
         self._process_cursor_event()
         self._text_in.focus_force()
+        self._text_in.redraw()
+        self._text_out.redraw()
 
     @property
     def pipeline(self) -> pip.PipelineType:
@@ -552,6 +563,7 @@ class PyDetexGUI(object):
         self._ready = True
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
         self._text_out['state'] = tk.DISABLED
+        self._text_out.redraw()
 
         # Detect language to rewrite the status
         self._detect_language()
@@ -570,7 +582,7 @@ class PyDetexGUI(object):
         def _paste():
             return pyperclip.paste()
 
-        self._status(self._cfg.lang('copy_from_clip'))
+        self._status(self._cfg.lang('copy_from_clip'), True)
         executor = concurrent.futures.ThreadPoolExecutor(1)
         future = executor.submit(_paste)
         try:
@@ -578,8 +590,11 @@ class PyDetexGUI(object):
         except concurrent.futures.TimeoutError:
             self._paste_timeout_error += 1
             if self._paste_timeout_error <= _MAX_PASTE_RETRY:
-                # print(f'Paste process failed (TimeoutError), retrying {self._paste_timeout_error}/{_MAX_PASTE_RETRY}')
-                self._root.after(100, self._process_clip_button)
+                print(f'Paste process failed (TimeoutError), retrying {self._paste_timeout_error}/{_MAX_PASTE_RETRY}')
+                try:
+                    self._root.after(100, self._process_clip_button)
+                except AttributeError:
+                    return self._process_clip()
             else:
                 self._paste_timeout_error = 0
                 error = f'Paste process failed after {_MAX_PASTE_RETRY} attempts'
@@ -587,10 +602,12 @@ class PyDetexGUI(object):
             return
 
         self._paste_timeout_error = 0
-        if text.strip() == '':
-            return
+        text = text.strip()
+        if text == '':
+            return self._status(self._cfg.lang('clip_empty'), True)
         self._text_in.delete(0.0, tk.END)
         self._text_in.insert(0.0, text)
+        self._text_in.redraw()
         self._process()
 
     def _get_pipeline_results(self) -> str:
@@ -618,8 +635,8 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        delta_h = 0 if ut.IS_OSX else 21
-        self._settings_window = gui_ut.SettingsWindow((375, 490 + delta_h), self._cfg)
+        delta_h = 0 if ut.IS_OSX else 25
+        self._settings_window = gui_ut.SettingsWindow((375, 515 + delta_h), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)

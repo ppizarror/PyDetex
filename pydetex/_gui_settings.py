@@ -69,6 +69,7 @@ class _LangManager(object):
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
                 'cfg_error_repetition_distance': 'Repetition distance must be greater than 2 and lower than 50',
                 'cfg_error_repetition_words': 'Invalid ignore words',
+                'cfg_error_show_line_numbers': 'Invalid show line numbers value',
                 'cfg_error_stemming': 'Invalid repetition stemming value',
                 'cfg_error_stopwords': 'Invalid repetition stopwords value',
                 'cfg_error_window_size': 'Invalid window size value',
@@ -78,6 +79,7 @@ class _LangManager(object):
                 'cfg_pipeline': 'Pipeline',
                 'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
+                'cfg_show_line_numbers': 'Show line numbers',
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
@@ -86,6 +88,7 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
                 'clear': 'Clear',
+                'clip_empty': 'Clipboard is empty',
                 'copy_from_clip': 'Copying from clipboard',
                 'detected_lang': 'Detected language: {0} ({1})',
                 'detected_lang_write': 'Write something to start recognizing the language',
@@ -165,6 +168,7 @@ class _LangManager(object):
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
                 'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2, y menor que 50',
                 'cfg_error_repetition_words': 'Repetición palabras incorrectas',
+                'cfg_error_show_line_numbers': 'Valor mostrar número de líneas incorrecto',
                 'cfg_error_stemming': 'Valor stemming incorrecto',
                 'cfg_error_stopwords': 'Valor stopwords incorrecto',
                 'cfg_error_window_size': 'Tamaño ventana incorrecto',
@@ -174,6 +178,7 @@ class _LangManager(object):
                 'cfg_pipeline': 'Pipeline',
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
+                'cfg_show_line_numbers': 'Mostrar nº líneas',
                 'cfg_window_size': 'Tamaño de ventana',
                 'cfg_words_repetition': 'Repetición de palabras',
                 'cfg_words_repetition_distance': 'Distancia de repetición',
@@ -182,6 +187,7 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
                 'clear': 'Limpiar',
+                'clip_empty': 'Portapapeles vacío',
                 'copy_from_clip': 'Copiando desde portapapeles',
                 'detected_lang': 'Idioma detectado: {0} ({1})',
                 'detected_lang_write': 'Escribe algo para iniciar detección idioma',
@@ -327,6 +333,7 @@ class Settings(object):
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
         self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
+        self.CFG_SHOW_LINE_NUMBERS = 'SHOW_LINE_NUMBERS'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
         # Words repetition
@@ -359,6 +366,7 @@ class Settings(object):
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
+            self.CFG_SHOW_LINE_NUMBERS: (False, bool, [True, False]),
             self.CFG_TOTAL_OPENED_APP: (0, int, lambda x: x >= 0),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
             self.CFG_WINDOW_SIZE: (self._valid_window_sizes[1], str, self._valid_window_sizes)

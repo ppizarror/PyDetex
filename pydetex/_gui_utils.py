@@ -217,7 +217,7 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_ignore_words = RichText(cfg, f, wrap='word', height=4,
+        self._var_repetition_ignore_words = RichText(cfg, self.root, f, wrap='word', height=4,
                                                      highlightthickness=3 if ut.IS_OSX else 0,
                                                      highlightcolor='#426392', editable=True)
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
@@ -232,6 +232,16 @@ class SettingsWindow(object):
         self._var_process_auto_copy.set(cfg.get(cfg.CFG_PROCESS_AUTO_COPY))
         tk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
+        # Font size
+        f = tk.Frame(f0, border=0)
+        f.pack(fill='both', pady=5)
+        tk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_w,
+                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_font_size = tk.StringVar(self.root)
+        self._var_font_size.set(cfg.get(cfg.CFG_FONT_SIZE))
+        fontsize = tk.OptionMenu(f, self._var_font_size, *cfg._valid_font_sizes)
+        fontsize.pack(side=tk.LEFT)
+
         # Output font format
         f = tk.Frame(f0, border=0, relief=tk.GROOVE)
         f.pack(fill='both')
@@ -241,17 +251,14 @@ class SettingsWindow(object):
         self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
         tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
 
-        # Set font size
-        f = tk.Frame(f0, border=0)
-        f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_w,
+        # Show line numbers
+        f = tk.Frame(f0, border=0, relief=tk.GROOVE)
+        f.pack(fill='both')
+        tk.Label(f, text=self._cfg.lang('cfg_show_line_numbers'), width=label_w,
                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
-
-        self._var_font_size = tk.StringVar(self.root)
-        self._var_font_size.set(cfg.get(cfg.CFG_FONT_SIZE))
-
-        fontsize = tk.OptionMenu(f, self._var_font_size, *cfg._valid_font_sizes)
-        fontsize.pack(side=tk.LEFT)
+        self._var_show_line_numbers = tk.BooleanVar(self.root)
+        self._var_show_line_numbers.set(cfg.get(cfg.CFG_SHOW_LINE_NUMBERS))
+        tk.Checkbutton(f, variable=self._var_show_line_numbers).pack(side=tk.LEFT)
 
         # Save
         fbuttons = tk.Frame(f0)
@@ -288,12 +295,15 @@ class SettingsWindow(object):
         """
         Save the settings.
         """
-        lang_value, current_lang = (self._dict_langs[self._var_lang.get()],
-                                    self._cfg.get(self._cfg.CFG_LANG))
-        windowsz_value, current_windowsz = (self._dict_window_sizes[self._var_window_size.get()],
-                                            self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
-        fontsize_value, current_fontsize = (self._var_font_size.get(),
-                                            self._cfg.get(self._cfg.CFG_FONT_SIZE))
+        lang_value, current_lang = \
+            (self._dict_langs[self._var_lang.get()], self._cfg.get(self._cfg.CFG_LANG))
+        windowsz_value, current_windowsz = \
+            (self._dict_window_sizes[self._var_window_size.get()],
+             self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
+        fontsize_value, current_fontsize = \
+            (self._var_font_size.get(), self._cfg.get(self._cfg.CFG_FONT_SIZE))
+        showlnum_value, current_showlnum_value = \
+            (self._var_show_line_numbers.get(), self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS))
 
         store: Tuple[Tuple[str, str, str], ...] = (
             (self._cfg.CFG_LANG, lang_value,
@@ -319,7 +329,9 @@ class SettingsWindow(object):
             (self._cfg.CFG_FONT_SIZE, fontsize_value,
              self._cfg.lang('cfg_error_font_size')),
             (self._cfg.CFG_PROCESS_AUTO_COPY, self._var_process_auto_copy.get(),
-             self._cfg.lang('cfg_error_auto_copy'))
+             self._cfg.lang('cfg_error_auto_copy')),
+            (self._cfg.CFG_SHOW_LINE_NUMBERS, self._var_show_line_numbers.get(),
+             self._cfg.lang('cfg_error_show_line_numbers'))
         )
 
         # Set values
@@ -332,8 +344,10 @@ class SettingsWindow(object):
                 do_close = False
 
         # Check if lang has changed
-        if lang_value != current_lang or int(fontsize_value) != current_fontsize or \
-                windowsz_value != current_windowsz:
+        if lang_value != current_lang or \
+                int(fontsize_value) != current_fontsize or \
+                windowsz_value != current_windowsz or \
+                showlnum_value != current_showlnum_value:
             messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
                                 message=self._cfg.lang('reload_message_message'))
 
@@ -431,7 +445,7 @@ class DictionaryGUI(object):
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
 
-        self._text_out = RichText(self._cfg, f, wrap='word', highlightthickness=hthick,
+        self._text_out = RichText(self._cfg, self.root, f, wrap='word', highlightthickness=hthick,
                                   highlightcolor=hcolor, copy=True)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
@@ -662,17 +676,22 @@ class RichText(tk.Text):
     _default_font: 'tkfont.Font'
     _default_size: int
     _em: int
+    _lnums: Optional['TextLineNumbers']
 
-    def __init__(self, cfg: '_Settings', *args, **kwargs):
+    def __init__(self, cfg: '_Settings', root: 'tk.Tk', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
         scrollbar_y = kwargs.pop('scrollbar_y', None)
         editable = kwargs.pop('editable', False)
         copy = kwargs.pop('copy', False)
+        add_line_numbers = kwargs.pop('add_line_numbers', None)
+        line_numbers_bg_color = kwargs.pop('line_numbers_bg_color', '#55595c')
+        line_numbers_fg_color = kwargs.pop('line_numbers_fg_color', '#cccccc')
+        line_numbers_fg_color_disabled = kwargs.pop('line_numbers_fg_color_disabled', '#86898d')
         if editable:
             kwargs['undo'] = True
 
         super().__init__(*args, **kwargs)
-        self._default_font = tkfont.nametofont(self.cget('font'))
+        self._default_font = tkfont.Font(root=root, name=self.cget('font'), exists=True)
         self._default_font.configure(size=font_size)
 
         self._em = self._default_font.measure('m')
@@ -697,10 +716,40 @@ class RichText(tk.Text):
 
         # Add a scrollbar in the given frame
         scroll_hthick = kwargs.get('highlightthickness', 0)
+        sy = None
         if scrollbar_y:
             sy = tk.Scrollbar(scrollbar_y, command=self.yview)
             sy.pack(side=tk.RIGHT, fill='y', pady=(scroll_hthick, scroll_hthick), padx=0)
             self['yscrollcommand'] = sy.set
+
+        # Add line numbers
+        self._lnums = None
+        if add_line_numbers:
+            self._lnums = TextLineNumbers(add_line_numbers, width=40,
+                                          bg=line_numbers_bg_color,
+                                          font_color=line_numbers_fg_color,
+                                          font_color_disabled=line_numbers_fg_color_disabled)
+            self._lnums.attach(self)
+
+            # noinspection PyUnusedLocal
+            def on_scroll_press(*args):
+                sy.bind('<B1-Motion>', self._lnums.redraw)
+
+            # noinspection PyUnusedLocal
+            def on_scroll_release(*args):
+                sy.unbind('<B1-Motion>', self._lnums.redraw)
+
+            # noinspection PyUnusedLocal
+            def on_press_delay(*args):
+                self.after(2, self._lnums.redraw)
+
+            self.bind('<MouseWheel>', on_press_delay)
+            self.bind('<Key>', on_press_delay)
+            self.bind('<Button-1>', self._lnums.redraw)
+            if sy:
+                sy.bind('<Button-1>', on_scroll_press)
+            self._lnums.pack(side=tk.LEFT, fill='y', pady=(scroll_hthick, scroll_hthick), padx=0)
+            self._lnums.redraw()
 
     def _add_font(self, tag: str, **kwargs) -> None:
         font = tkfont.Font(**self._default_font.configure())
@@ -725,6 +774,13 @@ class RichText(tk.Text):
         font.configure(**kwargs)
         self.tag_configure(tag, **tag_kwargs)
 
+    def redraw(self) -> None:
+        """
+        Redraw the components.
+        """
+        if self._lnums:
+            self._lnums.redraw()
+
     def insert_bullet(self, index: float, text: str) -> None:
         """
         Inserts a bullet.
@@ -733,6 +789,7 @@ class RichText(tk.Text):
         :param text: Text
         """
         self.insert(index, f'\u2022 {text}', 'bullet')
+        self.redraw()
 
     def insert_highlighted_text(self, s: str, clear: bool = False, font_format: bool = True) -> None:
         """
@@ -752,12 +809,70 @@ class RichText(tk.Text):
             except tk.TclError:
                 chars = [text[j] for j in range(len(text)) if ord(text[j]) in range(65536)]
                 self.insert('end', ''.join(chars), fonts.TAGS_FONT[tag] if font_format else 'normal')
+        self.redraw()
 
     def clear(self) -> None:
         """
         Clears the text.
         """
         self.delete(0.0, tk.END)
+
+
+class TextLineNumbers(tk.Canvas):
+    """
+    Line numbers.
+    """
+    _dx: int  # Number margin on x axis
+    _dy: int  # Number margin on y axis
+    _font_color: str
+    _textwidget: Optional['tk.Text']
+
+    def __init__(self, *args, **kwargs) -> None:
+        """
+        Constructor.
+        """
+        self._dx = 3
+        self._dy = -5 if ut.IS_OSX else 0
+        self._font_color = kwargs.pop('font_color', '#606366')
+        self._font_color_disabled = kwargs.pop('font_color_disabled', '#86898d')
+        self._textwidget = None
+        tk.Canvas.__init__(self, *args, **kwargs, highlightthickness=0)
+
+    def attach(self, text_widget: 'tk.Text') -> None:
+        """
+        Attach a widget.
+
+        :param text_widget: Text widget
+        """
+        self._textwidget = text_widget
+
+    # noinspection PyUnusedLocal
+    def redraw(self, *args):
+        """
+        Redraw line numbers.
+
+        :param args: Drawing arguments
+        """
+        if not self._textwidget:
+            return
+        self.delete('all')
+        if self._textwidget['state'] == tk.DISABLED:
+            fill = self._font_color_disabled
+        else:
+            fill = self._font_color
+        i = self._textwidget.index('@0,0')
+        while True:
+            dline = self._textwidget.dlineinfo(i)
+            if dline is None:
+                break
+            if float(i) >= 10000:
+                dx = 0
+            else:
+                dx = self._dx
+            y = dline[1]
+            linenum = str(i).split('.')[0]
+            self.create_text(dx, y + self._dy, anchor='nw', text=linenum, fill=fill)
+            i = self._textwidget.index('%s+1line' % i)
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
@@ -784,6 +899,9 @@ class EditableTextGUI(object):
         self.context_menu.add_command(label=cfg.lang('menu_cut'))
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
         self.context_menu.add_command(label=cfg.lang('menu_paste'))
+        self.context_menu.entryconfigure('Cut', command=self._cut)
+        self.context_menu.entryconfigure('Copy', command=self._copy)
+        self.context_menu.entryconfigure('Paste', command=self._paste)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
         self._w.bind('<Control-z>', self.undo)
@@ -791,8 +909,36 @@ class EditableTextGUI(object):
         self._w.bind('<Key>', self.add_changes)
 
         if ut.IS_OSX:
-            self._w.bind('<Control-c>', lambda _: self._w.event_generate('<<Copy>>'))
-            self._w.bind('<Control-v>', lambda _: self._w.event_generate('<<Paste>>'))
+            self._w.bind('<Control-c>', self._copy)
+            self._w.bind('<Control-v>', self._paste)
+
+    def _cut(self, *args) -> None:
+        """
+        Cut event.
+        """
+        self._w.event_generate('<<Cut>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
+
+    def _copy(self, *args) -> None:
+        """
+        Copy event.
+        """
+        default = self._w['state']
+        if default == tk.DISABLED:
+            self._w['state'] = tk.NORMAL
+        self._w.event_generate('<<Copy>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
+        self._w['state'] = default
+
+    def _paste(self, *args) -> None:
+        """
+        Paste event.
+        """
+        self._w.event_generate('<<Paste>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
 
     def popup(self, event: 'tk.Event') -> None:
         """
@@ -801,9 +947,6 @@ class EditableTextGUI(object):
         :param event: Event
         """
         self.context_menu.post(event.x_root, event.y_root)
-        self.context_menu.entryconfigure('Cut', command=lambda: self._w.event_generate('<<Cut>>'))
-        self.context_menu.entryconfigure('Copy', command=lambda: self._w.event_generate('<<Copy>>'))
-        self.context_menu.entryconfigure('Paste', command=lambda: self._w.event_generate('<<Paste>>'))
 
     def undo(self, event: Optional['tk.Event'] = None) -> None:
         """
@@ -857,11 +1000,22 @@ class CopyTextGUI(object):
 
         self.context_menu = tk.Menu(self._w, tearoff=0)
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
+        self.context_menu.entryconfigure('Copy', command=self._copy)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
 
         if ut.IS_OSX:
-            self._w.bind('<Control-c>', lambda _: self._w.event_generate('<<Copy>>'))
+            self._w.bind('<Control-c>', self._copy)
+
+    def _copy(self, *args) -> None:
+        """
+        Copy event.
+        """
+        default = self._w['state']
+        if default == tk.DISABLED:
+            self._w['state'] = tk.NORMAL
+        self._w.event_generate('<<Copy>>')
+        self._w['state'] = default
 
     def popup(self, event: 'tk.Event') -> None:
         """
@@ -870,7 +1024,6 @@ class CopyTextGUI(object):
         :param event: Event
         """
         self.context_menu.post(event.x_root, event.y_root)
-        self.context_menu.entryconfigure('Copy', command=lambda: self._w.event_generate('<<Copy>>'))
 
 
 class CustomEntry(tk.Entry):
