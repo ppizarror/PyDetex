@@ -473,9 +473,10 @@ class PyDetexGUI(object):
         for btn in (self._process_button, self._process_clip_button,
                     self._copy_clip_button, self._clear_button):
             btn['state'] = tk.DISABLED
-        self._root.after(50, lambda: self.__process_inner())
+        self._root['cursor'] = 'wait'
+        self._root.after(50, lambda: self._process_inner())
 
-    def __process_inner(self) -> None:
+    def _process_inner(self) -> None:
         """
         Process called after.
         """
@@ -505,7 +506,7 @@ class PyDetexGUI(object):
                 FONT_TAGS['error'] + traceback.format_exc()
             )
             self._text_out.insert_highlighted_text(FONT_TAGS['normal'] + err, True)
-            return self.__process_final()
+            return self._process_final()
         words = len(self._tokenizer.tokenize(out))
         self._cfg.add_words(words)
 
@@ -533,15 +534,16 @@ class PyDetexGUI(object):
         self._text_out.insert_highlighted_text(out, True, font_format)
 
         # Final
-        self.__process_final(words)
+        self._process_final(words)
 
-    def __process_final(self, words: int = 0) -> None:
+    def _process_final(self, words: int = 0) -> None:
         """
         Function executed after process finished.
 
         :param words: Total processed words
         """
         # Configure status
+        self._root['cursor'] = 'arrow'
         self._process_button['state'] = tk.NORMAL
         self._clear_button['state'] = tk.NORMAL
         if self._clip:
