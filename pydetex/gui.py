@@ -47,14 +47,17 @@ class PyDetexGUI(object):
     """
 
     _cfg: 'Settings'
+    _clear_button: 'ut.Button'
     _clip: bool
-    _copy_clip: 'tk.Button'
+    _copy_clip_button: 'tk.Button'
     _detect_language_event_id: str
     _detected_lang_tag: str
     _dictionary: 'MultiDictionary'
     _dictionary_btn: 'tk.Button'
     _dictionary_window: Optional['gui_ut.DictionaryGUI']
     _paste_timeout_error: int
+    _process_button: 'ut.Button'
+    _process_clip_button: 'tk.Button'
     _ready: bool
     _root: 'tk.Tk'
     _settings_window: Optional['gui_ut.SettingsWindow']
@@ -129,7 +132,8 @@ class PyDetexGUI(object):
         f1.pack_propagate(0)
 
         self._text_in = gui_ut.RichText(self._cfg, f1, wrap='word', highlightthickness=hthick,
-                                        highlightcolor=hcolor, font_size=fsize, editable=True)
+                                        highlightcolor=hcolor, font_size=fsize, editable=True,
+                                        scrollbar_y=f1)
         self._text_in.pack(fill='both')
         self._text_in.bind('<Button>', self._process_cursor_in)
         self._text_in.bind('<ButtonRelease>', self._process_cursor_in)
@@ -139,11 +143,12 @@ class PyDetexGUI(object):
 
         # Out text
         f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
-        f2.pack(fill='both', padx=10, pady=5)
+        f2.pack(fill='both', padx=10, pady=(window_size[3], 0))
         f2.pack_propagate(0)
 
         self._text_out = gui_ut.RichText(self._cfg, f2, wrap='word', highlightthickness=hthick,
-                                         highlightcolor=hcolor, font_size=fsize, copy=True)
+                                         highlightcolor=hcolor, font_size=fsize, copy=True,
+                                         scrollbar_y=f2)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
 
@@ -152,25 +157,28 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         command_btn_packx = 15  # margin px
         f3 = tk.Frame(self._root, border=2)
-        f3.pack(pady=(9, 18))
+        f3.pack(pady=(window_size[4], window_size[4] + 5))
 
         # Process
-        ut.Button(f3, text=ut.button_text(self._cfg.lang('process')), command=self._process, relief=tk.GROOVE,
-                  bg='#475aff' if ut.IS_OSX else '#6388ff').pack(side=tk.LEFT, padx=(0, command_btn_packx))
+        self._process_button = ut.Button(f3, text=ut.button_text(self._cfg.lang('process')),
+                                         command=self._process, relief=tk.GROOVE,
+                                         bg='#475aff' if ut.IS_OSX else '#6388ff')
+        self._process_button.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Process clip
-        process_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')),
-                                 command=self._process_clip, relief=tk.GROOVE)
-        process_clip.pack(side=tk.LEFT, padx=(0, command_btn_packx))
+        self._process_clip_button = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_clip')),
+                                              command=self._process_clip, relief=tk.GROOVE)
+        self._process_clip_button.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Copy to clip
-        self._copy_clip = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')),
-                                    command=self._copy_to_clip, relief=tk.GROOVE)
-        self._copy_clip.pack(side=tk.LEFT, padx=(0, command_btn_packx))
+        self._copy_clip_button = tk.Button(f3, text=ut.button_text(self._cfg.lang('process_copy')),
+                                           command=self._copy_to_clip, relief=tk.GROOVE)
+        self._copy_clip_button.pack(side=tk.LEFT, padx=(0, command_btn_packx))
 
         # Clear
-        ut.Button(f3, text=ut.button_text(self._cfg.lang('clear')), command=self._clear,
-                  relief=tk.GROOVE, bg='#ff7878').pack(side=tk.LEFT)
+        self._clear_button = ut.Button(f3, text=ut.button_text(self._cfg.lang('clear')), command=self._clear,
+                                       relief=tk.GROOVE, bg='#ff7878')
+        self._clear_button.pack(side=tk.LEFT)
 
         # ----------------------------------------------------------------------
         # Status bar
@@ -220,8 +228,8 @@ class PyDetexGUI(object):
             self._clip = False
             error = 'pyperclip is not available on your system (copy/paste mechanism). GUI buttons were disabled'
             warn(error)
-            process_clip['state'] = tk.DISABLED
-            self._copy_clip['state'] = tk.DISABLED
+            self._process_clip_button['state'] = tk.DISABLED
+            self._copy_clip_button['state'] = tk.DISABLED
 
         # Set variables
         self._detect_language_event_id = ''
@@ -438,7 +446,7 @@ class PyDetexGUI(object):
         self._text_in.delete(0.0, tk.END)
         self._text_out.delete(0.0, tk.END)
         self._text_out['state'] = tk.DISABLED
-        self._copy_clip['state'] = tk.DISABLED
+        self._copy_clip_button['state'] = tk.DISABLED
         self._ready = False
         self._detect_language()
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(0)
@@ -459,14 +467,22 @@ class PyDetexGUI(object):
         """
         Process and call the pipeline.
         """
+        self._status(self._cfg.lang('status_processing'), True)
+        self._root.after(10, self._process_inner)
+        for btn in (self._process_button, self._process_clip_button,
+                    self._copy_clip_button, self._clear_button):
+            btn['state'] = tk.DISABLED
+
+    def _process_inner(self) -> None:
+        """
+        Process called after.
+        """
         text = self._text_in.get(0.0, tk.END)
         if text.strip() == '':
             return self._clear()
-        self._status(self._cfg.lang('status_processing'), True)
-
         self._text_out['state'] = tk.NORMAL
         if self._clip:
-            self._copy_clip['state'] = tk.NORMAL
+            self._copy_clip_button['state'] = tk.NORMAL
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
@@ -506,9 +522,16 @@ class PyDetexGUI(object):
         self._text_out.insert_highlighted_text(out, True, font_format)
 
         # Configure status
-        self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
+        self._process_button['state'] = tk.NORMAL
+        self._clear_button['state'] = tk.NORMAL
+        if self._clip:
+            self._process_clip_button['state'] = tk.NORMAL
+            self._copy_clip_button['state'] = tk.NORMAL
         self._ready = True
+        self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
         self._text_out['state'] = tk.DISABLED
+
+        # Detect language to rewrite the status
         self._detect_language()
 
         # If auto copy
@@ -534,7 +557,7 @@ class PyDetexGUI(object):
             self._paste_timeout_error += 1
             if self._paste_timeout_error <= _MAX_PASTE_RETRY:
                 # print(f'Paste process failed (TimeoutError), retrying {self._paste_timeout_error}/{_MAX_PASTE_RETRY}')
-                self._root.after(100, self._process_clip)
+                self._root.after(100, self._process_clip_button)
             else:
                 self._paste_timeout_error = 0
                 error = f'Paste process failed after {_MAX_PASTE_RETRY} attempts'
@@ -586,10 +609,10 @@ class PyDetexGUI(object):
         """
         Close settings.
         """
-        self._settings_window = None
         self._detect_language()
-        if self._ready:
+        if self._ready and self._settings_window.saved:
             self._process()
+        self._settings_window = None
 
     def _get_selected_word(self) -> str:
         """
