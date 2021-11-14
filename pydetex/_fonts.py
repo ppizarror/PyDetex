@@ -35,6 +35,7 @@ FONT_PROPERTIES: Dict[str, Optional[Dict[str, Union[str, int]]]] = {
     'bullet': None,
     'equation_char': {weight: bold, fg: '#53f500'},
     'equation_inside': {slant: italic, fg: '#ffa450'},
+    'error': {fg: '#ff6b68'},
     'h1': {size: 2, weight: bold, spacing3: 1},
     'italic': {slant: italic},
     'link': {weight: bold, fg: '#ff02a6'},
