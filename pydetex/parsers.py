@@ -382,6 +382,7 @@ def remove_comments(s: str) -> str:
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
     s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
+    s = s.replace('\\\n', '\n')
     k = s.split('\n')
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
@@ -567,8 +568,8 @@ def remove_commands_char(s: str, chars: List[Tuple[str, str, bool]]) -> str:
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
                 new_s += s[i]
-            elif tex_tags[k][0] <= i < tex_tags[k][3]:
-                pass
+            # elif tex_tags[k][0] <= i < tex_tags[k][3]:
+            #     pass
             elif i == tex_tags[k][3]:  # Advance to other tag
                 k += 1
         else:
