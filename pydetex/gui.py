@@ -656,7 +656,8 @@ class PyDetexGUI(object):
         """
         self._detect_language()
         if self._ready and self._settings_window.saved:
-            self._process()
+            # self._process()
+            pass
         self._settings_window = None
 
     def _get_selected_word(self) -> str:
