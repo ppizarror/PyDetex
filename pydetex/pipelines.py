@@ -61,6 +61,7 @@ def strict(s: str, lang: str = 'en') -> str:
     s = simple(s, lang, replace_pydetex_tags=False)
     s = par.process_chars_equations(s, lang, False)
     s = par.remove_equations(s)
+    s = par.process_def(s)
     s = par.remove_environments(s)
     s = par.remove_commands_param(s, lang)
     s = par.remove_commands_param_noargv(s)
