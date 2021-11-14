@@ -24,6 +24,7 @@ import flatlatex
 import os
 import re
 
+from flatlatex.parser import LatexSyntaxError
 from typing import Tuple, Union, List, Dict, Optional, Any
 
 # Flat latex object
@@ -47,7 +48,7 @@ TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
                      'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
                      'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                      'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                     'W', 'X', 'Y', 'Z']
+                     'W', 'X', 'Y', 'Z', '*', '@']
 TEX_EQUATION_CHARS = [
     ('$', '$', True),
     ('\(', '\)', False),
@@ -205,7 +206,7 @@ def apply_tag_between_inside_char_command(
     return new_s
 
 
-def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
+def find_tex_commands(s: str, offset: int = 0) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     """
     Find all tex commands within a code.
 
@@ -213,11 +214,12 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
 
                  00000000001111111111222
                  01234567890123456789012
-                         a       b c  d
+                         a        b c  d
         Example: This is \\aCommand{nice}...
         Output: ((8, 16, 18, 21), ...)
 
     :param s: Latex string code
+    :param offset: Offset added to the positioning, useful when using recursive calling on substrings
     :return: Tuple if found codes ``(a, b, c, d, command continues)``
     """
     found: List = []
@@ -229,14 +231,15 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     depth_1 = 0  # []
     cont_chars = ('{', '[', ' ', '\n')
     cmd_idx = 0  # index
+    mode_arg = -1
 
     for i in range(len(s) - 1):
-        # print(i, s[i], depth_0, depth_1, is_cmd, is_argv)
-
         # Start a command
         if not is_cmd and s[i] == '\\' and s[i + 1] in TEX_COMMAND_CHARS:
             a, b, is_cmd, is_argv = i, -1, True, False
             cmd_idx += 1
+            mode_arg = -1
+            depth_0, depth_1 = 0, 0
 
         # If command before args encounter an invalid chad, disables the command
         elif is_cmd and not is_argv and s[i] not in cont_chars and s[i] not in TEX_COMMAND_CHARS:
@@ -262,27 +265,41 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
             if s[i] == '{':
                 if depth_0 == 0:
                     c0 = i + 1
+                    if mode_arg < 0:
+                        mode_arg = 0
                 depth_0 += 1
             else:
                 if depth_1 == 0:
                     c1 = i + 1
+                    if mode_arg < 0:
+                        mode_arg = 1
                 depth_1 += 1
 
         # Ends the argument, only if depth condition satisfies
         elif is_cmd and is_argv and s[i] in ('}', ']') and s[i - 1] != '\\':
             if s[i] == '}':
                 depth_0 -= 1
-            else:
+            else:  # ]
                 depth_1 -= 1
-            if depth_0 == 0 and depth_1 == 0:  # Finished
+
+            if (depth_0 == 0 and mode_arg == 0) or (depth_1 == 0 and mode_arg == 1):  # Finished
                 d = i - 1
                 found.append([a, b, c0 if s[i] == '}' else c1, d, cmd_idx])
                 if s[i + 1] not in cont_chars:
                     is_cmd = False
                 is_argv = False
-            elif depth_0 < 0 or depth_1 < 0:  # Invalid argument (parenthesis imbalance)
-                is_cmd = False
-                is_argv = False
+                mode_arg = -1
+            # elif depth_0 < 0 or depth_1 < 0:  # Invalid argument (parenthesis imbalance)
+            #     is_cmd = False
+            #     is_argv = False
+            # mode_arg = -1
+
+    # Add the offsets
+    for f in found:
+        f[0] += offset
+        f[1] += offset
+        f[2] += offset
+        f[3] += offset
 
     # Check if command continues
     if len(found) == 0:
@@ -304,6 +321,32 @@ def find_tex_commands(s: str) -> Tuple[Tuple[int, int, int, int, bool], ...]:
     return tuple(found)
 
 
+def _find_tex_env_recursive(original_s: str, s: str, offset: int = 0, depth: int = 0) -> List:
+    """
+    Find all environments.
+
+    :param s: Latex string code
+    :param offset: Offset applied to the search
+    :return: Tuple of all commands
+    """
+    tags = find_tex_commands(s, offset=offset)
+    new_tags = []
+    for t in tags:
+        a, b, c, d, _ = t
+        source_cmd = s[a - offset:b - offset + 1]
+        if 'begin' not in source_cmd and 'end' not in source_cmd:
+            # Get the arguments of the command, and check more environments there
+            cmd_args = s[c - offset:d - offset + 1]
+            if 'begin' in cmd_args or 'end' in cmd_args:
+                if 'newenvironment' in source_cmd or 'newcommand' in source_cmd:  # Prone to bugs
+                    continue
+                for tr in _find_tex_env_recursive(original_s, cmd_args, offset=c, depth=depth + 1):
+                    new_tags.append(tr)
+        else:
+            new_tags.append(t)
+    return new_tags
+
+
 def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, int, int], ...]:
     """
     Find all tex commands within a code.
@@ -319,7 +362,7 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
         Output: (('nice', 8, 20, 29, 39, 'parentenv'), ...)
 
     :param s: Latex string code
-    :return: Tuple if found environment ``(env_name, a, b, c, d, parent_env, env_depth, env_item_depth)``
+    :return: Tuple if found environment ``(env_name, a, b, c, d, parent_env_name, env_depth, env_item_depth)``
     """
 
     def _env_common(e: str) -> str:
@@ -333,16 +376,17 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
             return 'item_'
         return ''
 
-    tags = find_tex_commands(s)
+    tags = _find_tex_env_recursive(s, s)
     envs = []
     env: Dict[str, List[Tuple[int, int, str, int]]] = {}
     last_env = ''
     env_depth = 0
     cmds_cont = []
     env_depths: Dict[str, int] = {}
+
     for t in tags:
         a, b, c, d, _ = t
-        if 'begin' in s[a:d]:
+        if 'begin' in s[a:b + 1]:
             env_name = s[c:d + 1]
             c_env_name = _env_common(env_name)  # Common environment name
             if c_env_name not in env_depths.keys():
@@ -350,7 +394,6 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
             else:
                 env_depths[c_env_name] += 1
             env_i = (a, d + 2, last_env, env_depth)
-            # print(s[a:d + 1], t)
             if env_name not in env:
                 env[env_name] = [env_i]
             else:
@@ -359,7 +402,7 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
                 cmds_cont.append(a)
                 last_env = env_name
                 env_depth += 1
-        elif 'end' in s[a:d]:
+        elif 'end' in s[a:b + 1]:
             env_name = s[c:d + 1]
             if env_name in env.keys():
                 env_i = env[env_name].pop()
@@ -368,6 +411,7 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
                     del env[env_name]
                 last_env = env_i[2]
                 env_depth -= 1
+
     return tuple(envs)
 
 
@@ -428,7 +472,6 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
     cont_chars = ('{', '[', ' ')
 
     for i in range(len(s) - 1):
-
         if not is_cmd and s[i] == '\\' and s[i + 1] in TEX_COMMAND_CHARS:
             if i > 0 and s[i - 1] == '⇲':
                 continue
@@ -451,8 +494,6 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
         elif is_cmd and s[i] not in TEX_COMMAND_CHARS and s[i] not in cont_chars:
             is_cmd = False
             found.append([a, i - 1])
-
-        # print(i, s[i], is_cmd, found)
 
     if is_cmd and a != len(s) - 2:
         found.append([a, len(s) - 2])
@@ -719,7 +760,10 @@ def tex_to_unicode(s: str) -> str:
     s = s.replace('\n\n', '\n').replace('  ', ' ').replace('\t', ' ')
     space_symbol = '⇱SPACE:PYDETEX⇲'
     s = s.replace(' ', space_symbol)
-    s = _FLATLATEX.convert(s)
+    try:
+        s = _FLATLATEX.convert(s)
+    except LatexSyntaxError:
+        pass
     s = s.replace(space_symbol, ' ')
 
     return s
