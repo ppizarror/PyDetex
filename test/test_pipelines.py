@@ -8,6 +8,7 @@ Test the pipelines.
 
 from test._base import BaseTest
 import pydetex.pipelines as pip
+import pydetex.parsers as pa
 
 
 class ParserTest(BaseTest):
@@ -125,3 +126,55 @@ Concerning the recognition and generation of floor plans, Huang and Zheng [2] in
 
         s = '\DeclareUnicodeCharacter{2292}{\ensuremath{\ensuremath{\\to}}}'
         self.assertEqual(pip.strict(s), '')
+
+        s = """Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things and returns a friendly plain text! % And removes commands too!
+        
+        PyDetex can process equation, lists, cites, references, and many more:
+        
+        \\begin{equation}
+           a + \\frac{c}{d} \longrightarrow k^n
+        \end{equation}
+        
+        Or \myCustomCommand[\label{cmd1}]{can process \\textbf{lists}}:
+        
+        \\begin{itemize}[font=\\bfseries]
+           \item As shown in Figure \\ref{fignumber}
+           \item Proposed by $\\alpha$-Feltes \cite{feltes2008} because $x^n + y^n = z^n \\forall n \in 0 \ldots \infty$
+        \end{itemize}
+        """
+        t = """Write or paste here your LaTeX code. It simply removes all tex-things and returns a friendly plain text!
+
+PyDetex can process equation, lists, cites, references, and many more:
+
+EQUATION_0
+
+Or:
+
+- As shown in Figure 1
+- Proposed by α-Feltes [1] because EQUATION_1"""
+        self.assertEqual(pip.strict(s), t)
+
+        s = """% !TeX spellcheck = en_US
+                        \\begin{table*}[t]
+
+                        \centering
+                        % \\vspace{\\baselineskip}
+                        \\begin{tablenotes}
+                            \item[a] Graphics separation
+                            \item[b] Door/Window/Furniture/Others
+                            \item[c] OCR or Dimensions were recognized
+                            \item[d] Vectorization
+                            \item[e] Modeling (Graph, other)
+                        \end{tablenotes}
+                        \label{tab:review-rulebased}
+                        \end{threeparttable}
+                        \end{table*}
+                        """
+        self.assertEqual(
+            pip.strict(s),
+            '- [a] Graphics separation\n- [b] Door/Window/Furniture/Others\n- [c'
+            '] OCR or Dimensions were recognized\n- [d] Vectorization\n- [e] Mod'
+            'eling (Graph, other)')
+
+        self.assertEqual(pip.strict(pa._load_file_search('data/example_tables_strict.txt')),
+                         pa._load_file_search('data/example_tables_strict_output.txt'))

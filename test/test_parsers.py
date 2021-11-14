@@ -345,3 +345,48 @@ class ParserTest(BaseTest):
                             'c\n2. c\n   •  a\n   •  b\n   •  c\n3. epic\n        ')
 
         self.assertEqual(par._process_item('', ''), '')
+
+    def test_remove_environments(self) -> None:
+        """
+        Remove environment test.
+        """
+        s = 'e\\begin{nice}x\\end{nice}p\\begin{y}z\\end{y}i\\begin{k}z\\end{k}c'
+        self.assertEqual(par.remove_environments(s), s)
+        self.assertEqual(par.remove_environments(s, ['y']), 'e\\begin{nice}x\end{nice}pi\\begin{k}z\end{k}c')
+        self.assertEqual(par.remove_environments(s, ['y', 'nice']), 'epi\\begin{k}z\end{k}c')
+        self.assertEqual(par.remove_environments(s, ['y', 'nice', 'k']), 'epic')
+
+        s = """The following is a tikz figure, and must be removed:
+        
+        \\begin{tikzpicture}[line cap=round, line join=round, >=triangle 45,
+                     x=4.0cm, y=1.0cm, scale=1]
+          \draw [->,color=black] (-0.1,0) -- (2.5,0);
+          \\foreach \\x in {1,2}
+          \draw [shift={(\\x,0)}, color=black] (0pt,2pt)
+              -- (0pt,-2pt) node [below] {\\footnotesize $\\x$};
+          \draw [color=black] (2.5,0) node [below] {$x$};
+          \draw [->,color=black] (0,-0.1) -- (0,4.5);
+           \\foreach \y in {1,2,3,4}
+          \draw [shift={(0,\y)}, color=black] (2pt,0pt)
+              -- (-2pt,0pt) node[left] {\\footnotesize $\y$};
+          \draw [color=black] (0,4.5) node [right] {$y$};
+          \draw [color=black] (0pt,-10pt) node [left] {\\footnotesize $0$};
+          \draw [domain=0:2.2, line width=1.0pt] plot (\\x,{(\\x)^2});
+          \clip(0,-0.5) rectangle (3,5);
+          \draw (2,0) -- (2,4);
+          \\foreach \i in {1,...,\\thehigher}
+          \draw [fill=black,fill opacity=0.3, smooth,samples=50] ({1+(\i-1)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                  --({1+(\i)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                  --  ({1+(\i)/\thehigher},0)
+                  -- ({1+(\i-1)/\\thehigher},0)
+                  -- cycle;
+        \end{tikzpicture}and it was removed!!
+        
+        \\begin{epic}
+        But this should not be removed!
+        \\end{epic}"""
+        self.assertEqual(
+            par.remove_environments(s),
+            'The following is a tikz figure, and must be removed:\n        \n   '
+            '     and it was removed!!\n        \n        \\begin{epic}\n       '
+            ' But this should not be removed!\n        \\end{epic}')

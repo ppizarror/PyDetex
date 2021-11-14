@@ -1,0 +1,16 @@
+Datasets
+
+Datasets have played an important role within floor plan analysis as there is not a standard notation for its composition; therefore, designed models must incorporate specific rules for each particular style, facing high variability due to: (1) the visual representation of the building, wherein best cases only 70% of the graphical information is compliant with some standard rules [1], (2) the nature of the information contained, and (3) the way of the information is visually represented [2]. Moreover, each floor plan dataset has limitations regarding quantity or complexity. Thus, researchers opt to utilize the datasets suitable for their purposes, including specific processing steps that could not be generalized to other formats [3].
+
+For such datasets to be useful in floor plan analysis, there must be pixel-wise annotations for objects such as walls, openings, and rooms. However, there are few public datasets because it is difficult for floor plans to be invariably labeled due to ambiguity in notation and the need for high-level expertise for object recognition [2, 4]. Even though several practical tools have been developed to annotate them conveniently [5–7], it is difficult to do so because there is no way to guarantee the same annotations from different experts, especially for complicated plans [3].
+
+CAPTION: Datasets used by floor plan analysis research.
+
+Note: Res – Resolution in pixels (px).
+- [a] (all links visited on 10/01/2021)
+- [b] LINK: b
+- [c]
+
+CAPTION: Floor plan image examples from datasets.
+
+The existing datasets were summarized in Table 1, considering its source article, availability, annotation, and quantity, ordered by release year. Figure 2 illustrates a selection of images from the datasets considered within the review. It can be noted that there are distinct drawing styles and semantics among the apartment and house plans; some have colored floors, text, icons, dimension lines, furniture, and walls with several styles, angles, and complex arrangements. These diverse settings were exploited by rule-based methods, described in section 3, which recognize walls, doors, windows, furniture, and rooms by defining algorithms that considered different approaches specific to each style; or by learning-based ones (section 4), that trained models to automatically recognize the objects.
