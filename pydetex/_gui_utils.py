@@ -738,8 +738,8 @@ class RichText(tk.Text):
                 sy.bind('<B1-Motion>', self._lnums.redraw)
 
             # noinspection PyUnusedLocal
-            def on_scroll_release(*args):
-                sy.unbind('<B1-Motion>', self._lnums.redraw)
+            # def on_scroll_release(*args):
+            #    sy.unbind('<B1-Motion>', self._lnums.redraw)
 
             # noinspection PyUnusedLocal
             def on_press_delay(*args):
