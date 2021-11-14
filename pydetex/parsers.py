@@ -11,6 +11,7 @@ __all__ = [
     'FONT_FORMAT_SETTINGS',
     'process_chars_equations',
     'process_cite',
+    'process_def',
     'process_inputs',
     'process_items',
     'process_labels',
@@ -63,6 +64,9 @@ _ROMAN_DIGITS = [
     (4, 'IV'),
     (1, 'I')
 ]
+
+# Stores the learned definitions
+_DEFS = {}
 
 # Parser font format. This dict stores the font of some tex elements to be represented
 # in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
@@ -501,7 +505,6 @@ def process_inputs(s: str) -> str:
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
     symbol = '⇱INPUT_FILE_TAG⇲'
-    tx = ''
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
@@ -861,6 +864,52 @@ def strip_punctuation(s: str) -> str:
     for j in [',', ':', '=', ';', '!', '?', '.']:  # Before
         s = s.replace(f' {j}', j)
     return s
+
+
+def process_def(s: str, clear_learned: bool = True) -> str:
+    """
+    Process \defs. Store the definition, among others.
+
+    :param s: Latex with definitions
+    :param clear_learned: Clear the last learned definitions
+    :return: Latex without definitions
+    """
+    if '\\def' not in s:
+        return s
+    if clear_learned:
+        _DEFS.clear()
+    s += '   '
+    new_s = ''
+    found_def = False
+    a, b, c, depth = 0, 0, -1, -1  # Def positions (a\def      b{ .... c}
+    def_ranges = []
+    for i in range(len(s)):
+        if s[i:i + 4] == '\\def' and not found_def:  # After finding a def, check the first and last parenthesis
+            a, b, depth = i, -1, 0
+            found_def = True
+            continue
+        elif found_def:
+            if found_def and s[i] == '{' and s[i - 1] != '\\':
+                if depth == 0:
+                    b = i
+                depth += 1
+            if found_def and s[i] == '}' and s[i - 1] != '\\':
+                depth -= 1
+                if depth == 0:
+                    c = i
+                    def_ranges.append((a, c))
+
+                    # Check the name, if not a command, store
+                    def_name = s[a + 4:b].strip()
+                    if '#' not in def_name:
+                        _DEFS[def_name] = s[b + 1:c]
+                    found_def = False
+            continue
+
+        else:
+            new_s += s[i]
+
+    return new_s
 
 
 def process_items(s: str) -> str:
