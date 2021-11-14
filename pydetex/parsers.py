@@ -528,6 +528,8 @@ def process_inputs(s: str) -> str:
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
                         print('\tFile found and loaded')
+                        tx = '\n'.join(tx.splitlines())
+                        tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
                 else:
                     s = s[:k] + symbol + s[k + m + 1:]
@@ -975,6 +977,7 @@ def process_items(s: str) -> str:
                 continue
             s = s[0:a] + _process_item(s[b:c].strip(), t) + s[d + 2:]
             conv = True
+            break
         if not conv:
             break
 
