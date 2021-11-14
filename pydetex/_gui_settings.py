@@ -31,11 +31,11 @@ _PIPELINES = {
     'pipeline_strict': pip.strict
 }
 
-# Store the window sizes (w, h, height_richtext, type)
+# Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin_botttom)
 _WINDOW_SIZE = {
-    'window_size_small': [700, 425, 140],
-    'window_size_medium': [900, 513, 183],
-    'window_size_large': [1200, 613, 233]
+    'window_size_small': [720, 480, 175, 3, 6],
+    'window_size_medium': [960, 540, 200, 5, 10],
+    'window_size_large': [1280, 720, 285, 5, 15]
 }
 
 
@@ -69,6 +69,7 @@ class _LangManager(object):
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
                 'cfg_error_repetition_distance': 'Repetition distance must be greater than 2 and lower than 50',
                 'cfg_error_repetition_words': 'Invalid ignore words',
+                'cfg_error_show_line_numbers': 'Invalid show line numbers value',
                 'cfg_error_stemming': 'Invalid repetition stemming value',
                 'cfg_error_stopwords': 'Invalid repetition stopwords value',
                 'cfg_error_window_size': 'Invalid window size value',
@@ -78,6 +79,7 @@ class _LangManager(object):
                 'cfg_pipeline': 'Pipeline',
                 'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
+                'cfg_show_line_numbers': 'Show line numbers',
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
@@ -86,9 +88,10 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
                 'clear': 'Clear',
+                'clip_empty': 'Clipboard is empty',
                 'copy_from_clip': 'Copying from clipboard',
                 'detected_lang': 'Detected language: {0} ({1})',
-                'detected_lang_write': 'Write something to start recognizing the language',
+                'detected_lang_write': 'Write something to recognize the language',
                 'dictionary': 'Dictionary',
                 'dictionary_antonym': 'Antonym',
                 'dictionary_loading': 'Loading ...',
@@ -116,6 +119,7 @@ class _LangManager(object):
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
                 'process_copy': 'Copy to clipboard',
+                'process_error': 'An error has occured while processing the text.\nPlease create a new issue in the GitHub page ({0}) with full defails and minimal working example.\n\nError traceback:\n{1}\n',
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
@@ -164,6 +168,7 @@ class _LangManager(object):
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
                 'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2, y menor que 50',
                 'cfg_error_repetition_words': 'Repetición palabras incorrectas',
+                'cfg_error_show_line_numbers': 'Valor mostrar número de líneas incorrecto',
                 'cfg_error_stemming': 'Valor stemming incorrecto',
                 'cfg_error_stopwords': 'Valor stopwords incorrecto',
                 'cfg_error_window_size': 'Tamaño ventana incorrecto',
@@ -173,6 +178,7 @@ class _LangManager(object):
                 'cfg_pipeline': 'Pipeline',
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
+                'cfg_show_line_numbers': 'Mostrar nº líneas',
                 'cfg_window_size': 'Tamaño de ventana',
                 'cfg_words_repetition': 'Repetición de palabras',
                 'cfg_words_repetition_distance': 'Distancia de repetición',
@@ -181,9 +187,10 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
                 'clear': 'Limpiar',
+                'clip_empty': 'Portapapeles vacío',
                 'copy_from_clip': 'Copiando desde portapapeles',
                 'detected_lang': 'Idioma detectado: {0} ({1})',
-                'detected_lang_write': 'Escribe algo para iniciar detección idioma',
+                'detected_lang_write': 'Escribe algo para detectar el idioma',
                 'dictionary': 'Diccionario',
                 'dictionary_antonym': 'Antónimos',
                 'dictionary_loading': 'Cargando ...',
@@ -211,6 +218,7 @@ class _LangManager(object):
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',
                 'process_copy': 'Copiar al portapapeles',
+                'process_error': 'Un error ha ocurrido mientras se procesaba el texto.\nPor favor crea un nuevo issue en la página de GitHub ({0}) con los detalles completos y un ejemplo mínimo para probar las soluciones.\n\nDetalles del error:\n{1}\n',
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
@@ -243,6 +251,12 @@ class _LangManager(object):
 
         # Extend languages if not defined
         ut.complete_langs_dict(self._lang)
+
+        # Update window sizes
+        for la in self._lang.keys():
+            for tok in self._lang[la].keys():
+                if tok in _WINDOW_SIZE.keys():
+                    self._lang[la][tok] += f' ({_WINDOW_SIZE[tok][0]}x{_WINDOW_SIZE[tok][1]})'
 
     def get_available(self) -> List[str]:
         """
@@ -319,6 +333,7 @@ class Settings(object):
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
         self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
+        self.CFG_SHOW_LINE_NUMBERS = 'SHOW_LINE_NUMBERS'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
         # Words repetition
@@ -351,6 +366,7 @@ class Settings(object):
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
+            self.CFG_SHOW_LINE_NUMBERS: (False, bool, [True, False]),
             self.CFG_TOTAL_OPENED_APP: (0, int, lambda x: x >= 0),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
             self.CFG_WINDOW_SIZE: (self._valid_window_sizes[1], str, self._valid_window_sizes)

@@ -39,7 +39,7 @@ class GuiTest(BaseTest):
 
         # Process the pipeline
         gui._text_in.insert(0.0, 'This is \\textbf{Latex}')
-        gui._process()
+        gui._process_inner()
         self.assertEqual(gui._get_pipeline_results(), 'This is Latex')
         self.assertTrue(gui._ready)
 

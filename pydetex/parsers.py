@@ -9,8 +9,10 @@ Defines parsers, which perform a single task for removal LaTex things.
 __all__ = [
     'find_str',
     'FONT_FORMAT_SETTINGS',
+    'process_begin_document',
     'process_chars_equations',
     'process_cite',
+    'process_def',
     'process_inputs',
     'process_items',
     'process_labels',
@@ -21,6 +23,7 @@ __all__ = [
     'remove_commands_param_noargv',
     'remove_comments',
     'remove_common_tags',
+    'remove_environments',
     'remove_equations',
     'remove_tag',
     'replace_pydetex_tags',
@@ -33,9 +36,10 @@ import os
 import pydetex.utils as ut
 
 from pydetex._symbols import *
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 # Files
+_LAST_NOT_FOUND_FILES_PATH = [os.getcwd()]
 _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
 
@@ -43,7 +47,9 @@ _PRINT_LOCATION = False
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
 _TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
+_TAG_NEW_LINE = '⇱NEW_LINE⇲'
 _TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+_TAG_PERCENTAGE_SYMBOL = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
 
 # Others
 _ROMAN_DIGITS = [
@@ -62,19 +68,24 @@ _ROMAN_DIGITS = [
     (1, 'I')
 ]
 
+# Stores the learned definitions
+_DEFS = {}
+
 # Parser font format. This dict stores the font of some tex elements to be represented
 # in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
 # they are empty, and are updated in the PyDetexGUI._process() method
 FONT_FORMAT_SETTINGS = {
+    'bold': '',
     'cite': '',
     'equation': '',
+    'italic': '',
     'normal': '',
     'ref': '',
     'tex_text_tag': '',
     'tex_text_tag_content': ''
 }
 
-LANG_TEX_TEXT_TAGS = ut.LangTexTextTags()
+LANG_TT_TAGS = ut.LangTexTextTags()
 
 
 def _find_str(s: str, char: str) -> int:
@@ -177,25 +188,27 @@ def remove_tag(s: str, tagname: str) -> str:
                 break
 
 
-def remove_common_tags(s: str) -> str:
+def remove_common_tags(s: str, replace_tags: Optional[List] = None) -> str:
     """
     Remove common tags from string.
 
     :param s: Latex string code
+    :param replace_tags: List to replace. If ``None``, default will be used
     :return: Text without tags
     """
-    for tag in [
-        'bigp',
-        'chapter',
-        'emph',
-        'section',
-        'subsection',
-        'subsubsection',
-        'subsubsubsection',
-        'textbf',
-        'textit',
-        'texttt'
-    ]:
+    if replace_tags is None:
+        replace_tags = [
+            'chapter',
+            'emph',
+            'section',
+            'subsection',
+            'subsubsection',
+            'subsubsubsection',
+            'textbf',
+            'textit',
+            'texttt'
+        ]
+    for tag in replace_tags:
         s = remove_tag(s, tag)
     return s
 
@@ -216,6 +229,7 @@ def process_cite(
     :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
     """
+    assert isinstance(cite_separator, str)
     cites = {}
     look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{']
     k = -1
@@ -275,8 +289,7 @@ def process_cite(
                     for w in cite_nums:
                         new_cites.append(str(w))
 
-                c = ', '.join(new_cites)
-
+                c = cite_separator.join(new_cites)
                 s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
                     _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
@@ -297,6 +310,8 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_OPEN_CITE, (cite_format[0]))
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
     s = s.replace(_TAG_ITEM_SPACE, ' ')
+    s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
+    s = s.replace(_TAG_NEW_LINE, '\n')
     return s
 
 
@@ -363,11 +378,11 @@ def remove_comments(s: str) -> str:
     :param s: Latex string code
     :return: String without comments
     """
-    comment_symbol = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
-    newline_symbol = '⇱NEWLINE_SYMBOL⇲'
+    newline_symbol = '⇱NEWLINE_SYMBOL_REMOVE_COMMENTS⇲'
     s = s.replace('  ', ' ')
     s = s.replace('\\\\', newline_symbol)
-    s = s.replace('\\%', comment_symbol)
+    s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
+    s = s.replace('\\\n', '\n')
     k = s.split('\n')
     for r in range(len(k)):
         k[r] = k[r].strip()  # Strips all text
@@ -411,8 +426,7 @@ def remove_comments(s: str) -> str:
         last = j
     if len(w) > 0 and w[-1] == '':  # Removes last space
         w.pop()
-    s = '\n'.join(w)
-    s = s.replace(comment_symbol, '%').strip()
+    s = '\n'.join(w).strip()
     s = s.replace(newline_symbol, '\\\\')
     return s
 
@@ -471,16 +485,40 @@ def simple_replace(s: str) -> str:
     return new_s
 
 
-def process_inputs(s: str) -> str:
+def _load_file_search(tex_file: str) -> str:
+    """
+    Search and load a file.
+
+    :param tex_file: Name of the file
+    :return: Loaded file or tag error
+    """
+    tx = _TAG_FILE_ERROR
+    folders = _os_listfolder()
+    folders.insert(0, '../')
+    folders.insert(0, './')
+    for f in folders:
+        tx = _load_file(tex_file, f)
+        if tx == _TAG_FILE_ERROR:
+            print(f'\tFile not found in {f}')
+        else:
+            break
+    return tx
+
+
+def process_inputs(s: str, clear_not_found_files: bool = False) -> str:
     """
     Process inputs, and try to copy the content.
 
     :param s: Latex string code with inputs
+    :param clear_not_found_files: Clear the not found files. Used when changing the path
     :return: Text copied with data from inputs
     """
     global _PRINT_LOCATION, _NOT_FOUND_FILES
+    if os.getcwd() != _LAST_NOT_FOUND_FILES_PATH[0] or clear_not_found_files:
+        _LAST_NOT_FOUND_FILES_PATH[0] = os.getcwd()
+        _NOT_FOUND_FILES.clear()
     symbol = '⇱INPUT_FILE_TAG⇲'
-    tx = ''
+    s = remove_comments(s)
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
@@ -498,22 +536,14 @@ def process_inputs(s: str) -> str:
                         print(f'Current path location: {os.getcwd()}')
                         _PRINT_LOCATION = True
                     print(f'Detected file {tex_file}:')
-
-                    # Get folder locations
-                    folders = _os_listfolder()
-                    folders.insert(0, '../')
-                    folders.insert(0, './')
-                    for f in folders:
-                        tx = _load_file(tex_file, f)
-                        if tx == _TAG_FILE_ERROR:
-                            print(f'\tFile not found in {f}')
-                        else:
-                            break
+                    tx = _load_file_search(tex_file)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
                         print('\tFile found and loaded')
+                        tx = '\n'.join(tx.splitlines())
+                        tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
                 else:
                     s = s[:k] + symbol + s[k + m + 1:]
@@ -538,8 +568,8 @@ def remove_commands_char(s: str, chars: List[Tuple[str, str, bool]]) -> str:
         if k < len(tex_tags):
             if i < tex_tags[k][0]:
                 new_s += s[i]
-            elif tex_tags[k][0] <= i < tex_tags[k][3]:
-                pass
+            # elif tex_tags[k][0] <= i < tex_tags[k][3]:
+            #     pass
             elif i == tex_tags[k][3]:  # Advance to other tag
                 k += 1
         else:
@@ -572,17 +602,32 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     #   [(argument number, argument is optional), ...],
     #   tag to be replaced,
     #   total commands,
-    #   add new line
+    #   font_tag ('tex_text_tag' if None),
+    #   font_content ('tex_text_tag_content' if None),
+    #   add new line (before, after)
     # )
+    # The font format is like .... [font tag]YOUR TAG {[font content]YOUR CONTENT} ...[font normal]. In that case, tag to be
+    # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
-    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, bool]] = [
-        ('caption', [(1, False)], LANG_TEX_TEXT_TAGS.get(lang, 'caption'), 1, True),
-        ('href', [(2, False)], LANG_TEX_TEXT_TAGS.get(lang, 'link'), 2, False),
-        ('insertimage', [(3, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 3, True),
-        ('insertimage', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
-        ('insertimageboxed', [(4, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 4, True),
-        ('insertimageboxed', [(5, False)], LANG_TEX_TEXT_TAGS.get(lang, 'figure_caption'), 5, True),
-        ('subfloat', [(1, True)], LANG_TEX_TEXT_TAGS.get(lang, 'sub_figure_title'), 1, True)
+    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
+        ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
+        ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
+        ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
+        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
+        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),
+        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),
+        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
+        ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
+        ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
+        ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
+        ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''
 
@@ -591,7 +636,11 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
     for c in cmd_args:
         for cmd in commands:
             if c[0] == cmd[0]:
-                _, cmd_args, cmd_tag, total_commands, cmd_newline = cmd
+                _, cmd_args, cmd_tag, total_commands, font_tag, font_content, cmd_newline = cmd
+                if font_tag is None:
+                    font_tag = 'tex_text_tag'
+                if font_content is None:
+                    font_content = 'tex_text_tag_content'
                 if len(c) - 1 == total_commands:
                     args = []
                     for j in cmd_args:
@@ -603,23 +652,77 @@ def output_text_for_some_commands(s: str, lang: str) -> str:
                             if argv != '':
                                 args.append(argv)
                     if len(args) == len(cmd_args):
-                        args.insert(0, FONT_FORMAT_SETTINGS['tex_text_tag_content'])  # Add format text
+                        # Add format text
+                        for a in range(len(args)):
+                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + \
+                                      FONT_FORMAT_SETTINGS[font_tag]
                         text = cmd_tag.format(*args)
-                        new_s += FONT_FORMAT_SETTINGS['tex_text_tag'] + text + FONT_FORMAT_SETTINGS['normal']
-                        if cmd_newline:
-                            new_s += '\n'
-
+                        text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
+                        if cmd_newline[0]:
+                            text = _TAG_NEW_LINE + text
+                        new_s += text
+                        if cmd_newline[1]:
+                            new_s += _TAG_NEW_LINE
                         break
 
+    return new_s.strip()
+
+
+def remove_environments(s: str, env_list: Optional[List[str]] = None) -> str:
+    """
+    Remove a selection of environments.
+
+    :param s: Latex code
+    :param env_list: Environment list, if not defined, use the default from PyDetex
+    :return: Code without given environments
+    """
+    if not env_list:
+        env_list = ['tikzpicture', 'tabular']
+    tex_tags = ut.find_tex_environments(s)
+    if len(tex_tags) == 0 or len(env_list) == 0:
+        return s
+    new_s = ''
+
+    new_tex_tags = []
+    # Remove all the environments not in env_list
+    for t in tex_tags:
+        is_removed = False
+        for j in env_list:
+            if j in t[0]:
+                is_removed = True
+                break
+        if is_removed:
+            new_tex_tags.append(t)
+
+    # If tex tags is empty
+    if len(new_tex_tags) == 0:
+        return s
+
+    def is_in_tags(v: int) -> bool:
+        """
+        Check if a position is within tags.
+
+        :param v: Position
+        :return: True if in tags range
+        """
+        for j_ in new_tex_tags:
+            if j_[1] <= v <= j_[4] + 1:
+                return True
+        return False
+
+    for i in range(len(s)):
+        if not is_in_tags(i):
+            new_s += s[i]
     return new_s
 
 
-def remove_commands_param(s: str, lang: str) -> str:
+def remove_commands_param(s: str, lang: str, invalid_commands: Optional[List[str]] = None) -> str:
     """
     Remove all commands with params.
 
     :param s: Latex string code
     :param lang: Language tag of the code
+    :param invalid_commands: Invalid commands that will not call output_text_for_some_commands. If ``None`` use defaults
     :return: Code with removed chars
     """
     tex_tags = ut.find_tex_commands(s)
@@ -627,6 +730,13 @@ def remove_commands_param(s: str, lang: str) -> str:
         return s
     new_s = ''
     k = 0  # Moves through tags
+
+    # invalid commands that will not call output_text_for_some_commands
+    if not invalid_commands:
+        invalid_commands = [
+            'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter',
+            'newenvironment'
+        ]
 
     for i in range(len(s)):
         if k < len(tex_tags):
@@ -636,8 +746,26 @@ def remove_commands_param(s: str, lang: str) -> str:
                 pass
             else:  # Advance to other tag
                 sub_s = s[tex_tags[k][0]:tex_tags[k][3] + 2]
-                if not tex_tags[k][4]:  # If the command does not continue
-                    new_s += output_text_for_some_commands(sub_s, lang)
+
+                # If the command does not continue, write the text for such
+                # command, if this does not continue (for example, that happens
+                # when calling for \mycommand{1}{2}{3}. In that case, only tex_tags
+                # [\mycommand .... {3}] will be called, thus, sub_s will contain
+                # all the parameters of the command ({1}{2}{3})
+                if not tex_tags[k][4]:
+                    cmd_name = s[tex_tags[k][0]:tex_tags[k][1] + 1].strip()
+
+                    # Check if the invalid_commands are not within command name
+                    is_invalid = False
+                    for c in invalid_commands:
+                        if c in cmd_name:
+                            is_invalid = True
+                            break
+
+                    # If not invalid, call the analysis for its commands, check that
+                    # it can be recursive
+                    if not is_invalid:
+                        new_s += output_text_for_some_commands(sub_s, lang)
                 k += 1
         else:
             new_s += s[i]
@@ -749,7 +877,7 @@ def process_chars_equations(s: str, lang: str, single_only: bool) -> str:
                 else:
                     equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
-                        new_s += LANG_TEX_TEXT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        new_s += LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
                         eqn_number += 1
                     else:
                         new_s += equ
@@ -775,7 +903,55 @@ def strip_punctuation(s: str) -> str:
     """
     for j in [',', ':', '=', ';', '!', '?', '.']:  # Before
         s = s.replace(f' {j}', j)
+    s = s.replace('\n\n\n', '\n\n')
+    s = s.strip()
     return s
+
+
+def process_def(s: str, clear_learned: bool = True) -> str:
+    """
+    Process \defs. Store the definition, among others.
+
+    :param s: Latex with definitions
+    :param clear_learned: Clear the last learned definitions
+    :return: Latex without definitions
+    """
+    if '\\def' not in s:
+        return s
+    if clear_learned:
+        _DEFS.clear()
+    s += '   '
+    new_s = ''
+    found_def = False
+    a, b, c, depth = 0, 0, -1, -1  # Def positions (a\def      b{ .... c}
+    def_ranges = []
+    for i in range(len(s)):
+        if s[i:i + 4] == '\\def' and not found_def:  # After finding a def, check the first and last parenthesis
+            a, b, depth = i, -1, 0
+            found_def = True
+            continue
+        elif found_def:
+            if found_def and s[i] == '{' and s[i - 1] != '\\':
+                if depth == 0:
+                    b = i
+                depth += 1
+            if found_def and s[i] == '}' and s[i - 1] != '\\':
+                depth -= 1
+                if depth == 0:
+                    c = i
+                    def_ranges.append((a, c))
+
+                    # Check the name, if not a command, store
+                    def_name = s[a + 4:b].strip()
+                    if '#' not in def_name:
+                        _DEFS[def_name] = s[b + 1:c]
+                    found_def = False
+            continue
+
+        else:
+            new_s += s[i]
+
+    return new_s
 
 
 def process_items(s: str) -> str:
@@ -785,7 +961,7 @@ def process_items(s: str) -> str:
     :param s: Latex string code
     :return: Processed items
     """
-    if not ('itemize' in s or 'enumerate' in s):
+    if not ('itemize' in s or 'enumerate' in s or 'tablenotes' in s):
         return s
 
     def _get_name(e: str) -> str:
@@ -795,20 +971,24 @@ def process_items(s: str) -> str:
         :param e: Environment name
         :return: New name
         """
+        # This is due to itemize can contain other symbols or spaces, thus,
+        # itemize*    .. is converted to itemize
         if 'itemize' in e:
             return 'itemize'
         if 'enumerate' in e:
             return 'enumerate'
+        if 'tablenotes' in e:
+            return 'tablenotes'
         return ''
 
     def _are_item(e: str) -> bool:
         """
-        Return true if both are enumerate.
+        Return true if both are enumerate. Used to check recursive enumerates.
 
         :param e: Environment name
         :return: True if item
         """
-        return e == 'itemize' or e == 'enumerate'
+        return e == 'itemize' or e == 'enumerate' or e == 'tablenotes'
 
     # First, process the nested ones
     while True:
@@ -837,6 +1017,7 @@ def process_items(s: str) -> str:
                 continue
             s = s[0:a] + _process_item(s[b:c].strip(), t) + s[d + 2:]
             conv = True
+            break
         if not conv:
             break
 
@@ -852,7 +1033,8 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
     :param depth: Depth
     :return: Processed items
     """
-    assert t in ('enumerate', 'itemize')
+    if len(s) == 0:
+        return ''
     line = '\n' + _TAG_ITEM_SPACE * (3 * depth)
 
     def _num(x: int) -> str:
@@ -886,7 +1068,6 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         return f'{line}{x} '
 
     # Remove optional arguments list
-    # print('old', [s])
     if s[0] == '[':
         sqd = 1
         for j in range(1, len(s)):
@@ -905,7 +1086,6 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         if v != '':
             s_.append(v)
     s_ = '\n'.join(s_)
-    # print('new', [s_])
     s = s_
 
     if t == 'enumerate':
@@ -957,3 +1137,39 @@ def _int_to_alph(n: int) -> str:
         n, remainder = divmod(n - 1, 26)
         string = chr(65 + remainder) + string
     return string
+
+
+def process_begin_document(s: str) -> str:
+    """
+    Removes all code outside begin document, if found.
+
+    :param s: Latex code
+    :return: Removes all data outside the document
+    """
+    s += '          '
+    is_env = False
+    is_end = False
+    is_document_begin = False
+    i, j, w = -1, -1, -1  # Init and start of the begin document, w indicates the start of \end
+    # Find if begin document exists
+    for k in range(len(s) - 10):
+        if s[k:k + 6] == '\\begin':
+            is_env = True
+        elif s[k] == '{' and s[k - 1] != '\\' and is_env and not is_document_begin:
+            if s[k:k + 10] == '{document}':
+                is_document_begin = True
+                i = k + 10
+            else:
+                is_env = False
+        elif is_document_begin and s[k:k + 4] == '\\end':
+            is_end = True
+            w = k
+        elif is_document_begin and is_end and s[k] == '{' and s[k - 1] != '\\':
+            if s[k:k + 10] == '{document}':
+                j = k
+                break
+
+    # If document has been found
+    if i != -1 and j != -1 and i <= j:
+        return s[i:w]
+    return s

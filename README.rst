@@ -70,7 +70,7 @@ PyDetex can be installed via pip, for both MacOS, Windows & Linux. Simply run:
 
 .. code-block:: bash
 
-    $> python3 pip install --upgrade pydetex
+    $> python3 pip install pydetex -U
 
 Also, there're compiled binaries for Windows (x64) and macOS available through GitHub releases.
 
@@ -87,13 +87,14 @@ Simply run this command anywhere to execute the application, or just import pyde
     :scale: 40%
     :align: center
 
-    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste into Grammarly? ＼(^o^)／
+    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste into Google Docs, an email, or Grammarly ＼(^o^)／
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_strict.png
     :scale: 40%
     :align: center
 
     **(Strict Pipeline)** The strict pipeline removes all commands, or replaces by some known tags.
+    
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/pydetex_windows.png
     :scale: 40%
@@ -106,9 +107,7 @@ TO-DOs
 
 Currently, many things must be improved:
 
-- Learn \def and replace properly
-- Support for environments, such as *figure*, *table*, etc..
-
+- Custom support for environments, such as *figure*, *table*, etc..
 
 Author
 ------

@@ -1,0 +1,95 @@
+% !TeX spellcheck = en_US
+
+\subsection{Datasets}
+
+Datasets have played an important role within floor plan analysis as there is not a standard notation for its composition; therefore, designed models must incorporate specific rules for each particular style, facing high variability due to: (1) the visual representation of the building, wherein best cases only 70\% of the graphical information is compliant with some standard rules \cite{Ah-Soon1997}, (2) the nature of the information contained, and (3) the way of the information is visually represented \cite{DelasHeras2014}. Moreover, each floor plan dataset has limitations regarding quantity or complexity. Thus, researchers opt to utilize the datasets suitable for their purposes, including specific processing steps that could not be generalized to other formats \cite{Kim2021}. \\
+
+For such datasets to be useful in floor plan analysis, there must be pixel-wise annotations for objects such as walls, openings, and rooms. However, there are few public datasets because it is difficult for floor plans to be invariably labeled due to ambiguity in notation and the need for high-level expertise for object recognition \cite{Mace2010, DelasHeras2014}. Even though several practical tools have been developed to annotate them conveniently \cite{Rendek2004, Russell2008, DelasHeras2015}, it is difficult to do so because there is no way to guarantee the same annotations from different experts, especially for complicated plans \cite{Kim2021}. \\
+
+% revisar --->
+% + ROBIN
+% + SESYD
+\begin{table*}
+	\begin{threeparttable}
+		\centering
+		\caption{Datasets used by floor plan analysis research.}
+		\itemresize{1}{
+		\begin{tabular}[t]{lcL{13.2cm}}
+			\hline
+			\textbf{Dataset (year)} & \textbf{Public} & \textbf{Annotation (quantity)} \\
+			\hline
+			% antes usaba \checked \tnote{c}
+			
+FPLAN-POLY \cite{Rusinol2010} (2010) & \cite{Rusinol2010a} & Walls, doors, windows, and furniture from 37 classes in vectorized format (42)  \\
+
+SESYD \cite{Delalandre2010} (2010) & \cite{Delalandre2010a} & Walls, doors, windows, and six furniture classes; 10 different synthetic apartment configurations, designed to study symbol recognition. Res 1837--6775 (1000) \\ % res
+			
+			\hline
+			
+		\end{tabular}
+		}
+		% \vspace{\baselineskip}
+	\begin{tablenotes}
+			Note: Res -- Resolution in pixels (px).
+			\item[a] \url{http://dag.cvc.uab.es/resources/floorplans} (all links visited on 10/01/2021)
+			\item[b] \href{a}{b}
+			\item[c] \url{http://mathieu.delalandre.free.fr/projects/sesyd}
+%			\item[d] \url{https://www.cs.toronto.edu/~fidler/projects/rent3D.html}
+		\end{tablenotes}
+		\label{tab:databases}
+	\end{threeparttable}
+\end{table*}
+
+\def\heightfp {3.5cm}
+\begin{figure*}[t]
+	\centering
+	\caption{Floor plan image examples from datasets.}
+	\itemresize{1}{
+		\begin{tabular}[t]{ccccc}
+			\includegraphics[height=\heightfp]{datasets/fplanpoly.png} &
+			\includegraphics[height=\heightfp]{datasets/sesyd.png} &
+			\includegraphics[height=\heightfp]{datasets/cvcfp1} & 
+			\includegraphics[height=\heightfp]{datasets/r3d1} &
+			\includegraphics[height=\heightfp]{datasets/sydneyhouse4} \\
+			
+			\footnotesize {\textbf{FPLAN-POLY} \cite{Rusinol2010}} &
+			\footnotesize {\textbf{SESYD} \cite{Delalandre2010}} &
+			\footnotesize {\textbf{CVC-FP} \cite{DelasHeras2015}} &
+			\footnotesize {\textbf{R3D -- Rent3D} \cite{ChenxiLiu2015}} &
+			\footnotesize {\textbf{SydneyHouse} \cite{Chu2016}} \\
+			
+			&&&& \\
+			
+			\includegraphics[height=\heightfp]{datasets/rfp2} &
+			\includegraphics[height=\heightfp]{datasets/robin} &
+			\includegraphics[height=\heightfp]{datasets/r2v1} &
+			\includegraphics[width=\heightfp,angle=90]{datasets/cubicasa5k1} &
+			\includegraphics[width=\heightfp,angle=90]{datasets/rplan4.pdf} \\
+			
+			\footnotesize {\textbf{R-FP -- Rakuten} \cite{Dodge2017}} &
+			\footnotesize {\textbf{ROBIN} \cite{Sharma2017}} &
+			\footnotesize {\textbf{R2V} \cite{Liu2017} / \textbf{LIFULL} \cite{NationalInstituteofInformaticsNII2021}} &
+			\footnotesize {\textbf{CubiCasa5K} \cite{Kalervo2019}} &
+			\footnotesize {\textbf{RPLAN} \cite{Wu2019}} \\
+			
+			
+			&&&& \\
+			
+			\includegraphics[height=\heightfp]{datasets/bti.jpg} &
+			\includegraphics[width=\heightfp,angle=90]{datasets/eais2_1} &
+			\includegraphics[height=\heightfp]{datasets/zscvfp} &
+			\includegraphics[height=\heightfp]{datasets/rfp.jpg} &
+			\includegraphics[width=\heightfp,angle=90]{datasets/ruraldataset2.jpg} \\
+			
+			\footnotesize {\textbf{BTI} \cite{Surikov2020}} &
+			\footnotesize {\textbf{EAIS} \cite{Jang2020, MinistryofLandandTransport2021}} &
+			\footnotesize {\textbf{ZSCVFP} \cite{Dong2021}} &
+			\footnotesize {\textbf{RFP} \cite{Lv2021}} &
+			\footnotesize {\textbf{RuralHomeData} \cite{Lu2021}} \\
+		
+		\end{tabular}
+	}
+	\label{dataset:imgs}
+\end{figure*}
+
+The existing datasets were summarized in Table \ref{tab:databases}, considering its source article, availability, annotation, and quantity, ordered by release year. Figure \ref{dataset:imgs} illustrates a selection of images from the datasets considered within the review. It can be noted that there are distinct drawing styles and semantics among the apartment and house plans; some have colored floors, text, icons, dimension lines, furniture, and walls with several styles, angles, and complex arrangements. These diverse settings were exploited by rule-based methods, described in section \ref{rulebased}, which recognize walls, doors, windows, furniture, and rooms by defining algorithms that considered different approaches specific to each style; or by learning-based ones (section \ref{learningbased}), that trained models to automatically recognize the objects.
