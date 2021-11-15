@@ -49,7 +49,8 @@ excluded_binaries = [
     'libtinfo.6.dylib',
     'libtinfow.6.dylib',
     'libxml2.2.dylib',
-    'libzmq.5.dylib'
+    'libzmq.5.dylib',
+    'yaml._yaml'
 ]
 excluded_binaries_contains = [
     # 'lib-dynload',
