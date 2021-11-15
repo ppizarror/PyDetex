@@ -66,11 +66,11 @@ class ParserTest(BaseTest):
             'This is another example, [1] et al. suggests that yes, but [2] not')
         # Test multiple cites
         s = 'This is an example \\cite{b} \\cite{a,    b,    c    , d, e}'
-        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)), 'This is an example [1] [1–5]')
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)), 'This is an example [1] [1-5]')
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, compress_cites=False)),
                          'This is an example [1] [1, 2, 3, 4, 5]')
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, sort_cites=False)),
-                         'This is an example [1] [2, 1, 3–5]')
+                         'This is an example [1] [2, 1, 3-5]')
 
     def test_process_ref(self) -> None:
         """

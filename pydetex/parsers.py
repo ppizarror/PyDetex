@@ -287,7 +287,7 @@ def process_cite(
                                     if new_cites[m] == str(compr_range):
                                         new_cites.pop(m)
                                         break
-                                new_cites.append(f'{compr_range}–{w}')
+                                new_cites.append(f'{compr_range}-{w}')
                             else:
                                 new_cites.append(str(w))
                             cont = False
