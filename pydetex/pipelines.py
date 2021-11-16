@@ -37,8 +37,7 @@ def simple(
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=16))
-    pb.update('Splitting lines')
+    pb = kwargs.get('progressbar', ProgressBar(steps=15))
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
@@ -70,7 +69,7 @@ def strict(s: str, lang: str = 'en') -> str:
     :param lang: Language tag of the code
     :return: String with no latex!
     """
-    pb = ProgressBar(steps=22)
+    pb = ProgressBar(steps=21)
     s = simple(s, lang, replace_pydetex_tags=False, remove_common_tags=False, progressbar=pb)
     s = par.process_chars_equations(s, lang, False, pb=pb)
     s = par.remove_equations(s, pb=pb)
