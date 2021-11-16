@@ -355,17 +355,29 @@ def process_ref(s: str, **kwargs) -> str:
     :param s: Latex string code
     :return: String with numbers instead of references.
     """
-    r = 1
+    look = ['\\ref{', '\\ref*{', '\\autoref{']
+    refs = []
+    k = -1
     while True:
-        k = find_str(s, '\\ref{')
+        run_j = ''
+        for j in look.copy():
+            k = find_str(s, j)
+            if k == -1:
+                look.remove(j)
+            else:
+                run_j = j
+                break
         if k == -1:
             if kwargs.get('pb'):
                 kwargs.get('pb').update('Processing references')
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
-                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(r) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
-                r += 1
+                ref_label = s[k + len(run_j):k + j].strip()
+                if ref_label not in refs:
+                    refs.append(ref_label)
+                ref_idx = refs.index(ref_label) + 1
+                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(ref_idx) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
 
 
@@ -569,15 +581,15 @@ def process_inputs(
                     tex_file += '.tex'
                 if tex_file not in _NOT_FOUND_FILES and '\jobname' not in tex_file:
                     if not _PRINT_LOCATION:
-                        # print(f'Current path location: {os.getcwd()}')
+                        print(f'Current path location:\n\t{os.getcwd()}')
                         _PRINT_LOCATION = True
-                    # print(f'Detected file {tex_file}:')
+                    print(f'Detected file {tex_file}:')
                     tx = _load_file_search(tex_file)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
-                        # print('\tFile found and loaded')
+                        print('\tFile found and loaded')
                         tx = '\n'.join(tx.splitlines())
                         tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
@@ -1259,4 +1271,6 @@ def process_begin_document(s: str, **kwargs) -> str:
     # If document has been found
     if kwargs.get('pb'):
         kwargs.get('pb').update('Processing {document} environment')
-    return s[i:w]
+    if -1 < i <= w:
+        return s[i:w]
+    return s[0:len(s) - 10]
