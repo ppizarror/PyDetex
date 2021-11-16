@@ -359,7 +359,10 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
                  0123456789012345678901234567890123456789
                          a           b        c         d
         Example: This is \begin{nice}[cmd]my...\end{nice}
-        Output: (('nice', 8, 20, 29, 39, 'parentenv'), ...)
+        Output: (('nice', 8, 20, 29, 39, 'parentenv', 0, -1), ...)
+
+    This method also returns the name of the parent environment, the depth of the
+    environment, and the depth of the item enviroment (if itemizable).
 
     :param s: Latex string code
     :return: Tuple if found environment ``(env_name, a, b, c, d, parent_env_name, env_depth, env_item_depth)``
@@ -372,7 +375,7 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
         :param e: Environment name
         :return: Common environment
         """
-        if 'itemize' in e or 'enumerate' in e or 'tablenotes' in e:
+        if ('itemize' in e) or ('enumerate' in e) or ('tablenotes' in e):
             return 'item_'
         return ''
 
@@ -404,9 +407,28 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
                 env_depth += 1
         elif 'end' in s[a:b + 1]:
             env_name = s[c:d + 1]
+            c_env_name = _env_common(env_name)  # Common environment name
+
             if env_name in env.keys():
                 env_i = env[env_name].pop()
-                envs.append((env_name, env_i[0], env_i[1], a, d, env_i[2], env_i[3], env_depths.get('item_', -1)))
+
+                # Update env itemize depth
+                env_depth_item = -1
+                if c_env_name != '':
+                    env_depth_item = env_depths[c_env_name]
+                    env_depths[c_env_name] -= 1
+
+                envs.append((
+                    env_name,  # Environment name
+                    env_i[0],  # a-position of the env
+                    env_i[1],  # b-position
+                    a,  # c-position
+                    d,  # d-position
+                    env_i[2],  # parent environment name
+                    env_i[3],  # depth of the environment
+                    env_depth_item  # itemize depth
+                ))
+
                 if len(env[env_name]) == 0:
                     del env[env_name]
                 last_env = env_i[2]

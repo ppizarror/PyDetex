@@ -77,6 +77,7 @@ class ParserTest(BaseTest):
         Removes references from text.
         """
         self.assertEqual(par.process_ref('this is a \\ref{myref}'), 'this is a 1')
+        self.assertEqual(par.process_ref('this is a \\ref{myref} and \\ref*{myref}'), 'this is a 1 and 1')
 
     def test_remove_comments(self) -> None:
         """
@@ -386,6 +387,45 @@ class ParserTest(BaseTest):
             ' Res - Resolution in pixels (px).\n        \n        epic\n        '
         )
 
+        # Multiple non-nested
+        s = """
+        \\begin{enumerate}
+            \item a
+        \end{enumerate}
+        \\begin{enumeratebf}
+            \item a
+        \end{enumeratebf}
+        \\begin{enumerate}
+            \item b
+        \end{enumerate}
+        \\begin{enumerate}
+            \item a
+        \end{enumerate}
+        \\begin{enumerate}
+            \item b
+            \\begin{itemize}
+                \item c
+            \end{itemize}
+            \item d
+        \end{enumerate}
+        \\begin{nice}
+        \\end{nice}
+        """
+        self.assertEqual(
+            ut.find_tex_environments(s),
+            (('enumerate', 9, 26, 55, 68, '', 0, 0),
+             ('enumeratebf', 79, 98, 127, 142, '', 0, 0),
+             ('enumerate', 153, 170, 199, 212, '', 0, 0),
+             ('enumerate', 223, 240, 269, 282, '', 0, 0),
+             ('itemize', 343, 358, 395, 406, 'enumerate', 1, 1),
+             ('enumerate', 293, 310, 437, 450, '', 0, 0),
+             ('nice', 461, 473, 482, 490, '', 0, -1))
+        )
+        self.assertEqual(
+            par.replace_pydetex_tags(par.process_items(s)).strip(),
+            '1. a\n        \n1. a\n        \n1. b\n        \n1. a\n        \n1. '
+            'b\n   •  c\n2. d\n        \\begin{nice}\n        \\end{nice}')
+
     def test_remove_environments(self) -> None:
         """
         Remove environment test.
@@ -483,6 +523,9 @@ class ParserTest(BaseTest):
         """
         s = '\\begin{document}:end_\\end{document}'
         self.assertEqual(par.process_begin_document(s), ':end_')
+
+        s = ':end_\\end{document}'
+        self.assertEqual(par.process_begin_document(s), ':end_\\end{document}')
 
         # Others
         s = '\\end{document}\\begin{document}:end_\\begin{document}\\end{document}\\begin{document}'
