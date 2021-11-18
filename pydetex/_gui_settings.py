@@ -31,11 +31,12 @@ _PIPELINES = {
     'pipeline_strict': pip.strict
 }
 
-# Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin_botttom)
+# Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin)
 _WINDOW_SIZE = {
     'window_size_small': [720, 480, 175, 3, 6],
     'window_size_medium': [960, 540, 200, 5, 10],
-    'window_size_large': [1280, 720, 285, 5, 15]
+    'window_size_large': [1280, 720, 285, 5, 15],
+    'window_size_xlarge': [1440, 850, 343, 10, 19]
 }
 
 
@@ -80,6 +81,8 @@ class _LangManager(object):
                 'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
                 'cfg_show_line_numbers': 'Show line numbers',
+                'cfg_tab_pipeline': 'Pipeline',
+                'cfg_tab_ui': 'UI',
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
@@ -146,7 +149,8 @@ class _LangManager(object):
                 'version_upgrade_title': 'Oudated PyDetex version',
                 'window_size_large': 'Large',
                 'window_size_medium': 'Medium',
-                'window_size_small': 'Small'
+                'window_size_small': 'Small',
+                'window_size_xlarge': 'Extra Large'
             },
             'es': {
                 'about': 'Acerca de',
@@ -179,8 +183,10 @@ class _LangManager(object):
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
                 'cfg_show_line_numbers': 'Mostrar nº líneas',
+                'cfg_tab_pipeline': 'Pipeline',
+                'cfg_tab_ui': 'UI',
                 'cfg_window_size': 'Tamaño de ventana',
-                'cfg_words_repetition': 'Repetición de palabras',
+                'cfg_words_repetition': 'Rep. palabras',
                 'cfg_words_repetition_distance': 'Distancia de repetición',
                 'cfg_words_repetition_ignorew': 'Palabras ignoradas',
                 'cfg_words_repetition_minchars': 'Mínimo de carácteres',
@@ -245,7 +251,8 @@ class _LangManager(object):
                 'version_upgrade_title': 'Versión desactualizada de PyDetex',
                 'window_size_large': 'Grande',
                 'window_size_medium': 'Mediano',
-                'window_size_small': 'Pequeño'
+                'window_size_small': 'Pequeño',
+                'window_size_xlarge': 'Extra Grande'
             }
         }
 
