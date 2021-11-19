@@ -94,9 +94,9 @@ class SettingsWindow(object):
         tab2 = ttk.Frame(tab_control)
         tab3 = ttk.Frame(tab_control)
 
-        tab_control.add(tab1, text=self._cfg.lang('cfg_tab_ui'), padding=(-5, 0, -5, -5))
-        tab_control.add(tab2, text=self._cfg.lang('cfg_tab_pipeline'), padding=(-5, 0, -5, -5))
-        tab_control.add(tab3, text=self._cfg.lang('cfg_words_repetition'), padding=(-5, 5, -5, -5))
+        tab_control.add(tab1, text=self._cfg.lang('cfg_tab_ui'), padding=(-5, 0, -5, -5) if ut.IS_OSX else 0)
+        tab_control.add(tab2, text=self._cfg.lang('cfg_tab_pipeline'), padding=(-5, 0, -5, -5) if ut.IS_OSX else 0)
+        tab_control.add(tab3, text=self._cfg.lang('cfg_words_repetition'), padding=(-5, 5, -5, -5) if ut.IS_OSX else 0)
         tab_control.pack(expand=tk.TRUE, fill=tk.BOTH)
 
         # Init configs
@@ -120,9 +120,11 @@ class SettingsWindow(object):
         Setup UI configs.
         """
         # Set languages
+        label_wz = 15 if ut.IS_OSX else 18
         f = ttk.Frame(tab, border=0, padding=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_lang'), width=10, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+        ttk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
         self._dict_langs = {}
         for k in self._cfg._lang.get_available():
@@ -138,7 +140,8 @@ class SettingsWindow(object):
         # Window size
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_window_size'), width=10, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+        ttk.Label(f, text=self._cfg.lang('cfg_window_size'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
         self._dict_window_sizes = {}
         for k in self._cfg._valid_window_sizes:
@@ -153,8 +156,8 @@ class SettingsWindow(object):
         # Font size
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=5)
-        ttk.Label(f, text=self._cfg.lang('cfg_font_size'), width=10,
-                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        ttk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
         default = cfg.get(cfg.CFG_FONT_SIZE)
         self._var_font_size = tk.StringVar(self.root)
         self._var_font_size.set(default)
@@ -162,19 +165,19 @@ class SettingsWindow(object):
         fontsize.pack(side=tk.LEFT)
 
         # Output font format
-        f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
+        f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 5))
-        ttk.Label(f, text=self._cfg.lang('cfg_font_format'), width=14,
-                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        ttk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
         self._var_output_font_format = tk.BooleanVar(self.root)
         self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
         ttk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
 
         # Show line numbers
-        f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
+        f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 0))
-        ttk.Label(f, text=self._cfg.lang('cfg_show_line_numbers'), width=14,
-                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        ttk.Label(f, text=self._cfg.lang('cfg_show_line_numbers'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
         self._var_show_line_numbers = tk.BooleanVar(self.root)
         self._var_show_line_numbers.set(cfg.get(cfg.CFG_SHOW_LINE_NUMBERS))
         ttk.Checkbutton(f, variable=self._var_show_line_numbers).pack(side=tk.LEFT)
@@ -183,6 +186,8 @@ class SettingsWindow(object):
         """
         Setup pipeline config.
         """
+        label_wz = 17 if ut.IS_OSX else 23
+
         # Set pipelines
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 0))
@@ -202,7 +207,7 @@ class SettingsWindow(object):
         pipe.pack(side=tk.LEFT)
 
         f = ttk.Frame(tab, border=0)
-        f.pack(fill='both', pady=(0, 2))
+        f.pack(fill='both', pady=(0, 4 if ut.IS_OSX else 2))
         label_pad = 5 if ut.IS_OSX else 15
         self._pipeline_descr_title = make_label_ttk(f, w=70, h=40, side=tk.LEFT, pad=(0, label_pad, 5, 10), pack=False)
         self._pipeline_description = make_label_ttk(f, w=window_size[0] - 90, h=40, side=tk.LEFT,
@@ -211,18 +216,18 @@ class SettingsWindow(object):
         self._var_pipeline.trace('w', self._change_description_pipeline)
 
         # Process copy auto
-        f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
+        f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(0, 5))
-        ttk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=17,
+        ttk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_process_auto_copy = tk.BooleanVar(self.root)
         self._var_process_auto_copy.set(cfg.get(cfg.CFG_PROCESS_AUTO_COPY))
         ttk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
         # Replace defs
-        f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
+        f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(0, 0))
-        ttk.Label(f, text=self._cfg.lang('cfg_pipeline_replace_defs'), width=17,
+        ttk.Label(f, text=self._cfg.lang('cfg_pipeline_replace_defs'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_pipeline_replace_defs = tk.BooleanVar(self.root)
         self._var_pipeline_replace_defs.set(cfg.get(cfg.CFG_PIPELINE_REPLACE_DEFS))
@@ -232,9 +237,11 @@ class SettingsWindow(object):
         """
         Set words repetition config.
         """
+        label_wz = 16 if ut.IS_OSX else 21
+
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_check'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_check'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5))
         self._var_check_repetition = tk.BooleanVar(self.root)
@@ -244,7 +251,7 @@ class SettingsWindow(object):
         # Repetition min chars
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
@@ -257,7 +264,7 @@ class SettingsWindow(object):
         # Repetition distance
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
@@ -269,7 +276,7 @@ class SettingsWindow(object):
         # Repetition use stemming
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5)
         )
@@ -280,7 +287,7 @@ class SettingsWindow(object):
         # Repetition use stopwords
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 2))
-        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5)
         )
@@ -291,7 +298,7 @@ class SettingsWindow(object):
         # Repetition ignore words
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(5, 0))
-        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=15, anchor='w').pack(
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
@@ -985,9 +992,9 @@ class EditableTextGUI(object):
         self.context_menu.add_command(label=cfg.lang('menu_cut'))
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
         self.context_menu.add_command(label=cfg.lang('menu_paste'))
-        self.context_menu.entryconfigure('Cut', command=self._cut)
-        self.context_menu.entryconfigure('Copy', command=self._copy)
-        self.context_menu.entryconfigure('Paste', command=self._paste)
+        self.context_menu.entryconfigure(cfg.lang('menu_cut'), command=self._cut)
+        self.context_menu.entryconfigure(cfg.lang('menu_copy'), command=self._copy)
+        self.context_menu.entryconfigure(cfg.lang('menu_paste'), command=self._paste)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
         self._w.bind('<Control-z>', self.undo)
@@ -1086,7 +1093,7 @@ class CopyTextGUI(object):
 
         self.context_menu = tk.Menu(self._w, tearoff=0)
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
-        self.context_menu.entryconfigure('Copy', command=self._copy)
+        self.context_menu.entryconfigure(cfg.lang('menu_copy'), command=self._copy)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
 
