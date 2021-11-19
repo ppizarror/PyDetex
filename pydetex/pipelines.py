@@ -14,7 +14,13 @@ __all__ = [
 
 import pydetex.parsers as par
 from pydetex.utils import ProgressBar
-from typing import Callable, TypedDict
+from typing import Callable
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
 class Options(TypedDict):

@@ -7,3 +7,4 @@ PyMultiDictionary>=1.1.0
 pyperclip
 requests
 tkmacosx
+typing_extensions
