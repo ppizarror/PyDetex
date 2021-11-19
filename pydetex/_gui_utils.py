@@ -10,6 +10,7 @@ __all__ = [
     'BorderedFrame',
     'center_window',
     'CustomEntry',
+    'CustomTtkEntry',
     'DictionaryGUI',
     'make_label',
     'make_label_ttk',
@@ -1106,6 +1107,16 @@ class CustomEntry(tk.Entry):
 
     def __init__(self, parent, cfg: '_Settings', *args, **kwargs):
         tk.Entry.__init__(self, parent, *args, **kwargs)
+        EditableTextGUI(self, cfg)
+
+
+class CustomTtkEntry(ttk.Entry):
+    """
+    Entry with undo/redo and menu.
+    """
+
+    def __init__(self, parent, cfg: '_Settings', *args, **kwargs):
+        ttk.Entry.__init__(self, parent, *args, **kwargs)
         EditableTextGUI(self, cfg)
 
 
