@@ -59,6 +59,7 @@ class PyDetexGUI(object):
     _paste_timeout_error: int
     _process_button: 'ut.Button'
     _process_clip_button: 'tk.Button'
+    _processing: bool
     _ready: bool
     _root: 'tk.Tk'
     _settings_window: Optional['gui_ut.SettingsWindow']
@@ -241,6 +242,7 @@ class PyDetexGUI(object):
         self._detect_language_event_id = ''
         self._detected_lang_tag = '–'
         self._paste_timeout_error = 0
+        self._processing = False
         self._ready = False
         self._settings_window = None
         self._tokenizer = RegexpTokenizer(r'\w+')
@@ -488,15 +490,18 @@ class PyDetexGUI(object):
         """
         Process and call the pipeline.
         """
+        if self._processing:
+            return
         self._status(self._cfg.lang('status_processing'), True)
-        for btn in (self._process_button, self._process_clip_button,
-                    self._copy_clip_button, self._clear_button):
-            btn['state'] = tk.DISABLED
+        self._processing = True
+        # for btn in (self._process_button, self._process_clip_button,
+        #             self._copy_clip_button, self._clear_button):
+        #     btn['state'] = tk.DISABLED
         try:
             self._root['cursor'] = 'wait'
         except tk.TclError:
             pass
-        self._root.after(50, lambda: self._process_inner())
+        self._root.after(1, lambda: self._process_inner())
 
     def _process_inner(self) -> None:
         """
@@ -521,7 +526,8 @@ class PyDetexGUI(object):
         # Process the text and get the language
         # noinspection PyBroadException
         try:
-            out = self.pipeline(text, self._detected_lang_tag)
+            out = self.pipeline(text, self._detected_lang_tag,
+                                show_progress=True)  # text, language, show progress
         except Exception:
             err = self._cfg.lang('process_error').format(
                 pydetex.__url_bug_tracker__,
@@ -574,6 +580,7 @@ class PyDetexGUI(object):
         if self._clip:
             self._process_clip_button['state'] = tk.NORMAL
             self._copy_clip_button['state'] = tk.NORMAL
+        self._processing = False
         self._ready = True
         self._status_bar_words['text'] = self._cfg.lang('status_words').format(words)
         self._text_out['state'] = tk.DISABLED
