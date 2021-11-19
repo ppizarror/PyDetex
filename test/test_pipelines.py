@@ -24,7 +24,7 @@ class ParserTest(BaseTest):
             ' such as (1) \\textit{Graphics separation}, (2) \\textit{Pattern ' \
             'recognition}, (3) \\textit{Vectorization}, and (4) \\textit{Structural modeling}.'
         self.assertEqual(
-            pip.simple(s),
+            pip.simple(s, show_progress=True),
             'Table 1 details the reviewed rule-based methods within floor plan '
             'recognition, considering the datasets used (Table 2) and the four '
             'categories of tasks, such as (1) Graphics separation, (2) Pattern '
@@ -93,7 +93,7 @@ class ParserTest(BaseTest):
         \end{table*}
         """
         self.assertEqual(
-            pip.strict(s),
+            pip.strict(s, show_progress=True),
             '- [a] Graphics separation\n- [b] Door/Window/Furniture/Others\n- [c'
             '] OCR or Dimensions were recognized\n- [d] Vectorization\n- [e] Mod'
             'eling (Graph, other)')
