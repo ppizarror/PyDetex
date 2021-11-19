@@ -371,7 +371,7 @@ class Settings(object):
             self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
-            self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
+            self.CFG_PIPELINE: (self._available_pipelines[1], str, self._available_pipelines),
             self.CFG_PIPELINE_REPLACE_DEFS: (False, bool, [True, False]),
             self.CFG_PROCESS_AUTO_COPY: (False, bool, [True, False]),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
