@@ -995,12 +995,18 @@ def strip_punctuation(s: str, **kwargs) -> str:
     return s
 
 
-def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
+def process_def(
+        s: str,
+        clear_learned: bool = True,
+        replace: bool = False,
+        **kwargs
+) -> str:
     """
     Process \defs. Store the definition, among others.
 
     :param s: Latex with definitions
     :param clear_learned: Clear the last learned definitions
+    :param replace: Replace instances of learned defs
     :return: Latex without definitions
     """
     if '\\def' not in s:
@@ -1014,7 +1020,7 @@ def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
     found_def = False
     a, b, c, depth = 0, 0, -1, -1  # Def positions (a\def      b{ .... c}
     def_ranges = []
-    for i in range(len(s)):
+    for i in range(len(s) - 3):
         if s[i:i + 4] == '\\def' and not found_def:  # After finding a def, check the first and last parenthesis
             a, b, depth = i, -1, 0
             found_def = True
@@ -1040,8 +1046,35 @@ def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
         else:
             new_s += s[i]
 
+    # Now, if replace defs if enabled, check all non-arg commands and replace if
+    # known
+    if replace:
+        new_s_def = ''
+        st = ut.find_tex_commands_noargv(new_s)
+        w = 0  # Iterates through st
+        k = -1
+        if len(st) > 0:
+            for _ in range(len(new_s)):
+                k += 1
+                if k < st[w][0]:
+                    new_s_def += new_s[k]
+                else:
+                    a, b = st[w]
+                    def_n = new_s[a:b + 1]
+                    if def_n in _DEFS.keys():
+                        new_s_def += _DEFS[def_n]
+                        k += len(def_n)
+                        w += 1
+                        if w == len(st):
+                            new_s_def += new_s[k:]
+                            break
+                if k > len(new_s):
+                    break
+            new_s = new_s_def
+
     if kwargs.get('pb'):
         kwargs.get('pb').update('Processing definitions')
+
     return new_s
 
 

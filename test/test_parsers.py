@@ -478,7 +478,7 @@ class ParserTest(BaseTest):
         par._DEFS.clear()
 
         s = 'This is my \\def\\code {epic!} but yes \\def\\a{} epic'
-        self.assertEqual(par.process_def(s), 'This is my  but yes  epic   ')
+        self.assertEqual(par.process_def(s), 'This is my  but yes  epic')
         self.assertEqual(len(par._DEFS), 2)
         self.assertEqual(par._DEFS['\\code'], 'epic!')
 
@@ -516,6 +516,16 @@ class ParserTest(BaseTest):
         """
         self.assertEqual(par.process_def(s).strip(), 'not epic')
         self.assertEqual(len(par._DEFS), 0)
+
+        s = '\\def\mycommand{epic}This is really \mycommand yes'
+        self.assertEqual(par.process_def(s, replace=True), 'This is really epic yes')
+
+        s = 'a\\def\e{e}'
+        self.assertEqual(par.process_def(s), 'a')
+        s = '\\def\e{e}'
+        self.assertEqual(par.process_def(s), '')
+        s = '\\def\e{e}\\def\p{p}\\def\i       {i}\\def\c\n{c}\e\p\i\c'
+        self.assertEqual(par.process_def(s, replace=True), 'epic')
 
     def test_begin_document(self) -> None:
         """
