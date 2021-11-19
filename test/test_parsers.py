@@ -517,8 +517,10 @@ class ParserTest(BaseTest):
         self.assertEqual(par.process_def(s).strip(), 'not epic')
         self.assertEqual(len(par._DEFS), 0)
 
-        s = '\\def\mycommand{epic}This is really \mycommand yes'
+        s = '\\def\\mycommand{epic}This is really \mycommand yes'
         self.assertEqual(par.process_def(s, replace=True), 'This is really epic yes')
+        s = '\\def\\mycommand{epic}This is really \mycommand'
+        self.assertEqual(par.process_def(s, replace=True), 'This is really epic')
 
         s = 'a\\def\e{e}'
         self.assertEqual(par.process_def(s), 'a')
@@ -526,6 +528,26 @@ class ParserTest(BaseTest):
         self.assertEqual(par.process_def(s), '')
         s = '\\def\e{e}\\def\p{p}\\def\i       {i}\\def\c\n{c}\e\p\i\c'
         self.assertEqual(par.process_def(s, replace=True), 'epic')
+        s = '\epic \def\\a{a} \\nice \\item \\a\\a\\a not \\b'
+        self.assertEqual(par.process_def(s, replace=True), '\epic  \\nice \\item aaa not \\b')
+
+        s = """
+        \\begin{itemize}[font=\\bfseries]
+            \item a
+        \end{itemize}
+        
+        a\def\\a{epic}
+        jejeje \\a
+        """
+        self.assertEqual(
+            par.process_def(s, replace=True).strip(),
+            '\\begin{itemize}[font=\\bfseries]\n            \item a\n        \\end{itemize}\n        \n'
+            '        a\n        jejeje epic'
+        )
+
+        # Invalid defs
+        s = '\def\\a{a} and \def\\b{b} and \\def   \nc{c} and \\defee\\d{d}: \\a\\b\\c\\d.'
+        self.assertEqual(par.process_def(s, replace=True), ' and  and  and \defee\d{d}: ab\c\d.')
 
     def test_begin_document(self) -> None:
         """

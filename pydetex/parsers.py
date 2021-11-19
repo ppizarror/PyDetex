@@ -1015,13 +1015,14 @@ def process_def(
         return s
     if clear_learned:
         _DEFS.clear()
-    s += '   '
+    s += '    '
     new_s = ''
     found_def = False
     a, b, c, depth = 0, 0, -1, -1  # Def positions (a\def      b{ .... c}
     def_ranges = []
-    for i in range(len(s) - 3):
-        if s[i:i + 4] == '\\def' and not found_def:  # After finding a def, check the first and last parenthesis
+    for i in range(len(s) - 4):
+        # After finding a def, check the first and last parenthesis
+        if s[i:i + 4] == '\\def' and s[i + 4] not in ut.TEX_COMMAND_CHARS:
             a, b, depth = i, -1, 0
             found_def = True
             continue
@@ -1052,10 +1053,9 @@ def process_def(
         new_s_def = ''
         st = ut.find_tex_commands_noargv(new_s)
         w = 0  # Iterates through st
-        k = -1
+        k = 0
         if len(st) > 0:
             for _ in range(len(new_s)):
-                k += 1
                 if k < st[w][0]:
                     new_s_def += new_s[k]
                 else:
@@ -1063,12 +1063,15 @@ def process_def(
                     def_n = new_s[a:b + 1]
                     if def_n in _DEFS.keys():
                         new_s_def += _DEFS[def_n]
-                        k += len(def_n)
-                        w += 1
-                        if w == len(st):
-                            new_s_def += new_s[k:]
-                            break
-                if k > len(new_s):
+                    else:
+                        new_s_def += new_s[a:b + 1]
+                    k += b - a
+                    w += 1
+                    if w == len(st):
+                        new_s_def += new_s[k + 1:]
+                        break
+                k += 1
+                if k >= len(new_s):
                     break
             new_s = new_s_def
 
