@@ -530,6 +530,8 @@ class ParserTest(BaseTest):
         self.assertEqual(par.process_def(s, replace=True), 'epic')
         s = '\epic \def\\a{a} \\nice \\item \\a\\a\\a not \\b'
         self.assertEqual(par.process_def(s, replace=True), '\epic  \\nice \\item aaa not \\b')
+        s = 'a\\def\e{e} jjajjajaja'
+        self.assertEqual(par.process_def(s, replace=True), 'a jjajjajaja')
 
         s = """
         \\begin{itemize}[font=\\bfseries]

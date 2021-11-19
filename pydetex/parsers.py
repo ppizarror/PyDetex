@@ -1056,23 +1056,22 @@ def process_def(
         k = 0
         if len(st) > 0:
             for _ in range(len(new_s)):
-                if k < st[w][0]:
-                    new_s_def += new_s[k]
-                else:
-                    a, b = st[w]
-                    def_n = new_s[a:b + 1]
-                    if def_n in _DEFS.keys():
-                        new_s_def += _DEFS[def_n]
+                if k < len(new_s):
+                    if k < st[w][0]:
+                        new_s_def += new_s[k]
                     else:
-                        new_s_def += new_s[a:b + 1]
-                    k += b - a
-                    w += 1
-                    if w == len(st):
-                        new_s_def += new_s[k + 1:]
-                        break
+                        a, b = st[w]
+                        def_n = new_s[a:b + 1]
+                        if def_n in _DEFS.keys():
+                            new_s_def += _DEFS[def_n]
+                        else:
+                            new_s_def += new_s[a:b + 1]
+                        k += b - a
+                        w += 1
+                        if w == len(st):
+                            new_s_def += new_s[k + 1:]
+                            break
                 k += 1
-                if k >= len(new_s):
-                    break
             new_s = new_s_def
 
     if kwargs.get('pb'):
