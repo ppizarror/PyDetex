@@ -53,6 +53,7 @@ class SettingsWindow(object):
     _var_lang: 'tk.StringVar'
     _var_output_font_format: 'tk.BooleanVar'
     _var_pipeline: 'tk.StringVar'
+    _var_pipeline_replace_defs: 'tk.BooleanVar'
     _var_process_auto_copy: 'tk.BooleanVar'
     _var_repetition_distance: 'tk.Entry'
     _var_repetition_ignore_words: 'tk.Text'
@@ -211,12 +212,21 @@ class SettingsWindow(object):
 
         # Process copy auto
         f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
-        f.pack(fill='both')
+        f.pack(fill='both', pady=(0, 5))
         ttk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=17,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_process_auto_copy = tk.BooleanVar(self.root)
         self._var_process_auto_copy.set(cfg.get(cfg.CFG_PROCESS_AUTO_COPY))
         ttk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
+
+        # Replace defs
+        f = ttk.Frame(tab, border=0, relief=tk.GROOVE)
+        f.pack(fill='both', pady=(0, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_pipeline_replace_defs'), width=17,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_pipeline_replace_defs = tk.BooleanVar(self.root)
+        self._var_pipeline_replace_defs.set(cfg.get(cfg.CFG_PIPELINE_REPLACE_DEFS))
+        ttk.Checkbutton(f, variable=self._var_pipeline_replace_defs).pack(side=tk.LEFT)
 
     def _cfg_words_repetition(self, tab: 'ttk.Frame', cfg: '_Settings') -> None:
         """
@@ -352,7 +362,9 @@ class SettingsWindow(object):
             (self._cfg.CFG_PROCESS_AUTO_COPY, self._var_process_auto_copy.get(),
              self._cfg.lang('cfg_error_auto_copy')),
             (self._cfg.CFG_SHOW_LINE_NUMBERS, self._var_show_line_numbers.get(),
-             self._cfg.lang('cfg_error_show_line_numbers'))
+             self._cfg.lang('cfg_error_show_line_numbers')),
+            (self._cfg.CFG_PIPELINE_REPLACE_DEFS, self._var_pipeline_replace_defs.get(),
+             self._cfg.lang('cfg_error_pipeline_replace_defs'))
         )
 
         # Set values
