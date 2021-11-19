@@ -57,9 +57,7 @@ def simple(
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=16))
-    if not show_progress:
-        pb = None
+    pb = kwargs.get('progressbar', ProgressBar(steps=16)) if show_progress else None
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
@@ -98,7 +96,7 @@ def strict(
     :param show_progress: Show progress bar
     :return: String with no latex!
     """
-    pb = ProgressBar(steps=21)
+    pb = ProgressBar(steps=21) if show_progress else None
     if 'progressbar' not in kwargs.keys():
         # noinspection PyTypeChecker
         kwargs['progressbar'] = pb

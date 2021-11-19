@@ -659,8 +659,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        delta_h = 0 if ut.IS_OSX else 21
-        self._settings_window = gui_ut.SettingsWindow((420, 330 + delta_h), self._cfg)
+        self._settings_window = gui_ut.SettingsWindow((420, 330), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
@@ -712,7 +711,7 @@ class PyDetexGUI(object):
             pass
 
         # Apply pipeline
-        word = pip.strict(word)
+        word = pip.strict(word, show_progress=False)
         word = ut.tokenize(word)
         return word
 
