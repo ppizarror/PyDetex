@@ -66,6 +66,7 @@ class _LangManager(object):
                 'cfg_error_lang': 'Invalid lang value',
                 'cfg_error_output_format': 'Invalid output font format value',
                 'cfg_error_pipeline': 'Invalid pipeline value',
+                'cfg_error_pipeline_replace_defs': 'Invalid replace \def value',
                 'cfg_error_repetition': 'Invalid repetition value',
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
                 'cfg_error_repetition_distance': 'Repetition distance must be greater than 2 and lower than 50',
@@ -78,6 +79,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Font size',
                 'cfg_lang': 'Language',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_replace_defs': 'Replace \def',
                 'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
                 'cfg_show_line_numbers': 'Show line numbers',
@@ -168,6 +170,7 @@ class _LangManager(object):
                 'cfg_error_lang': 'Valor idioma incorrecto',
                 'cfg_error_output_format': 'Valor formato output incorrecto',
                 'cfg_error_pipeline': 'Valor pipeline incorrecto',
+                'cfg_error_pipeline_replace_defs': 'Valor reemplazo \def incorrecto',
                 'cfg_error_repetition': 'Valor repetición incorrecto',
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
                 'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2, y menor que 50',
@@ -180,6 +183,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_replace_defs': 'Reemplazar \def',
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
                 'cfg_show_line_numbers': 'Mostrar nº líneas',
@@ -339,6 +343,7 @@ class Settings(object):
         self.CFG_LAST_OPENED_FOLDER = 'LAST_OPENED_FOLDER'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_PIPELINE_REPLACE_DEFS = 'PIPELINE_REPLACE_DEFS'
         self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
         self.CFG_SHOW_LINE_NUMBERS = 'SHOW_LINE_NUMBERS'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
@@ -367,6 +372,7 @@ class Settings(object):
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
+            self.CFG_PIPELINE_REPLACE_DEFS: (False, bool, [True, False]),
             self.CFG_PROCESS_AUTO_COPY: (False, bool, [True, False]),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
             self.CFG_REPETITION_IGNORE_WORDS: ('ignored_word_1, ignored_word_2', str, None),
