@@ -16,12 +16,13 @@ import pydetex.parsers as par
 from pydetex.utils import ProgressBar
 from typing import Callable
 
-PipelineType = Callable[[str, str], str]
+PipelineType = Callable
 
 
 def simple(
         s: str,
         lang: str = 'en',
+        show_progress: bool = False,
         replace_pydetex_tags: bool = True,
         remove_common_tags: bool = True,
         **kwargs
@@ -31,19 +32,20 @@ def simple(
 
     :param s: String latex
     :param lang: Language tag of the code
+    :param show_progress: Show progress bar
     :param replace_pydetex_tags: Replace cite tags
     :param remove_common_tags: Call ``remove_common_tags`` parser
     :return: String with no latex!
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=16))
-    pb.update('Splitting lines')
+    pb = kwargs.get('progressbar', ProgressBar(steps=16)) if show_progress else None
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
     s = par.process_begin_document(s, pb=pb)
     s = par.simple_replace(s, pb=pb)
+    s = par.process_def(s, pb=pb, replace=kwargs.get('replace_defs', False))
     if remove_common_tags:
         s = par.remove_common_tags(s, pb=pb)
     s = par.process_cite(s, pb=pb)
@@ -62,19 +64,28 @@ def simple(
     return s
 
 
-def strict(s: str, lang: str = 'en') -> str:
+def strict(
+        s: str,
+        lang: str = 'en',
+        show_progress: bool = False,
+        **kwargs
+) -> str:
     """
     Apply simple + removes all commands.
 
     :param s: String latex
     :param lang: Language tag of the code
+    :param show_progress: Show progress bar
     :return: String with no latex!
     """
-    pb = ProgressBar(steps=22)
-    s = simple(s, lang, replace_pydetex_tags=False, remove_common_tags=False, progressbar=pb)
+    pb = ProgressBar(steps=21) if show_progress else None
+    if 'progressbar' not in kwargs.keys():
+        # noinspection PyTypeChecker
+        kwargs['progressbar'] = pb
+    s = simple(s, lang, replace_pydetex_tags=False, remove_common_tags=False,
+               show_progress=show_progress, **kwargs)
     s = par.process_chars_equations(s, lang, False, pb=pb)
     s = par.remove_equations(s, pb=pb)
-    s = par.process_def(s, pb=pb)
     s = par.remove_environments(s, pb=pb)
     s = par.remove_commands_param(s, lang, pb=pb)
     s = par.remove_commands_param_noargv(s, pb=pb)

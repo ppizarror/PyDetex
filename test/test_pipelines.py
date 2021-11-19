@@ -24,14 +24,17 @@ class ParserTest(BaseTest):
             ' such as (1) \\textit{Graphics separation}, (2) \\textit{Pattern ' \
             'recognition}, (3) \\textit{Vectorization}, and (4) \\textit{Structural modeling}.'
         self.assertEqual(
-            pip.simple(s),
+            pip.simple(s, show_progress=True),
             'Table 1 details the reviewed rule-based methods within floor plan '
             'recognition, considering the datasets used (Table 2) and the four '
             'categories of tasks, such as (1) Graphics separation, (2) Pattern '
             'recognition, (3) Vectorization, and (4) Structural modeling.')
 
         s = 'aa\\begin{document}x\\end{document}'
-        self.assertEqual(pip.simple(s), 'x')
+        self.assertEqual(pip.simple(s, show_progress=True), 'x')
+
+        s = '$a$a\\def\\a{a}\\a'
+        self.assertEqual(pip.simple(s, show_progress=True, replace_defs=True), 'aaa')
 
         # New lines
         s = 'New space \\ and line \\\\Epic'
@@ -62,7 +65,8 @@ class ParserTest(BaseTest):
         Strict pipeline.
         """
         s = 'This contains \\insertimageanother{\label{1}}{2}{3}commands, but must be removed!\\'
-        self.assertEqual(pip.strict(s), 'This contains commands, but must be removed!')
+        self.assertEqual(pip.strict(s, show_progress=True),
+                         'This contains commands, but must be removed!')
 
         s = 'This \\quoteepic{code removed!}is removed\\totally. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed. Not epic [1]')
@@ -71,7 +75,7 @@ class ParserTest(BaseTest):
         self.assertEqual(pip.strict(s), 'This is removed nice. Not epic [1]')
 
         # Empty
-        self.assertEqual(pip.strict(''), '')
+        self.assertEqual(pip.strict('', show_progress=True), '')
 
         s = '\DeclareUnicodeCharacter{2292}{\ensuremath{\ensuremath{\\to}}}'
         self.assertEqual(pip.strict(s), '')
@@ -93,7 +97,7 @@ class ParserTest(BaseTest):
         \end{table*}
         """
         self.assertEqual(
-            pip.strict(s),
+            pip.strict(s, show_progress=True),
             '- [a] Graphics separation\n- [b] Door/Window/Furniture/Others\n- [c'
             '] OCR or Dimensions were recognized\n- [d] Vectorization\n- [e] Mod'
             'eling (Graph, other)')
@@ -108,6 +112,11 @@ class ParserTest(BaseTest):
         for f in example_files:
             self.assertEqual(pip.strict(par._load_file_search(f[0])),
                              par._load_file_search(f[1]))
+
+        # Test remove environments
+        self.assertEqual(pip.strict(par._load_file_search('data/example_complex_envs.txt'),
+                                    show_progress=True).strip(),
+                         par._load_file_search('data/example_complex_envs_output.txt'))
 
         # Exclusive tests
         test_complex = False

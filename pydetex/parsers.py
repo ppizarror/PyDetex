@@ -355,17 +355,29 @@ def process_ref(s: str, **kwargs) -> str:
     :param s: Latex string code
     :return: String with numbers instead of references.
     """
-    r = 1
+    look = ['\\ref{', '\\ref*{', '\\autoref{']
+    refs = []
+    k = -1
     while True:
-        k = find_str(s, '\\ref{')
+        run_j = ''
+        for j in look.copy():
+            k = find_str(s, j)
+            if k == -1:
+                look.remove(j)
+            else:
+                run_j = j
+                break
         if k == -1:
             if kwargs.get('pb'):
                 kwargs.get('pb').update('Processing references')
             return s
         for j in range(len(s)):
             if s[k + j] == '}':
-                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(r) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
-                r += 1
+                ref_label = s[k + len(run_j):k + j].strip()
+                if ref_label not in refs:
+                    refs.append(ref_label)
+                ref_idx = refs.index(ref_label) + 1
+                s = s[:k] + FONT_FORMAT_SETTINGS['ref'] + str(ref_idx) + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
 
 
@@ -569,15 +581,15 @@ def process_inputs(
                     tex_file += '.tex'
                 if tex_file not in _NOT_FOUND_FILES and '\jobname' not in tex_file:
                     if not _PRINT_LOCATION:
-                        # print(f'Current path location: {os.getcwd()}')
+                        print(f'Current path location:\n\t{os.getcwd()}')
                         _PRINT_LOCATION = True
-                    # print(f'Detected file {tex_file}:')
+                    print(f'Detected file {tex_file}:')
                     tx = _load_file_search(tex_file)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
-                        # print('\tFile found and loaded')
+                        print('\tFile found and loaded')
                         tx = '\n'.join(tx.splitlines())
                         tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
@@ -983,12 +995,18 @@ def strip_punctuation(s: str, **kwargs) -> str:
     return s
 
 
-def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
+def process_def(
+        s: str,
+        clear_learned: bool = True,
+        replace: bool = False,
+        **kwargs
+) -> str:
     """
     Process \defs. Store the definition, among others.
 
     :param s: Latex with definitions
     :param clear_learned: Clear the last learned definitions
+    :param replace: Replace instances of learned defs
     :return: Latex without definitions
     """
     if '\\def' not in s:
@@ -997,13 +1015,14 @@ def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
         return s
     if clear_learned:
         _DEFS.clear()
-    s += '   '
+    s += '    '
     new_s = ''
     found_def = False
     a, b, c, depth = 0, 0, -1, -1  # Def positions (a\def      b{ .... c}
     def_ranges = []
-    for i in range(len(s)):
-        if s[i:i + 4] == '\\def' and not found_def:  # After finding a def, check the first and last parenthesis
+    for i in range(len(s) - 4):
+        # After finding a def, check the first and last parenthesis
+        if s[i:i + 4] == '\\def' and s[i + 4] not in ut.TEX_COMMAND_CHARS:
             a, b, depth = i, -1, 0
             found_def = True
             continue
@@ -1028,8 +1047,36 @@ def process_def(s: str, clear_learned: bool = True, **kwargs) -> str:
         else:
             new_s += s[i]
 
+    # Now, if replace defs if enabled, check all non-arg commands and replace if
+    # known
+    if replace:
+        new_s_def = ''
+        st = ut.find_tex_commands_noargv(new_s)
+        w = 0  # Iterates through st
+        k = 0
+        if len(st) > 0:
+            for _ in range(len(new_s)):
+                if k < len(new_s):
+                    if k < st[w][0]:
+                        new_s_def += new_s[k]
+                    else:
+                        a, b = st[w]
+                        def_n = new_s[a:b + 1]
+                        if def_n in _DEFS.keys():
+                            new_s_def += _DEFS[def_n]
+                        else:
+                            new_s_def += new_s[a:b + 1]
+                        k += b - a
+                        w += 1
+                        if w == len(st):
+                            new_s_def += new_s[k + 1:]
+                            break
+                k += 1
+            new_s = new_s_def
+
     if kwargs.get('pb'):
         kwargs.get('pb').update('Processing definitions')
+
     return new_s
 
 
@@ -1259,4 +1306,6 @@ def process_begin_document(s: str, **kwargs) -> str:
     # If document has been found
     if kwargs.get('pb'):
         kwargs.get('pb').update('Processing {document} environment')
-    return s[i:w]
+    if -1 < i <= w:
+        return s[i:w]
+    return s[0:len(s) - 10]
