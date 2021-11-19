@@ -15,26 +15,8 @@ __all__ = [
 import pydetex.parsers as par
 from pydetex.utils import ProgressBar
 from typing import Callable
-import sys
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
-
-
-class Options(TypedDict):
-    """
-    Pipeline options.
-    """
-    progressbar: ProgressBar
-    remove_common_tags: bool
-    replace_defs: bool
-    replace_pydetex_tags: bool
-    show_progress: bool
-
-
-PipelineType = Callable[[str, str, Options], str]
+PipelineType = Callable
 
 
 def simple(
@@ -43,7 +25,7 @@ def simple(
         show_progress: bool = False,
         replace_pydetex_tags: bool = True,
         remove_common_tags: bool = True,
-        **kwargs: Options
+        **kwargs
 ) -> str:
     """
     The most simple pipeline ever.
@@ -86,7 +68,7 @@ def strict(
         s: str,
         lang: str = 'en',
         show_progress: bool = False,
-        **kwargs: Options
+        **kwargs
 ) -> str:
     """
     Apply simple + removes all commands.

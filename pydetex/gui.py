@@ -526,7 +526,6 @@ class PyDetexGUI(object):
         # Process the text and get the language
         # noinspection PyBroadException
         try:
-            # noinspection PyArgumentList
             out = self.pipeline(
                 text,
                 self._detected_lang_tag,
