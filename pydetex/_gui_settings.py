@@ -379,7 +379,7 @@ class Settings(object):
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
-            self.CFG_SHOW_LINE_NUMBERS: (False, bool, [True, False]),
+            self.CFG_SHOW_LINE_NUMBERS: (True, bool, [True, False]),
             self.CFG_TOTAL_OPENED_APP: (0, int, lambda x: x >= 0),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
             self.CFG_WINDOW_SIZE: (self._valid_window_sizes[1], str, self._valid_window_sizes)
