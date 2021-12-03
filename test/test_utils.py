@@ -697,6 +697,8 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.tex_to_unicode(s), 'α')
         s = 'alpha'
         self.assertEqual(ut.tex_to_unicode(s), 'α')
+        s = '\\frac a2 + \\frac b3 = \sqrt{10}'
+        self.assertEqual(ut.tex_to_unicode(s), 'ᵃ⁄₂ + ᵇ⁄₃ = √10')
 
     def test_progress_bar(self) -> None:
         """

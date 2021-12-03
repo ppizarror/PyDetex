@@ -28,7 +28,7 @@ from flatlatex.parser import LatexSyntaxError
 from typing import Tuple, Union, List, Dict, Optional, Any
 
 # Flat latex object
-_FLATLATEX = flatlatex.converter(ignore_newlines=False)
+_FLATLATEX = flatlatex.converter(ignore_newlines=False, keep_spaces=True)
 
 # Tex to unicode
 _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
@@ -652,7 +652,7 @@ def _convert_single_symbol(s: str) -> Optional[str]:
     return None
 
 
-def convert_latex_symbols(s: str) -> str:
+def _convert_latex_symbols(s: str) -> str:
     """
     Replace each ``'\alpha'``, ``'\beta'`` and similar latex symbols with
     their unicode representation.
@@ -775,19 +775,16 @@ def tex_to_unicode(s: str) -> str:
     if ss is not None:
         return ss
 
-    s = convert_latex_symbols(s)
+    s = _convert_latex_symbols(s)
     s = _process_starting_modifiers(s)
     s = _apply_all_modifiers(s)
 
     # Last filter
     s = s.replace('\n\n', '\n').replace('  ', ' ').replace('\t', ' ')
-    space_symbol = '⇱SPACE:PYDETEX⇲'
-    s = s.replace(' ', space_symbol)
     try:
         s = _FLATLATEX.convert(s)
     except LatexSyntaxError:
         pass
-    s = s.replace(space_symbol, ' ')
 
     return s
 
