@@ -3,7 +3,7 @@ flatlatex>=0.15
 langdetect
 nltk
 outdated
-PyMultiDictionary>=1.1.0
+PyMultiDictionary>=1.1.1
 pyperclip
 requests
 tkmacosx
