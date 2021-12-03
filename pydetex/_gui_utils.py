@@ -209,7 +209,9 @@ class SettingsWindow(object):
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(0, 4 if ut.IS_OSX else 2))
         label_pad = 5 if ut.IS_OSX else 15
-        self._pipeline_descr_title = make_label_ttk(f, w=70, h=40, side=tk.LEFT, pad=(0, label_pad, 5, 10), pack=False)
+        label_width = 70 if ut.IS_OSX else 54
+        self._pipeline_descr_title = make_label_ttk(f, w=label_width, h=40, side=tk.LEFT,
+                                                    pad=(0, label_pad, 5, 10), pack=False)
         self._pipeline_description = make_label_ttk(f, w=window_size[0] - 90, h=40, side=tk.LEFT,
                                                     pad=(0, 0, 5, 10))
         self._change_description_pipeline()
