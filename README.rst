@@ -104,7 +104,7 @@ Simply run this command anywhere to execute the application.
 
 You can also import the library, and use the parsers (methods that take latex code
 and perform a single task) or the pipelines (combination of parsers). For more
-information, visit the `documentation <pydetex.readthedocs.io>`_
+information, visit the `documentation <https://pydetex.readthedocs.io>`_.
 
 .. code-block:: python
 
