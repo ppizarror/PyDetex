@@ -33,6 +33,10 @@ PyDetex
 .. image:: https://codecov.io/gh/ppizarror/PyDetex/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/ppizarror/PyDetex
     :alt: Codecov
+    
+.. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex.svg?type=shield
+    :target: https://app.fossa.com/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex?ref=badge_shield
+    :alt: FOSSA Status
 
 .. image:: https://img.shields.io/github/issues/ppizarror/PyDetex
     :target: https://github.com/ppizarror/PyDetex/issues
