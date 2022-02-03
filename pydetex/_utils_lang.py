@@ -292,7 +292,7 @@ def check_repeated_words(
 
 def get_word_from_cursor(s: str, pos: int) -> Tuple[str, int, int]:
     """
-    Return the word from an string on a given cursor.
+    Return the word from a string on a given cursor.
 
     :param s: String
     :param pos: Position to check the string

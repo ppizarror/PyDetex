@@ -79,7 +79,7 @@ def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
 
     :param s: String
     :param tags: Tag list
-    :return: Splitted tags
+    :return: Split tags
     """
     assert len(tags) > 0
     tagged_lines: List[Tuple[str, str]] = []

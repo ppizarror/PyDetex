@@ -93,7 +93,7 @@ class PyDetexGUI(object):
         # Configure window
         self._root.title('PyDetex')
         img = tk.Image('photo', file=ut.RESOURCES_PATH + 'icon.gif')
-        # noinspection PyProtectedMember
+        # noinspection PyProtectedMember,PyUnresolvedReferences
         self._root.tk.call('wm', 'iconphoto', self._root._w, img)
         if not ut.IS_OSX:
             try:
@@ -111,7 +111,7 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         f0 = tk.Frame(self._root, border=10, width=window_size[0], height=50)
         f0.pack()
-        f0.pack_propagate(0)
+        f0.pack_propagate(False)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('open_file')), command=self._open_file,
                   relief=tk.GROOVE).pack(side=tk.LEFT)
         tk.Button(f0, text=ut.button_text(self._cfg.lang('about')), command=self._about,
@@ -133,7 +133,7 @@ class PyDetexGUI(object):
         # In text
         f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f1.pack(fill='both', padx=10)
-        f1.pack_propagate(0)
+        f1.pack_propagate(False)
 
         self._text_in = gui_ut.RichText(self._cfg, self._root, f1, wrap='word', highlightthickness=hthick,
                                         highlightcolor=hcolor, font_size=fsize, editable=True,
@@ -143,6 +143,7 @@ class PyDetexGUI(object):
         self._text_in.bind('<ButtonRelease>', self._process_cursor_in)
         self._text_in.bind('<FocusIn>', self._process_focusin_in)
         self._text_in.bind('<FocusOut>', self._process_focusout_in)
+        # noinspection PyTypeChecker
         self._text_in.bind('<Key>', self._process_in_key, add='+')
         self._text_in.bind('<Key-Tab>', self._text_in.tab_selected)
         self._text_in.bind('<Shift-KeyPress-Tab>', self._text_in.undo_tab_selected)
@@ -151,11 +152,12 @@ class PyDetexGUI(object):
         # Out text
         f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
         f2.pack(fill='both', padx=10, pady=(window_size[3], 0))
-        f2.pack_propagate(0)
+        f2.pack_propagate(False)
 
         self._text_out = gui_ut.RichText(self._cfg, self._root, f2, wrap='word', highlightthickness=hthick,
                                          highlightcolor=hcolor, font_size=fsize, copy=True,
                                          scrollbar_y=f2, add_line_numbers=f2 if show_lnum else None)
+        # noinspection PyTypeChecker
         self._text_out.bind('<Key>', self._process_out_key, add='+')
         self._text_out.pack(fill='both')
 
@@ -195,7 +197,7 @@ class PyDetexGUI(object):
 
         f4 = tk.Frame(self._root, width=window_size[0], height=26)
         f4.pack(fill='both')
-        f4.pack_propagate(0)
+        f4.pack_propagate(False)
 
         # Detected language
         show_status = 0.2 if window_size[0] > 750 else 0
@@ -617,6 +619,7 @@ class PyDetexGUI(object):
             if self._paste_timeout_error <= _MAX_PASTE_RETRY:
                 print(f'Paste process failed (TimeoutError), retrying {self._paste_timeout_error}/{_MAX_PASTE_RETRY}')
                 try:
+                    # noinspection PyTypeChecker
                     self._root.after(100, self._process_clip_button)
                 except AttributeError:
                     return self._process_clip()
@@ -710,7 +713,7 @@ class PyDetexGUI(object):
             pass
 
         # Apply pipeline
-        word = pip.strict(word, show_progress=False)
+        word = pip.strict(word)
         word = ut.tokenize(word)
         return word
 
