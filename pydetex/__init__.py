@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 PYDETEX
-An application that transforms LaTeX code to plain text.
+An application that transforms LaTeX codes to plain text.
 """
 
 import pydetex.version

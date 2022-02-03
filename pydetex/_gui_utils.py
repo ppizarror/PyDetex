@@ -345,7 +345,7 @@ class SettingsWindow(object):
         showlnum_value, current_showlnum_value = \
             (self._var_show_line_numbers.get(), self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS))
 
-        store: Tuple[Tuple[str, str, str], ...] = (
+        store: Tuple[Tuple[Any, Union[str, bool], str], ...] = (
             (self._cfg.CFG_LANG, lang_value,
              self._cfg.lang('cfg_error_lang')),
             (self._cfg.CFG_WINDOW_SIZE, windowsz_value,
@@ -412,7 +412,7 @@ class DictionaryGUI(object):
     _lang: str
     _main: 'PyDetexGUI'
     _mean: 'tk.Button'
-    _query_active: Dict[str, int]
+    _query_active: Dict[str, Union[int, Any]]
     _query_events_id: Dict[str, str]
     _query_max_trials: int
     _query_output: Dict[str, Any]
@@ -917,8 +917,8 @@ class TextLineNumbers(tk.Canvas):
     """
     Line numbers.
     """
-    _dx: int  # Number margin on x axis
-    _dy: int  # Number margin on y axis
+    _dx: int  # Number margin on x-axis
+    _dy: int  # Number margin on y-axis
     _font_color: str
     _textwidget: Optional['tk.Text']
 
@@ -1194,7 +1194,8 @@ def make_label_ttk(
     """
     labelvar = tk.StringVar(master)
     f = ttk.Frame(master, height=int(h), width=int(w))
-    f.pack_propagate(0)  # don't shrink
+    f.pack_propagate(False)  # don't shrink
+    # noinspection PyTypeChecker
     f.pack(side=side)
     label = ttk.Label(f, textvariable=labelvar)
     if w > 0 and pack:
@@ -1226,7 +1227,8 @@ def make_label(
     :return: Stringvar
     """
     f = ttk.Frame(master, height=int(h), width=int(w))
-    f.pack_propagate(0)  # don't shrink
+    f.pack_propagate(False)  # don't shrink
+    # noinspection PyTypeChecker
     f.pack(side=side)
     label = tk.Label(f, *args, **kwargs)
     if w > 0:

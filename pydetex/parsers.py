@@ -72,7 +72,7 @@ _ROMAN_DIGITS = [
 _DEFS = {}
 
 # Parser font format. This dict stores the font of some tex elements to be represented
-# in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default
+# in the GUI text editor. The values are the same of _fonts.FONT_TAGS. By default,
 # they are empty, and are updated in the PyDetexGUI._process() method
 FONT_FORMAT_SETTINGS = {
     'bold': '',
@@ -312,7 +312,7 @@ def replace_pydetex_tags(
         **kwargs
 ) -> str:
     """
-    Replaces font tags to an specific format.
+    Replaces font tags to a specific format.
 
     :param s: Latex string code
     :param cite_format: Cite format
@@ -451,7 +451,7 @@ def remove_comments(s: str, **kwargs) -> str:
         new_k.append(merged_str)
     k = new_k
 
-    w = []  # Removes duplicates '' lines to single ''
+    w = []  # Remove duplicates '' lines to single ''
     last = ''
     for j in k:
         if j == '' and j == last:
@@ -816,7 +816,7 @@ def remove_commands_param(
 
                 # If the command does not continue, write the text for such
                 # command, if this does not continue (for example, that happens
-                # when calling for \mycommand{1}{2}{3}. In that case, only tex_tags
+                # when calling for \mycommand{1}{2}{3}). In that case, only tex_tags
                 # [\mycommand .... {3}] will be called, thus, sub_s will contain
                 # all the parameters of the command ({1}{2}{3})
                 if not tex_tags[k][4]:
@@ -1047,7 +1047,7 @@ def process_def(
         else:
             new_s += s[i]
 
-    # Now, if replace defs if enabled, check all non-arg commands and replace if
+    # Now, if replace defs is enabled, check all non-arg commands and replace if
     # known
     if replace:
         new_s_def = ''
@@ -1111,7 +1111,7 @@ def process_items(s: str, **kwargs) -> str:
 
     def _are_item(e: str) -> bool:
         """
-        Return true if both are enumerate. Used to check recursive enumerates.
+        Return true if both are enumerated. Used to check recursive enumerates.
 
         :param e: Environment name
         :return: True if item
@@ -1243,7 +1243,7 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
 
 def _int_to_roman(number: int) -> str:
     """
-    Convert a arabic integer number to a roman.
+    Convert an arabic integer number to a roman.
 
     :param number: Number
     :return: Number in roman
@@ -1285,7 +1285,7 @@ def process_begin_document(s: str, **kwargs) -> str:
     is_env = False
     is_end = False
     is_document_begin = False
-    i, j, w = -1, -1, -1  # Init and start of the begin document, w indicates the start of \end
+    i, j, w = -1, -1, -1  # Init and start of "begin document", w indicates the start of \end
     # Find if begin document exists
     for k in range(len(s) - 10):
         if s[k:k + 6] == '\\begin':

@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 SYMBOLS
-Contain latex commands converted to symbols.
+Contain latex commands converted to symbol.
 """
 
 __all__ = [
