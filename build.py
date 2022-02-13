@@ -19,10 +19,11 @@ if mode == 'pyinstaller':
     upx = ''
     if sys.platform == 'win32' and sys_arch == 64:
         upx = '--upx-dir build/upx_64'
+    pyinstaller = f'{python} -m PyInstaller' if sys.platform == 'win32' else 'pyinstaller'
 
-    # os.system(f'{python} -m PyInstaller specs/PyDetex_Win.spec --noconfirm {upx}')
-    os.system(f'{python} -m PyInstaller specs/PyDetex_Win_Single.spec --noconfirm {upx}')
-    os.system(f'{python} -m PyInstaller specs/PyDetex_macOS.spec --noconfirm')
+    # os.system(f'{pyinstaller} specs/PyDetex_Win.spec --noconfirm {upx}')
+    os.system(f'{pyinstaller} specs/PyDetex_Win_Single.spec --noconfirm {upx}')
+    os.system(f'{pyinstaller} specs/PyDetex_macOS.spec --noconfirm')
 
 elif mode == 'pip':
     if os.path.isdir('dist/pip'):
