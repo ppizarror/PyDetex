@@ -11,7 +11,7 @@ import sys
 
 assert len(sys.argv) == 2, 'Argument is required, usage: build.py pyinstaller/pip/twine/gource'
 mode = sys.argv[1].strip()
-python = 'python3' if not sys.platform == 'win32' else 'py -3.7'
+python = 'python3' if not sys.platform == 'win32' else 'py -3'
 sys_arch = struct.calcsize('P') * 8
 
 if mode == 'pyinstaller':
@@ -20,9 +20,9 @@ if mode == 'pyinstaller':
     if sys.platform == 'win32' and sys_arch == 64:
         upx = '--upx-dir build/upx_64'
 
-    # os.system(f'pyinstaller specs/PyDetex_Win.spec --noconfirm {upx}')
-    os.system(f'pyinstaller specs/PyDetex_Win_Single.spec --noconfirm {upx}')
-    os.system(f'pyinstaller specs/PyDetex_macOS.spec --noconfirm')
+    # os.system(f'{python} -m PyInstaller specs/PyDetex_Win.spec --noconfirm {upx}')
+    os.system(f'{python} -m PyInstaller specs/PyDetex_Win_Single.spec --noconfirm {upx}')
+    os.system(f'{python} -m PyInstaller specs/PyDetex_macOS.spec --noconfirm')
 
 elif mode == 'pip':
     if os.path.isdir('dist/pip'):
