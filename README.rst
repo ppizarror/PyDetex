@@ -21,6 +21,14 @@ PyDetex
 .. image:: https://img.shields.io/github/workflow/status/ppizarror/PyDetex/Run%20Tests
     :target: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml
     :alt: Build status
+    
+.. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex.svg?type=shield
+    :target: https://app.fossa.com/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex?ref=badge_shield
+    :alt: FOSSA Status
+    
+.. image:: https://readthedocs.org/projects/pydetex/badge/?version=latest
+    :target: https://pydetex.readthedocs.io
+    :alt: Documentation Status
 
 .. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/ppizarror/PyDetex/alerts
@@ -33,10 +41,6 @@ PyDetex
 .. image:: https://codecov.io/gh/ppizarror/PyDetex/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/ppizarror/PyDetex
     :alt: Codecov
-    
-.. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex.svg?type=shield
-    :target: https://app.fossa.com/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex?ref=badge_shield
-    :alt: FOSSA Status
 
 .. image:: https://img.shields.io/github/issues/ppizarror/PyDetex
     :target: https://github.com/ppizarror/PyDetex/issues
