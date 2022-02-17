@@ -100,9 +100,9 @@ class SettingsWindow(object):
         tab_control.pack(expand=tk.TRUE, fill=tk.BOTH)
 
         # Init configs
-        self._cfg_ui(tab1, cfg)
-        self._cfg_pipeline(tab2, cfg, window_size)
-        self._cfg_words_repetition(tab3, cfg)
+        self._cfg_ui(tab1)
+        self._cfg_pipeline(tab2, window_size)
+        self._cfg_words_repetition(tab3)
 
         # Save
         fbuttons = tk.Frame(self.root)
@@ -115,7 +115,7 @@ class SettingsWindow(object):
         self.root.update()
 
     # noinspection PyProtectedMember
-    def _cfg_ui(self, tab: 'ttk.Frame', cfg: '_Settings') -> None:
+    def _cfg_ui(self, tab: 'ttk.Frame') -> None:
         """
         Setup UI configs.
         """
@@ -129,7 +129,7 @@ class SettingsWindow(object):
         self._dict_langs = {}
         for k in self._cfg._lang.get_available():
             self._dict_langs[self._cfg._lang.get(k, 'lang')] = k
-        default = self._cfg._lang.get(cfg.get(cfg.CFG_LANG), 'lang')
+        default = self._cfg._lang.get(self._cfg.get(self._cfg.CFG_LANG), 'lang')
         self._var_lang = tk.StringVar(self.root)
         self._var_lang.set(default)  # default value
 
@@ -146,7 +146,7 @@ class SettingsWindow(object):
         self._dict_window_sizes = {}
         for k in self._cfg._valid_window_sizes:
             self._dict_window_sizes[self._cfg.lang(k)] = k
-        default = self._cfg.lang(cfg.get(cfg.CFG_WINDOW_SIZE, update=False))
+        default = self._cfg.lang(self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
         self._var_window_size = tk.StringVar(self.root)
         self._var_window_size.set(default)  # default value
 
@@ -158,10 +158,10 @@ class SettingsWindow(object):
         f.pack(fill='both', pady=5)
         ttk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9))
-        default = cfg.get(cfg.CFG_FONT_SIZE)
+        default = self._cfg.get(self._cfg.CFG_FONT_SIZE)
         self._var_font_size = tk.StringVar(self.root)
         self._var_font_size.set(default)
-        fontsize = ttk.OptionMenu(f, self._var_font_size, default, *cfg._valid_font_sizes)
+        fontsize = ttk.OptionMenu(f, self._var_font_size, default, *self._cfg._valid_font_sizes)
         fontsize.pack(side=tk.LEFT)
 
         # Output font format
@@ -170,7 +170,7 @@ class SettingsWindow(object):
         ttk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
         self._var_output_font_format = tk.BooleanVar(self.root)
-        self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
+        self._var_output_font_format.set(self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT))
         ttk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
 
         # Show line numbers
@@ -179,10 +179,10 @@ class SettingsWindow(object):
         ttk.Label(f, text=self._cfg.lang('cfg_show_line_numbers'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
         self._var_show_line_numbers = tk.BooleanVar(self.root)
-        self._var_show_line_numbers.set(cfg.get(cfg.CFG_SHOW_LINE_NUMBERS))
+        self._var_show_line_numbers.set(self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS))
         ttk.Checkbutton(f, variable=self._var_show_line_numbers).pack(side=tk.LEFT)
 
-    def _cfg_pipeline(self, tab: 'ttk.Frame', cfg: '_Settings', window_size: Tuple[int, int]) -> None:
+    def _cfg_pipeline(self, tab: 'ttk.Frame', window_size: Tuple[int, int]) -> None:
         """
         Setup pipeline config.
         """
@@ -199,7 +199,7 @@ class SettingsWindow(object):
         for k in self._cfg._available_pipelines:
             self._dict_pipelines[self._cfg.lang(k)] = k
 
-        default = self._cfg.lang(cfg.get(cfg.CFG_PIPELINE, update=False))
+        default = self._cfg.lang(self._cfg.get(self._cfg.CFG_PIPELINE, update=False))
         self._var_pipeline = tk.StringVar(self.root)
         self._var_pipeline.set(default)  # default value
 
@@ -223,7 +223,7 @@ class SettingsWindow(object):
         ttk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_process_auto_copy = tk.BooleanVar(self.root)
-        self._var_process_auto_copy.set(cfg.get(cfg.CFG_PROCESS_AUTO_COPY))
+        self._var_process_auto_copy.set(self._cfg.get(self._cfg.CFG_PROCESS_AUTO_COPY))
         ttk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
         # Replace defs
@@ -232,10 +232,10 @@ class SettingsWindow(object):
         ttk.Label(f, text=self._cfg.lang('cfg_pipeline_replace_defs'), width=label_wz,
                   anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
         self._var_pipeline_replace_defs = tk.BooleanVar(self.root)
-        self._var_pipeline_replace_defs.set(cfg.get(cfg.CFG_PIPELINE_REPLACE_DEFS))
+        self._var_pipeline_replace_defs.set(self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS))
         ttk.Checkbutton(f, variable=self._var_pipeline_replace_defs).pack(side=tk.LEFT)
 
-    def _cfg_words_repetition(self, tab: 'ttk.Frame', cfg: '_Settings') -> None:
+    def _cfg_words_repetition(self, tab: 'ttk.Frame') -> None:
         """
         Set words repetition config.
         """
@@ -247,7 +247,7 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5))
         self._var_check_repetition = tk.BooleanVar(self.root)
-        self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
+        self._var_check_repetition.set(self._cfg.get(self._cfg.CFG_CHECK_REPETITION))
         ttk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
 
         # Repetition min chars
@@ -261,7 +261,8 @@ class SettingsWindow(object):
         self._var_repetition_min_char = CustomEntry(f, self._cfg, validate='all', validatecommand=(reg_int, '%P'),
                                                     width=5)
         self._var_repetition_min_char.pack(side=tk.LEFT)
-        self.root.after(100, lambda: self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR)))
+        self.root.after(100, lambda: self._var_repetition_min_char.insert(0, self._cfg.get(
+            self._cfg.CFG_REPETITION_MIN_CHAR)))
 
         # Repetition distance
         f = ttk.Frame(tab, border=0)
@@ -273,7 +274,7 @@ class SettingsWindow(object):
         self._var_repetition_distance = CustomEntry(f, self._cfg, validate='all',
                                                     validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_distance.pack(side=tk.LEFT)
-        self.root.after(100, self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE)))
+        self.root.after(100, self._var_repetition_distance.insert(0, self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE)))
 
         # Repetition use stemming
         f = ttk.Frame(tab, border=0)
@@ -283,7 +284,7 @@ class SettingsWindow(object):
             padx=(5 if ut.IS_OSX else 4, 5)
         )
         self._var_check_repetition_stemming = tk.BooleanVar(self.root)
-        self._var_check_repetition_stemming.set(cfg.get(cfg.CFG_REPETITION_USE_STEMMING))
+        self._var_check_repetition_stemming.set(self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING))
         ttk.Checkbutton(f, variable=self._var_check_repetition_stemming).pack(side=tk.LEFT)
 
         # Repetition use stopwords
@@ -294,7 +295,7 @@ class SettingsWindow(object):
             padx=(5 if ut.IS_OSX else 4, 5)
         )
         self._var_check_repetition_stopwords = tk.BooleanVar(self.root)
-        self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
+        self._var_check_repetition_stopwords.set(self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS))
         ttk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
 
         # Repetition ignore words
@@ -304,11 +305,11 @@ class SettingsWindow(object):
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_ignore_words = RichText(cfg, self.root, f, wrap='word', height=4,
+        self._var_repetition_ignore_words = RichText(self._cfg, self.root, f, wrap='word', height=4,
                                                      highlightthickness=3 if ut.IS_OSX else 0,
                                                      highlightcolor='#426392', editable=True)
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
-        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS).strip())
+        self._var_repetition_ignore_words.insert(0.0, self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS).strip())
 
     # noinspection PyUnusedLocal
     def _change_description_pipeline(self, *args) -> None:
