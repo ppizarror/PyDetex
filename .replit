@@ -1,0 +1,2 @@
+language = "bash"
+run = "python3 setup.py install; clear; python3 pydetex/gui.py"

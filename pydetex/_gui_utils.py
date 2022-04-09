@@ -10,8 +10,10 @@ __all__ = [
     'BorderedFrame',
     'center_window',
     'CustomEntry',
+    'CustomTtkEntry',
     'DictionaryGUI',
     'make_label',
+    'make_label_ttk',
     'RichText',
     'SettingsWindow'
 ]
@@ -42,8 +44,8 @@ class SettingsWindow(object):
     _cfg: '_Settings'
     _dict_langs: Dict[str, str]
     _dict_pipelines: Dict[str, str]
-    _pipeline_descr_title: 'tk.Label'
-    _pipeline_description: 'tk.Label'
+    _pipeline_descr_title: 'tk.StringVar'
+    _pipeline_description: 'tk.StringVar'
     _var_check_repetition: 'tk.BooleanVar'
     _var_check_repetition_stemming: 'tk.BooleanVar'
     _var_check_repetition_stopwords: 'tk.BooleanVar'
@@ -51,12 +53,15 @@ class SettingsWindow(object):
     _var_lang: 'tk.StringVar'
     _var_output_font_format: 'tk.BooleanVar'
     _var_pipeline: 'tk.StringVar'
+    _var_pipeline_replace_defs: 'tk.BooleanVar'
+    _var_process_auto_copy: 'tk.BooleanVar'
     _var_repetition_distance: 'tk.Entry'
     _var_repetition_ignore_words: 'tk.Text'
     _var_repetition_min_char: 'tk.Entry'
     _var_window_size: 'tk.StringVar'
     on_destroy: Optional[Callable[[], None]]
     root: 'tk.Tk'
+    saved: bool
 
     # noinspection PyProtectedMember
     def __init__(self, window_size: Tuple[int, int], cfg: '_Settings') -> None:
@@ -77,181 +82,234 @@ class SettingsWindow(object):
         center_window(self.root, window_size)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if not ut.IS_OSX:
-            self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
+            try:
+                self.root.iconbitmap(ut.RESOURCES_PATH + 'cog.ico')
+            except tk.TclError:  # Linux
+                pass
 
-        # Registers
-        reg_int = self.root.register(ut.validate_int)
+        # Create tabs
+        tab_control = ttk.Notebook(self.root, padding=(10, 10, 10, 0))  # l, t, r, b
 
-        # Main frame
-        f0 = tk.Frame(self.root, border=5)
-        f0.pack(fill='both')
+        tab1 = ttk.Frame(tab_control)
+        tab2 = ttk.Frame(tab_control)
+        tab3 = ttk.Frame(tab_control)
 
-        label_w = 17
+        tab_control.add(tab1, text=self._cfg.lang('cfg_tab_ui'), padding=(-5, 0, -5, -5) if ut.IS_OSX else 0)
+        tab_control.add(tab2, text=self._cfg.lang('cfg_tab_pipeline'), padding=(-5, 0, -5, -5) if ut.IS_OSX else 0)
+        tab_control.add(tab3, text=self._cfg.lang('cfg_words_repetition'), padding=(-5, 5, -5, -5) if ut.IS_OSX else 0)
+        tab_control.pack(expand=tk.TRUE, fill=tk.BOTH)
 
+        # Init configs
+        self._cfg_ui(tab1)
+        self._cfg_pipeline(tab2, window_size)
+        self._cfg_words_repetition(tab3)
+
+        # Save
+        fbuttons = tk.Frame(self.root)
+        fbuttons.pack(side=tk.BOTTOM, expand=True)
+        ut.Button(fbuttons, text=ut.button_text(self._cfg.lang('cfg_save')), command=self._save,
+                  relief=tk.GROOVE).pack(pady=(2, 0))
+
+        # Update
+        self.saved = False
+        self.root.update()
+
+    # noinspection PyProtectedMember
+    def _cfg_ui(self, tab: 'ttk.Frame') -> None:
+        """
+        Setup UI configs.
+        """
         # Set languages
-        f = tk.Frame(f0, border=0)
-        f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+        label_wz = 15 if ut.IS_OSX else 18
+        f = ttk.Frame(tab, border=0, padding=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_lang'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
         self._dict_langs = {}
         for k in self._cfg._lang.get_available():
             self._dict_langs[self._cfg._lang.get(k, 'lang')] = k
-
+        default = self._cfg._lang.get(self._cfg.get(self._cfg.CFG_LANG), 'lang')
         self._var_lang = tk.StringVar(self.root)
-        self._var_lang.set(self._cfg._lang.get(cfg.get(cfg.CFG_LANG), 'lang'))  # default value
+        self._var_lang.set(default)  # default value
 
-        pipe = tk.OptionMenu(f, self._var_lang, *list(self._dict_langs.keys()))
+        pipe = ttk.OptionMenu(f, self._var_lang, default, *list(self._dict_langs.keys()))
         pipe.focus()
         pipe.pack(side=tk.LEFT)
 
         # Window size
-        f = tk.Frame(f0, border=0)
-        f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_window_size'), width=label_w, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_window_size'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
         self._dict_window_sizes = {}
         for k in self._cfg._valid_window_sizes:
             self._dict_window_sizes[self._cfg.lang(k)] = k
-
+        default = self._cfg.lang(self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
         self._var_window_size = tk.StringVar(self.root)
-        self._var_window_size.set(self._cfg.lang(cfg.get(cfg.CFG_WINDOW_SIZE, update=False)))  # default value
+        self._var_window_size.set(default)  # default value
 
-        windowsize = tk.OptionMenu(f, self._var_window_size, *list(self._dict_window_sizes.keys()))
+        windowsize = ttk.OptionMenu(f, self._var_window_size, default, *list(self._dict_window_sizes.keys()))
         windowsize.pack(side=tk.LEFT)
 
-        # Set pipelines
-        f = tk.Frame(f0, border=0)
+        # Font size
+        f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=label_w,
-                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        ttk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9))
+        default = self._cfg.get(self._cfg.CFG_FONT_SIZE)
+        self._var_font_size = tk.StringVar(self.root)
+        self._var_font_size.set(default)
+        fontsize = ttk.OptionMenu(f, self._var_font_size, default, *self._cfg._valid_font_sizes)
+        fontsize.pack(side=tk.LEFT)
+
+        # Output font format
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 5))
+        ttk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
+        self._var_output_font_format = tk.BooleanVar(self.root)
+        self._var_output_font_format.set(self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT))
+        ttk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
+
+        # Show line numbers
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_show_line_numbers'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 15))
+        self._var_show_line_numbers = tk.BooleanVar(self.root)
+        self._var_show_line_numbers.set(self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS))
+        ttk.Checkbutton(f, variable=self._var_show_line_numbers).pack(side=tk.LEFT)
+
+    def _cfg_pipeline(self, tab: 'ttk.Frame', window_size: Tuple[int, int]) -> None:
+        """
+        Setup pipeline config.
+        """
+        label_wz = 17 if ut.IS_OSX else 23
+
+        # Set pipelines
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_pipeline'), width=7,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
 
         self._dict_pipelines = {}
+        # noinspection PyProtectedMember
         for k in self._cfg._available_pipelines:
             self._dict_pipelines[self._cfg.lang(k)] = k
 
+        default = self._cfg.lang(self._cfg.get(self._cfg.CFG_PIPELINE, update=False))
         self._var_pipeline = tk.StringVar(self.root)
-        self._var_pipeline.set(self._cfg.lang(cfg.get(cfg.CFG_PIPELINE, update=False)))  # default value
-        self._var_pipeline.trace('w', self._change_description_pipeline)
+        self._var_pipeline.set(default)  # default value
 
-        pipe = tk.OptionMenu(f, self._var_pipeline, *list(self._dict_pipelines.keys()))
+        pipe = ttk.OptionMenu(f, self._var_pipeline, default, *list(self._dict_pipelines.keys()))
         pipe.pack(side=tk.LEFT)
 
-        f = tk.Frame(f0, border=0)
-        f.pack(fill='both', pady=0)
-        label_fg = '#999999' if ut.IS_OSX else '#666666'
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(0, 4 if ut.IS_OSX else 2))
         label_pad = 5 if ut.IS_OSX else 15
-        self._pipeline_descr_title = make_label(f, w=70, h=40, side=tk.LEFT, fg=label_fg,  # bg='blue',
-                                                bd=0, relief=tk.SUNKEN, anchor=tk.E, pad=(0, label_pad, 5, 7))
-        self._pipeline_description = make_label(f, w=window_size[0] - 70, h=40, side=tk.LEFT, fg=label_fg,  # bg='red',
-                                                bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 5, 0), justify=tk.LEFT)
+        label_width = 70 if ut.IS_OSX else 54
+        self._pipeline_descr_title = make_label_ttk(f, w=label_width, h=40, side=tk.LEFT,
+                                                    pad=(0, label_pad, 5, 10), pack=False)
+        self._pipeline_description = make_label_ttk(f, w=window_size[0] - 90, h=40, side=tk.LEFT,
+                                                    pad=(0, 0, 5, 10))
         self._change_description_pipeline()
+        self._var_pipeline.trace('w', self._change_description_pipeline)
 
-        # Check repetition
-        f_repetition = tk.LabelFrame(f0, text=self._cfg.lang('cfg_words_repetition'), bd=1, relief=tk.GROOVE)
-        f_repetition.pack(fill='both')
+        # Process copy auto
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(0, 5))
+        ttk.Label(f, text=self._cfg.lang('cfg_process_auto_copy'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_process_auto_copy = tk.BooleanVar(self.root)
+        self._var_process_auto_copy.set(self._cfg.get(self._cfg.CFG_PROCESS_AUTO_COPY))
+        ttk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_check'), width=label_w, anchor='w').pack(
+        # Replace defs
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(0, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_pipeline_replace_defs'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_pipeline_replace_defs = tk.BooleanVar(self.root)
+        self._var_pipeline_replace_defs.set(self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS))
+        ttk.Checkbutton(f, variable=self._var_pipeline_replace_defs).pack(side=tk.LEFT)
+
+    def _cfg_words_repetition(self, tab: 'ttk.Frame') -> None:
+        """
+        Set words repetition config.
+        """
+        label_wz = 16 if ut.IS_OSX else 21
+
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_check'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if ut.IS_OSX else 4, 4))
+            padx=(5 if ut.IS_OSX else 4, 5))
         self._var_check_repetition = tk.BooleanVar(self.root)
-        self._var_check_repetition.set(cfg.get(cfg.CFG_CHECK_REPETITION))
-        tk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
+        self._var_check_repetition.set(self._cfg.get(self._cfg.CFG_CHECK_REPETITION))
+        ttk.Checkbutton(f, variable=self._var_check_repetition).pack(side=tk.LEFT)
 
         # Repetition min chars
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_w, anchor='w').pack(
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_minchars'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
+        reg_int = self.root.register(ut.validate_int)
         self._var_repetition_min_char = CustomEntry(f, self._cfg, validate='all', validatecommand=(reg_int, '%P'),
                                                     width=5)
         self._var_repetition_min_char.pack(side=tk.LEFT)
-        self.root.after(100, lambda: self._var_repetition_min_char.insert(0, cfg.get(cfg.CFG_REPETITION_MIN_CHAR)))
+        self.root.after(100, lambda: self._var_repetition_min_char.insert(0, self._cfg.get(
+            self._cfg.CFG_REPETITION_MIN_CHAR)))
 
         # Repetition distance
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_w, anchor='w').pack(
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_distance'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
         self._var_repetition_distance = CustomEntry(f, self._cfg, validate='all',
                                                     validatecommand=(reg_int, '%P'), width=5)
         self._var_repetition_distance.pack(side=tk.LEFT)
-        self.root.after(100, self._var_repetition_distance.insert(0, cfg.get(cfg.CFG_REPETITION_DISTANCE)))
+        self.root.after(100, self._var_repetition_distance.insert(0, self._cfg.get(self._cfg.CFG_REPETITION_DISTANCE)))
 
         # Repetition use stemming
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_w, anchor='w').pack(
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stemming'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if ut.IS_OSX else 4, 4)
+            padx=(5 if ut.IS_OSX else 4, 5)
         )
         self._var_check_repetition_stemming = tk.BooleanVar(self.root)
-        self._var_check_repetition_stemming.set(cfg.get(cfg.CFG_REPETITION_USE_STEMMING))
-        tk.Checkbutton(f, variable=self._var_check_repetition_stemming).pack(side=tk.LEFT)
+        self._var_check_repetition_stemming.set(self._cfg.get(self._cfg.CFG_REPETITION_USE_STEMMING))
+        ttk.Checkbutton(f, variable=self._var_check_repetition_stemming).pack(side=tk.LEFT)
 
         # Repetition use stopwords
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_w, anchor='w').pack(
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 2))
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_stopwords'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
-            padx=(5 if ut.IS_OSX else 4, 4)
+            padx=(5 if ut.IS_OSX else 4, 5)
         )
         self._var_check_repetition_stopwords = tk.BooleanVar(self.root)
-        self._var_check_repetition_stopwords.set(cfg.get(cfg.CFG_REPETITION_USE_STOPWORDS))
-        tk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
+        self._var_check_repetition_stopwords.set(self._cfg.get(self._cfg.CFG_REPETITION_USE_STOPWORDS))
+        ttk.Checkbutton(f, variable=self._var_check_repetition_stopwords).pack(side=tk.LEFT)
 
         # Repetition ignore words
-        f = tk.Frame(f_repetition, border=0)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_w, anchor='w').pack(
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(5, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_words_repetition_ignorew'), width=label_wz, anchor='w').pack(
             side=tk.LEFT,
             padx=(5 if ut.IS_OSX else 4, 5 if ut.IS_OSX else 9)
         )
-        self._var_repetition_ignore_words = RichText(cfg, f, wrap='word', height=4,
+        self._var_repetition_ignore_words = RichText(self._cfg, self.root, f, wrap='word', height=4,
                                                      highlightthickness=3 if ut.IS_OSX else 0,
                                                      highlightcolor='#426392', editable=True)
         self._var_repetition_ignore_words.pack(side=tk.LEFT, padx=(0, 5))
-        self._var_repetition_ignore_words.insert(0.0, cfg.get(cfg.CFG_REPETITION_IGNORE_WORDS).strip())
-
-        # End repetition
-        f = tk.Frame(f_repetition, border=0, height=3 if ut.IS_OSX else 5)
-        f.pack()
-        f.pack_propagate(0)
-
-        # Font format
-        f = tk.Frame(f0, border=0, relief=tk.GROOVE)
-        f.pack(fill='both')
-        tk.Label(f, text=self._cfg.lang('cfg_font_format'), width=label_w,
-                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
-        self._var_output_font_format = tk.BooleanVar(self.root)
-        self._var_output_font_format.set(cfg.get(cfg.CFG_OUTPUT_FONT_FORMAT))
-        tk.Checkbutton(f, variable=self._var_output_font_format).pack(side=tk.LEFT)
-
-        # Set font size
-        f = tk.Frame(f0, border=0)
-        f.pack(fill='both', pady=5)
-        tk.Label(f, text=self._cfg.lang('cfg_font_size'), width=label_w,
-                 anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
-
-        self._var_font_size = tk.StringVar(self.root)
-        self._var_font_size.set(cfg.get(cfg.CFG_FONT_SIZE))
-
-        fontsize = tk.OptionMenu(f, self._var_font_size, *cfg._valid_font_sizes)
-        fontsize.pack(side=tk.LEFT)
-
-        # Save
-        fbuttons = tk.Frame(f0)
-        fbuttons.pack(side=tk.BOTTOM, expand=True)
-        ut.Button(fbuttons, text=ut.button_text(self._cfg.lang('cfg_save')), command=self._save,
-                  relief=tk.GROOVE).pack(pady=(12 if ut.IS_OSX else 8, 0))
-
-        # Update
-        self.root.update()
+        self._var_repetition_ignore_words.insert(0.0, self._cfg.get(self._cfg.CFG_REPETITION_IGNORE_WORDS).strip())
 
     # noinspection PyUnusedLocal
     def _change_description_pipeline(self, *args) -> None:
@@ -263,8 +321,8 @@ class SettingsWindow(object):
         t = self._cfg.lang(f'{self._dict_pipelines[self._var_pipeline.get()]}_description')
         # t = f'{self._var_pipeline.get()}: {t}'
         t = '\n'.join(textwrap.wrap(t, 41 if ut.IS_OSX else 50))
-        self._pipeline_descr_title['text'] = f'{self._var_pipeline.get()}:'
-        self._pipeline_description['text'] = t
+        self._pipeline_descr_title.set(f'{self._var_pipeline.get()}:')
+        self._pipeline_description.set(t)
 
     def close(self) -> None:
         """
@@ -278,14 +336,17 @@ class SettingsWindow(object):
         """
         Save the settings.
         """
-        lang_value, current_lang = (self._dict_langs[self._var_lang.get()],
-                                    self._cfg.get(self._cfg.CFG_LANG))
-        windowsz_value, current_windowsz = (self._dict_window_sizes[self._var_window_size.get()],
-                                            self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
-        fontsize_value, current_fontsize = (self._var_font_size.get(),
-                                            self._cfg.get(self._cfg.CFG_FONT_SIZE))
+        lang_value, current_lang = \
+            (self._dict_langs[self._var_lang.get()], self._cfg.get(self._cfg.CFG_LANG))
+        windowsz_value, current_windowsz = \
+            (self._dict_window_sizes[self._var_window_size.get()],
+             self._cfg.get(self._cfg.CFG_WINDOW_SIZE, update=False))
+        fontsize_value, current_fontsize = \
+            (self._var_font_size.get(), self._cfg.get(self._cfg.CFG_FONT_SIZE))
+        showlnum_value, current_showlnum_value = \
+            (self._var_show_line_numbers.get(), self._cfg.get(self._cfg.CFG_SHOW_LINE_NUMBERS))
 
-        store: Tuple[Tuple[str, str, str], ...] = (
+        store: Tuple[Tuple[Any, Union[str, bool], str], ...] = (
             (self._cfg.CFG_LANG, lang_value,
              self._cfg.lang('cfg_error_lang')),
             (self._cfg.CFG_WINDOW_SIZE, windowsz_value,
@@ -307,7 +368,13 @@ class SettingsWindow(object):
             (self._cfg.CFG_OUTPUT_FONT_FORMAT, self._var_output_font_format.get(),
              self._cfg.lang('cfg_error_output_format')),
             (self._cfg.CFG_FONT_SIZE, fontsize_value,
-             self._cfg.lang('cfg_error_font_size'))
+             self._cfg.lang('cfg_error_font_size')),
+            (self._cfg.CFG_PROCESS_AUTO_COPY, self._var_process_auto_copy.get(),
+             self._cfg.lang('cfg_error_auto_copy')),
+            (self._cfg.CFG_SHOW_LINE_NUMBERS, self._var_show_line_numbers.get(),
+             self._cfg.lang('cfg_error_show_line_numbers')),
+            (self._cfg.CFG_PIPELINE_REPLACE_DEFS, self._var_pipeline_replace_defs.get(),
+             self._cfg.lang('cfg_error_pipeline_replace_defs'))
         )
 
         # Set values
@@ -320,12 +387,15 @@ class SettingsWindow(object):
                 do_close = False
 
         # Check if lang has changed
-        if lang_value != current_lang or int(fontsize_value) != current_fontsize or \
-                windowsz_value != current_windowsz:
+        if lang_value != current_lang or \
+                int(fontsize_value) != current_fontsize or \
+                windowsz_value != current_windowsz or \
+                showlnum_value != current_showlnum_value:
             messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
                                 message=self._cfg.lang('reload_message_message'))
 
         # Save
+        self.saved = True
         self._cfg.save()
         if do_close:
             self.close()
@@ -343,7 +413,7 @@ class DictionaryGUI(object):
     _lang: str
     _main: 'PyDetexGUI'
     _mean: 'tk.Button'
-    _query_active: Dict[str, int]
+    _query_active: Dict[str, Union[int, Any]]
     _query_events_id: Dict[str, str]
     _query_max_trials: int
     _query_output: Dict[str, Any]
@@ -376,7 +446,10 @@ class DictionaryGUI(object):
         center_window(self.root, window_size)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if not ut.IS_OSX:
-            self.root.iconbitmap(ut.RESOURCES_PATH + 'dictionary.ico')
+            try:
+                self.root.iconbitmap(ut.RESOURCES_PATH + 'dictionary.ico')
+            except tk.TclError:  # Linux
+                pass
 
         # Main frame
         f0 = tk.Frame(self.root, border=5)
@@ -415,7 +488,7 @@ class DictionaryGUI(object):
 
         hthick, hcolor = 3 if ut.IS_OSX else 1, '#426392' if ut.IS_OSX else '#475aff'
 
-        self._text_out = RichText(self._cfg, f, wrap='word', highlightthickness=hthick,
+        self._text_out = RichText(self._cfg, self.root, f, wrap='word', highlightthickness=hthick,
                                   highlightcolor=hcolor, copy=True)
         self._text_out.bind('<Key>', self._process_out_key)
         self._text_out.pack(fill='both')
@@ -459,9 +532,12 @@ class DictionaryGUI(object):
             syn, mean, _, ant = self._dictionary._langs[self._lang]
         except KeyError:
             syn, mean, ant = False, False, False
-        self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
-        self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
-        self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
+        try:
+            self._syn['state'] = tk.NORMAL if (syn and enable) else tk.DISABLED
+            self._mean['state'] = tk.NORMAL if (mean and enable) else tk.DISABLED
+            self._ant['state'] = tk.NORMAL if (ant and enable) else tk.DISABLED
+        except tk.TclError:
+            pass
 
     @staticmethod
     def _process_out_key(event: 'tk.Event') -> Optional['tk.Event']:
@@ -615,12 +691,15 @@ class DictionaryGUI(object):
 
         :param word: Word
         """
-        self._text_out.clear()
-        self._word.delete(0, tk.END)
-        stemmer = ut.make_stemmer(self._lang)
-        if stemmer is not None and self._stemmer:
-            word = stemmer.stem(word)
-        self.root.after(50, lambda: self._word.insert(0, word))
+        try:
+            self._text_out.clear()
+            self._word.delete(0, tk.END)
+            stemmer = ut.make_stemmer(self._lang)
+            if stemmer is not None and self._stemmer:
+                word = stemmer.stem(word)
+            self.root.after(50, lambda: self._word.insert(0, word))
+        except tk.TclError:
+            pass
 
     def close(self) -> None:
         """
@@ -640,20 +719,28 @@ class RichText(tk.Text):
     _default_font: 'tkfont.Font'
     _default_size: int
     _em: int
+    _lnums: Optional['TextLineNumbers']
+    tab_spaces: int
 
-    def __init__(self, cfg: '_Settings', *args, **kwargs):
+    def __init__(self, cfg: '_Settings', root: 'tk.Tk', *args, **kwargs):
         font_size = kwargs.pop('font_size', 11)
+        scrollbar_y = kwargs.pop('scrollbar_y', None)
         editable = kwargs.pop('editable', False)
         copy = kwargs.pop('copy', False)
+        add_line_numbers = kwargs.pop('add_line_numbers', None)
+        line_numbers_bg_color = kwargs.pop('line_numbers_bg_color', '#55595c')
+        line_numbers_fg_color = kwargs.pop('line_numbers_fg_color', '#cccccc')
+        line_numbers_fg_color_disabled = kwargs.pop('line_numbers_fg_color_disabled', '#86898d')
         if editable:
             kwargs['undo'] = True
 
         super().__init__(*args, **kwargs)
-        self._default_font = tkfont.nametofont(self.cget('font'))
+        self._default_font = tkfont.Font(root=root, name=self.cget('font'), exists=True)
         self._default_font.configure(size=font_size)
 
         self._em = self._default_font.measure('m')
         self._default_size = self._default_font.cget('size')
+        self.tab_spaces = 4
 
         # Editable gui
         if editable:
@@ -671,6 +758,43 @@ class RichText(tk.Text):
             if style is None:
                 continue
             self._add_font(tag, **style)
+
+        # Add a scrollbar in the given frame
+        scroll_hthick = kwargs.get('highlightthickness', 0)
+        sy = None
+        if scrollbar_y:
+            sy = tk.Scrollbar(scrollbar_y, command=self.yview)
+            sy.pack(side=tk.RIGHT, fill='y', pady=(scroll_hthick, scroll_hthick), padx=0)
+            self['yscrollcommand'] = sy.set
+
+        # Add line numbers
+        self._lnums = None
+        if add_line_numbers:
+            self._lnums = TextLineNumbers(add_line_numbers, width=40,
+                                          bg=line_numbers_bg_color,
+                                          font_color=line_numbers_fg_color,
+                                          font_color_disabled=line_numbers_fg_color_disabled)
+            self._lnums.attach(self)
+
+            # noinspection PyUnusedLocal
+            def on_scroll_press(*args):
+                sy.bind('<B1-Motion>', self._lnums.redraw)
+
+            # noinspection PyUnusedLocal
+            # def on_scroll_release(*args):
+            #    sy.unbind('<B1-Motion>', self._lnums.redraw)
+
+            # noinspection PyUnusedLocal
+            def on_press_delay(*args):
+                self.after(2, self._lnums.redraw)
+
+            self.bind('<MouseWheel>', on_press_delay)
+            self.bind('<Key>', on_press_delay)
+            self.bind('<Button-1>', self._lnums.redraw)
+            if sy:
+                sy.bind('<Button-1>', on_scroll_press)
+            self._lnums.pack(side=tk.LEFT, fill='y', pady=(scroll_hthick, scroll_hthick), padx=0)
+            self._lnums.redraw()
 
     def _add_font(self, tag: str, **kwargs) -> None:
         font = tkfont.Font(**self._default_font.configure())
@@ -695,6 +819,64 @@ class RichText(tk.Text):
         font.configure(**kwargs)
         self.tag_configure(tag, **tag_kwargs)
 
+    def redraw(self) -> None:
+        """
+        Redraw the components.
+        """
+        if self._lnums:
+            self._lnums.redraw()
+
+    # noinspection PyUnusedLocal
+    def tab_selected(self, *args) -> str:
+        """
+        Tab the selected text.
+        """
+        try:
+            last = self.index('sel.last linestart')
+            index = self.index('sel.first linestart')
+        except tk.TclError:
+            self.insert(self.index(tk.INSERT), ' ' * self.tab_spaces)
+            return 'break'
+        while self.compare(index, '<=', last):
+            self.insert(index, ' ' * self.tab_spaces)
+            index = self.index('%s + 1 line' % index)
+        return 'break'
+
+    # noinspection PyUnusedLocal
+    def undo_tab_selected(self, *args) -> str:
+        """
+        Undo-Tab the selected text.
+        """
+        try:
+            last = self.index('sel.last linestart')
+            index = self.index('sel.first linestart')
+        except tk.TclError:
+            index = self.index('insert linestart')
+            last = self.index('insert lineend')
+            line = self.get(index, last)
+            i = 0
+            for j in range(self.tab_spaces):
+                if line[j] == ' ':
+                    i += 1
+                else:
+                    break
+            line = line[i:]
+            self.replace(index, last, line)
+            return 'break'
+        while self.compare(index, '<=', last):
+            index2 = self.index('%s lineend' % index)
+            line = self.get(index, index2)
+            i = 0
+            for j in range(self.tab_spaces):
+                if line[j] == ' ':
+                    i += 1
+                else:
+                    break
+            line = line[i:]
+            self.replace(index, index2, line)
+            index = self.index('%s + 1 line' % index)
+        return 'break'
+
     def insert_bullet(self, index: float, text: str) -> None:
         """
         Inserts a bullet.
@@ -703,6 +885,7 @@ class RichText(tk.Text):
         :param text: Text
         """
         self.insert(index, f'\u2022 {text}', 'bullet')
+        self.redraw()
 
     def insert_highlighted_text(self, s: str, clear: bool = False, font_format: bool = True) -> None:
         """
@@ -717,13 +900,75 @@ class RichText(tk.Text):
             self.clear()
         for t in ut.split_tags(s, list(fonts.FONT_TAGS.values())):
             tag, text = t
-            self.insert('end', text, fonts.TAGS_FONT[tag] if font_format else 'normal')
+            try:
+                self.insert('end', text, fonts.TAGS_FONT[tag] if font_format else 'normal')
+            except tk.TclError:
+                chars = [text[j] for j in range(len(text)) if ord(text[j]) in range(65536)]
+                self.insert('end', ''.join(chars), fonts.TAGS_FONT[tag] if font_format else 'normal')
+        self.redraw()
 
     def clear(self) -> None:
         """
         Clears the text.
         """
         self.delete(0.0, tk.END)
+
+
+class TextLineNumbers(tk.Canvas):
+    """
+    Line numbers.
+    """
+    _dx: int  # Number margin on x-axis
+    _dy: int  # Number margin on y-axis
+    _font_color: str
+    _textwidget: Optional['tk.Text']
+
+    def __init__(self, *args, **kwargs) -> None:
+        """
+        Constructor.
+        """
+        self._dx = 3
+        self._dy = -5 if ut.IS_OSX else 0
+        self._font_color = kwargs.pop('font_color', '#606366')
+        self._font_color_disabled = kwargs.pop('font_color_disabled', '#86898d')
+        self._textwidget = None
+        tk.Canvas.__init__(self, *args, **kwargs, highlightthickness=0)
+
+    def attach(self, text_widget: 'tk.Text') -> None:
+        """
+        Attach a widget.
+
+        :param text_widget: Text widget
+        """
+        self._textwidget = text_widget
+
+    # noinspection PyUnusedLocal
+    def redraw(self, *args):
+        """
+        Redraw line numbers.
+
+        :param args: Drawing arguments
+        """
+        if not self._textwidget:
+            return
+        self.delete('all')
+        if self._textwidget['state'] == tk.DISABLED:
+            fill = self._font_color_disabled
+        else:
+            fill = self._font_color
+        i = self._textwidget.index('@0,0')
+        while True:
+            dline = self._textwidget.dlineinfo(i)
+            if dline is None:
+                break
+            if float(i) >= 10000:
+                dx = 0
+            else:
+                dx = self._dx
+            y = dline[1]
+            linenum = str(i).split('.')[0]
+            self.create_text(dx, y + self._dy, anchor='nw', text=linenum, fill=fill)
+            i = self._textwidget.index('%s+1line' % i)
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
@@ -750,6 +995,9 @@ class EditableTextGUI(object):
         self.context_menu.add_command(label=cfg.lang('menu_cut'))
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
         self.context_menu.add_command(label=cfg.lang('menu_paste'))
+        self.context_menu.entryconfigure(cfg.lang('menu_cut'), command=self._cut)
+        self.context_menu.entryconfigure(cfg.lang('menu_copy'), command=self._copy)
+        self.context_menu.entryconfigure(cfg.lang('menu_paste'), command=self._paste)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
         self._w.bind('<Control-z>', self.undo)
@@ -757,8 +1005,36 @@ class EditableTextGUI(object):
         self._w.bind('<Key>', self.add_changes)
 
         if ut.IS_OSX:
-            self._w.bind('<Control-c>', lambda _: self._w.event_generate('<<Copy>>'))
-            self._w.bind('<Control-v>', lambda _: self._w.event_generate('<<Paste>>'))
+            self._w.bind('<Control-c>', self._copy)
+            self._w.bind('<Control-v>', self._paste)
+
+    def _cut(self, *args) -> None:
+        """
+        Cut event.
+        """
+        self._w.event_generate('<<Cut>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
+
+    def _copy(self, *args) -> None:
+        """
+        Copy event.
+        """
+        default = self._w['state']
+        if default == tk.DISABLED:
+            self._w['state'] = tk.NORMAL
+        self._w.event_generate('<<Copy>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
+        self._w['state'] = default
+
+    def _paste(self, *args) -> None:
+        """
+        Paste event.
+        """
+        self._w.event_generate('<<Paste>>')
+        if isinstance(self._w, RichText):
+            self._w.redraw()
 
     def popup(self, event: 'tk.Event') -> None:
         """
@@ -767,9 +1043,6 @@ class EditableTextGUI(object):
         :param event: Event
         """
         self.context_menu.post(event.x_root, event.y_root)
-        self.context_menu.entryconfigure('Cut', command=lambda: self._w.event_generate('<<Cut>>'))
-        self.context_menu.entryconfigure('Copy', command=lambda: self._w.event_generate('<<Copy>>'))
-        self.context_menu.entryconfigure('Paste', command=lambda: self._w.event_generate('<<Paste>>'))
 
     def undo(self, event: Optional['tk.Event'] = None) -> None:
         """
@@ -823,11 +1096,22 @@ class CopyTextGUI(object):
 
         self.context_menu = tk.Menu(self._w, tearoff=0)
         self.context_menu.add_command(label=cfg.lang('menu_copy'))
+        self.context_menu.entryconfigure(cfg.lang('menu_copy'), command=self._copy)
 
         self._w.bind('<Button-3>' if not ut.IS_OSX else '<Button-2>', self.popup)
 
         if ut.IS_OSX:
-            self._w.bind('<Control-c>', lambda _: self._w.event_generate('<<Copy>>'))
+            self._w.bind('<Control-c>', self._copy)
+
+    def _copy(self, *args) -> None:
+        """
+        Copy event.
+        """
+        default = self._w['state']
+        if default == tk.DISABLED:
+            self._w['state'] = tk.NORMAL
+        self._w.event_generate('<<Copy>>')
+        self._w['state'] = default
 
     def popup(self, event: 'tk.Event') -> None:
         """
@@ -836,7 +1120,6 @@ class CopyTextGUI(object):
         :param event: Event
         """
         self.context_menu.post(event.x_root, event.y_root)
-        self.context_menu.entryconfigure('Copy', command=lambda: self._w.event_generate('<<Copy>>'))
 
 
 class CustomEntry(tk.Entry):
@@ -846,6 +1129,16 @@ class CustomEntry(tk.Entry):
 
     def __init__(self, parent, cfg: '_Settings', *args, **kwargs):
         tk.Entry.__init__(self, parent, *args, **kwargs)
+        EditableTextGUI(self, cfg)
+
+
+class CustomTtkEntry(ttk.Entry):
+    """
+    Entry with undo/redo and menu.
+    """
+
+    def __init__(self, parent, cfg: '_Settings', *args, **kwargs):
+        ttk.Entry.__init__(self, parent, *args, **kwargs)
         EditableTextGUI(self, cfg)
 
 
@@ -879,7 +1172,15 @@ def center_window(root: 'tk.Tk', window_size: Union[Tuple[int, int], List[int]])
                                        (root.winfo_screenheight() - window_size[1]) / 2))
 
 
-def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **kwargs) -> 'tk.Label':
+def make_label_ttk(
+        master: Union['tk.Tk', 'tk.Frame'],
+        h: int,
+        w: int,
+        side: str,
+        pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        separator: bool = False,
+        pack: bool = True
+) -> 'tk.StringVar':
     """
     Makes a label with defined width/height.
 
@@ -887,14 +1188,48 @@ def make_label(master, h, w, side, *args, pad=(0, 0, 0, 0), separator=False, **k
     :param h: Height in pixels
     :param w: Width in pixels
     :param side: Packing side
-    :param args: Label arguments
     :param pad: Padding (top, right, bottom, left)
     :param separator: Add separator
-    :param kwargs: Optional keyword-arguments
-    :return: Label
+    :param pack: Pack the element
+    :return: Stringvar
     """
-    f = tk.Frame(master, height=int(h), width=int(w))
-    f.pack_propagate(0)  # don't shrink
+    labelvar = tk.StringVar(master)
+    f = ttk.Frame(master, height=int(h), width=int(w))
+    f.pack_propagate(False)  # don't shrink
+    # noinspection PyTypeChecker
+    f.pack(side=side)
+    label = ttk.Label(f, textvariable=labelvar)
+    if w > 0 and pack:
+        label.pack(fill=tk.BOTH, expand=1, padx=(int(pad[3]), int(pad[1])), pady=(int(pad[0]), int(pad[2])))
+        if separator:
+            ttk.Separator(master, orient='vertical').pack(side=tk.LEFT, fill='y')
+    return labelvar
+
+
+def make_label(
+        master: Union['tk.Tk', 'tk.Frame'],
+        h: int,
+        w: int,
+        *args,
+        side: 'str',
+        pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        separator: bool = False,
+        **kwargs
+) -> 'tk.Label':
+    """
+    Makes a label with defined width/height.
+
+    :param master: Master object
+    :param h: Height in pixels
+    :param w: Width in pixels
+    :param side: Packing side
+    :param pad: Padding (top, right, bottom, left)
+    :param separator: Add separator
+    :return: Stringvar
+    """
+    f = ttk.Frame(master, height=int(h), width=int(w))
+    f.pack_propagate(False)  # don't shrink
+    # noinspection PyTypeChecker
     f.pack(side=side)
     label = tk.Label(f, *args, **kwargs)
     if w > 0:

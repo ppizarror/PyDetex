@@ -3,11 +3,12 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 UTILS
-Several text utils.
+Module that contain all util methods and classes used in parsers and pipelines,
+from tex, language, and low-level.
 """
 
 __all__ = [
-    'apply_tag_between_inside',
+    'apply_tag_between_inside_char_command',
     'apply_tag_tex_commands',
     'apply_tag_tex_commands_no_argv',
     'Button',
@@ -17,6 +18,7 @@ __all__ = [
     'find_tex_command_char',
     'find_tex_commands',
     'find_tex_commands_noargv',
+    'find_tex_environments',
     'format_number_d',
     'get_diff_startend_word',
     'get_language_name',
@@ -26,9 +28,14 @@ __all__ = [
     'IS_OSX',
     'LangTexTextTags',
     'make_stemmer',
+    'open_file',
+    'ProgressBar',
     'RESOURCES_PATH',
     'split_tags',
     'syntax_highlight',
+    'TEX_COMMAND_CHARS',
+    'TEX_EQUATION_CHARS',
+    'tex_to_unicode',
     'tokenize',
     'validate_float',
     'validate_int'
@@ -37,8 +44,10 @@ __all__ = [
 import datetime
 import os
 import platform
+import sys
+import time
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
 from pydetex._utils_lang import *
@@ -70,7 +79,7 @@ def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
 
     :param s: String
     :param tags: Tag list
-    :return: Splitted tags
+    :return: Split tags
     """
     assert len(tags) > 0
     tagged_lines: List[Tuple[str, str]] = []
@@ -157,19 +166,18 @@ def syntax_highlight(s: str) -> str:
     """
     Syntax highlighter.
 
-    :param s: Latex code
+    :param s: Latex string code
     :return: Code with format
     """
     # Add initial normal
     s = _FONT_TAGS['normal'] + s
 
     # Format equations
-    s = apply_tag_between_inside(
+    s = apply_tag_between_inside_char_command(
         s=s,
-        symbols_char=('$', '$'),
+        symbols_char=TEX_EQUATION_CHARS,
         tags=(_FONT_TAGS['equation_char'], _FONT_TAGS['equation_inside'],
-              _FONT_TAGS['equation_char'], _FONT_TAGS['normal']),
-        ignore_escape=True
+              _FONT_TAGS['equation_char'], _FONT_TAGS['normal'])
     )
 
     # Format commands with {arguments}
@@ -211,3 +219,94 @@ def get_number_of_day() -> int:
     :return: Day number
     """
     return datetime.datetime.now().timetuple().tm_yday
+
+
+def open_file(f: str) -> str:
+    """
+    Open file and return its string.
+
+    :param f: Filename
+    :return: File content
+    """
+    o = open(f, 'r', encoding='utf-8')
+    text = ''.join(o.readlines())
+    o.close()
+    return text
+
+
+class ProgressBar(object):
+    """
+    Basic progress bar implementation.
+    """
+
+    _current: int
+    _last_step: float
+    _size: int
+    _step_times: Dict[str, float]
+    _steps: int
+    _t0: float
+
+    def __init__(self, steps: int, size: int = 15) -> None:
+        """
+        Constructor.
+
+        :param steps: How many steps have the procedure
+        :param size: Bar size
+        """
+        assert isinstance(steps, int) and steps >= 1
+        assert isinstance(size, int) and size >= 1
+        self._current = 0
+        self._last_step = time.time()
+        self._size = size  # Bar size
+        self._step_times = {}
+        self._steps = steps - 1
+        self._t0 = time.time()
+
+    def _print_progress_bar(self, i: int, max_: int, post_text: str) -> None:
+        """
+        Prints a progress bar.
+
+        :param i: Progress bar
+        :param max_: Max steps
+        :param post_text: Status
+        """
+        j = i / max_
+        sys.stdout.write('\r')
+        sys.stdout.write(f"[{'=' * int(self._size * j):{self._size}s}] {int(100 * j)}%  {post_text}")
+        sys.stdout.flush()
+
+    def update(self, status: str = '', print_total_time: bool = True) -> None:
+        """
+        Update the current status to a new step.
+
+        :param status: Status text
+        :param print_total_time: Prints total computing time
+        """
+        if self._current > self._steps:
+            return
+        self._print_progress_bar(self._current, self._steps, status)
+        dt = time.time() - self._last_step
+        self._last_step = time.time()
+        self._step_times[status] = dt
+        self._current += 1
+        if self._current == self._steps + 1:
+            print('')
+            sys.stdout.flush()
+            if print_total_time:
+                print(f'Process finished in {time.time() - self._t0:.3f} seconds')
+
+    def detail_times(self) -> None:
+        """
+        Print times.
+        """
+        for k in self._step_times.keys():
+            print(f'{self._step_times[k]:.3f}s\t{k}')
+
+    def reset(self) -> None:
+        """
+        Reset the steps.
+        """
+        self._current = 0
+        self._t0 = time.time()
+        self._last_step = time.time()
+        self._step_times.clear()

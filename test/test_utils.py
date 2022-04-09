@@ -9,7 +9,7 @@ Test utils.
 from test._base import BaseTest
 
 import pydetex.utils as ut
-from typing import Tuple
+from typing import Tuple, List
 
 
 class UtilsTest(BaseTest):
@@ -155,37 +155,62 @@ class UtilsTest(BaseTest):
         Test find tex command char.
         """
         s = '$aaa$'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((0, 4),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((0, 1, 3, 4),))
+        s = 'New $$ equation'
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((4, 5, 4, 5),))
         s = 'This is a $formula$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$')), ((10, 18),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((10, 11, 17, 18),))
         s = 'This is a $formula\$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ())
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', False)]), ((10, 11, 18, 19),))
+        s = 'This is a $formula\$ and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ())
         s = 'This is a $formula\$$ and this is not.'
-        self.assertEqual(ut.find_tex_command_char(s, ('$', '$'), ignore_escape=True), ((10, 20),))
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ((10, 11, 19, 20),))
+        s = 'This is a \(formula\) and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, [('\(', '\)', False)]), ((10, 12, 18, 20),))
+        s = 'This is a \($formula$\) and this is not.'
+        self.assertEqual(ut.find_tex_command_char(s, [('\(', '\)', False), ('$', '$', False)]), ((10, 12, 20, 22),))
+        s = 'This is a \\begin{math}fo$\$rmula\end{math} and I like it'
+        self.assertEqual(ut.find_tex_command_char(s, [('$', '$', True)]), ())
+        self.assertEqual(ut.find_tex_command_char(s, [('\\begin{math}', '\end{math}', False)]), ((10, 22, 31, 41),))
 
     def test_apply_tag_between(self) -> None:
         """
         Test apply tags between.
         """
-        self.assertEqual(
-            ut.apply_tag_between_inside('This is a $formula$ and this is not', ('$', '$'), ('a', 'b', 'c', 'd')),
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'This is a $formula$ and this is not', [('$', '$', False)], ('a', 'b', 'c', 'd')),
             'This is a a$bformulac$d and this is not')
-        self.assertEqual(
-            ut.apply_tag_between_inside('$formula$', ('$', '$'), ('X', '', '', 'X')),
-            'X$formula$X')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), ''), '$formula$')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$', ('$', '$'), 'a'), 'a$aformulaa$a')
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), 'a'),
-                         'a$aformulaa$a jaja a$axa$a')
-        self.assertEqual(
-            ut.apply_tag_between_inside('$form\\$ula$', ('$', '$'), ('X', '', '', 'X'), True),
-            'X$form\\$ula$X')
-        self.assertEqual(
-            ut.apply_tag_between_inside('\\$formula\\$', ('$', '$'), ('X', '', '', 'X'), True),
-            '\\$formula\\$')
 
-        self.assertEqual(ut.apply_tag_between_inside('$formula$ jaja $x$', ('$', '$'), ('a', '', '', 'b')),
-                         'a$formula$b jaja a$x$b')
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], ('X', '', '', 'X')), 'X$formula$X')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], ''), '$formula$')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$', [('$', '$', False)], 'a'), 'a$aformulaa$a')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$ jaja $x$', [('$', '$', False)], 'a'), 'a$aformulaa$a jaja a$axa$a')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$form\\$ula$', [('$', '$', True)], ('X', '', '', 'X')), 'X$form\\$ula$X')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '\\$formula\\$', [('$', '$', True)], ('X', '', '', 'X')), '\\$formula\\$')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$formula$ jaja $x$', [('$', '$', False)], ('a', '', '', 'b')), 'a$formula$b jaja a$x$b')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'a formula $$', [('$', '$', False)], ('a', 'b', 'c', 'd')), 'a formula a$$d')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            'a formula \(xx+yy\)', [('\(', '\)', False)], ('a', 'b', 'c', 'd')), 'a formula a\(bxx+yyc\)d')
+
+        self.assertEqual(ut.apply_tag_between_inside_char_command(
+            '$x$$y$$z$', [('$', '$', False)], ('a', '', '', 'b')), 'a$x$ba$y$ba$z$b')
 
     def test_find_tex_commands(self) -> None:
         """
@@ -258,7 +283,7 @@ class UtilsTest(BaseTest):
 
         # Test with two parethesis format
         _test('This is \\aCommand   [  nice} ')
-        _test('This is \\aCommand   {  nice]  This is \\aCommand[nice2]', ('nice2',))
+        _test('This is \\aCommand[nice2]', ('nice2',))
 
         # Test multi-command
         _test('This is \\aCommand{nice}{nice2}', ('nice', 'nice2'))
@@ -270,15 +295,130 @@ class UtilsTest(BaseTest):
         _test('This is \\aCommand[1]{2} nice', ('1', '2'))
         _test('This is \\aCommand [1] {2} nice', ('1', '2'))
         _test('This is \\aCommand [1]\n {2} nice', ('1', '2'))
-        s = 'This is \\f[1]{2} \\g{3} \\h[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
-        _test(s, ('1', '2', '3', '6', '7', '9', '10', '11'))
 
         # Test corrupt
         _test('This is a \\caption {epic \\caption{nice} sad')
 
         # Check continues
+        s = 'This is \\f[1]{2} \\g{3} \\h{[}{4}{5} \\g \\f{6}[7]]{8} \\f{9}[10]{11} k {12}'
+        _test(s, ('1', '2', '3', '[', '4', '5', '6', '7', '9', '10', '11'))
         t = [k[4] for k in ut.find_tex_commands(s)]
-        self.assertEqual(t, [True, False, False, True, False, True, True, False])
+        self.assertEqual(t, [True, False, False, True, True, False, True, False, True, True, False])
+
+        # Test empty
+        s = '\DeclareUnicodeCharacter{2292}{\ensuremath{\ensuremath{}}}j nice \\f{g}'
+        w = ut.find_tex_commands(s)
+        self.assertEqual(len(w), 3)
+        self.assertEqual(s[w[1][2]:w[1][3] + 1], '\\ensuremath{\\ensuremath{}}')
+        self.assertEqual(s[w[2][2]:w[2][3] + 1], 'g')
+
+    def test_find_tex_environments(self) -> None:
+        """
+        Test find tex environments.
+        """
+
+        def _test(s: str, envname: List[str], envargs: List[str], parents: List[str], depths: List[int]) -> None:
+            k = ut.find_tex_environments(s)
+            lk = len(k)
+            if len(envargs) != 0:
+                self.assertEqual(lk, len(envargs))
+            self.assertEqual(lk, len(envname))
+            for j in range(lk):
+                self.assertEqual(k[j][0], envname[j])
+                a, b = k[j][2], k[j][3]
+                if len(envargs) != 0:
+                    self.assertEqual(s[a:b], envargs[j])
+                self.assertEqual(k[j][5], parents[j])
+                self.assertEqual(k[j][6], depths[j])
+
+        _test('This is \\begin{nice}[cmd]my...\end{nice}', ['nice'], ['[cmd]my...'], [''], [0])
+        _test('This is \\begin{itemize*}\end{itemize*}', ['itemize*'], [''], [''], [0])
+        _test('This is \\begin{enumerate*}\\begin{enumerate*}\item a\end{enumerate*}\end{enumerate*}',
+              ['enumerate*', 'enumerate*'], ['\item a', '\\begin{enumerate*}\item a\end{enumerate*}'],
+              ['enumerate*', ''], [1, 0])
+
+        t = """This is \\latex{command}
+        \\begin{minipage}[l][0][t]
+        New \\mycommand[\\texttt{epic}]{nice}
+            \\begin{itemize}[label=\\arabic]
+                \\item A
+                \\item B
+                \\item C
+                \\begin{itemize}
+                    \\item D
+                    \\item E
+                    \\item F
+                \\end{itemize}
+            \\end{itemize}
+        \\end{minipage}
+        """
+        _test(t, ['itemize', 'itemize', 'minipage'], [], ['itemize', 'minipage', ''], [2, 1, 0])
+
+        t = """This is \\latex{command}
+        \\begin{minipage}[l][0][t]
+        New \\mycommand[\\texttt{epic}]{nice}
+            \\begin{itemize}[label=\\arabic]
+                \\item A
+                \\item B
+                \\item C
+                \\begin{itemize}
+                    \\item D
+                    \\item E
+                    \\begin{itemize}
+                        \\item D
+                        \\item E
+                        \\item F
+                    \\end{itemize}
+                \\end{itemize}
+            \\end{itemize}
+        \\end{minipage}
+        """
+        _test(t, ['itemize', 'itemize', 'itemize', 'minipage'], [],
+              ['itemize', 'itemize', 'minipage', ''], [3, 2, 1, 0])
+
+        _s = """
+        \\begin{figure}
+            \\begin{animateinline}[poster = first, controls]{5}
+            \whiledo{\\thehigher<30}{
+             \\begin{tikzpicture}[line cap=round, line join=round, >=triangle 45,
+                     x=4.0cm, y=1.0cm, scale=1]
+              \draw [->,color=black] (-0.1,0) -- (2.5,0);
+              \\foreach \\x in {1,2}
+              \draw [shift={(\\x,0)}, color=black] (0pt,2pt)
+                  -- (0pt,-2pt) node [below] {\\footnotesize $\\x$};
+              \draw [color=black] (2.5,0) node [below] {$x$};
+              \draw [->,color=black] (0,-0.1) -- (0,4.5);
+               \\foreach \y in {1,2,3,4}
+              \draw [shift={(0,\y)}, color=black] (2pt,0pt)
+                  -- (-2pt,0pt) node[left] {\\footnotesize $\y$};
+              \draw [color=black] (0,4.5) node [right] {$y$};
+              \draw [color=black] (0pt,-10pt) node [left] {\\footnotesize $0$};
+              \draw [domain=0:2.2, line width=1.0pt] plot (\\x,{(\\x)^2});
+              \clip(0,-0.5) rectangle (3,5);
+              \draw (2,0) -- (2,4);
+              \\foreach \i in {1,...,\\thehigher}
+              \draw [fill=black,fill opacity=0.3, smooth,samples=50] ({1+(\i-1)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                      --({1+(\i)/\\thehigher},{(1+(\i)/\\thehigher)^2})
+                      --  ({1+(\i)/\thehigher},0)
+                      -- ({1+(\i-1)/\\thehigher},0)
+                      -- cycle;
+               \end{tikzpicture}
+            %
+            \stepcounter{higher}
+            \ifthenelse{\\thehigher<30}{ \\newframe }{\end{animateinline} }
+          }
+          \caption{Upper Riemann Sum}
+          \label{epic}
+        \end{figure}
+        
+        % Environments inside newenvironment should be ignored
+        \\
+        """
+        self.assertEqual(
+            ut.find_tex_environments(_s),
+            (('tikzpicture', 137, 156, 1435, 1450, 'animateinline', 2, -1),
+             ('animateinline', 36, 57, 1552, 1569, 'figure', 1, -1),
+             ('figure', 9, 23, 1655, 1665, '', 0, -1)))
 
     def test_get_tex_commands_args(self) -> None:
         """
@@ -290,6 +430,7 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.get_tex_commands_args(s), (('caption', ('epic', False)), ('caption', ('nice', False))))
         s = 'This is \\subfloat[a title]'
         self.assertEqual(ut.get_tex_commands_args(s), (('subfloat', ('a title', True)),))
+        self.assertEqual(ut.get_tex_commands_args(s, True), (('subfloat', ('a title', True), (8, 26)),))
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
@@ -532,3 +673,44 @@ class UtilsTest(BaseTest):
         self.assertEqual(lang.get('en', 'multi_char_equ'), 'EQUATION_{0}')
         self.assertEqual(lang.get('it', 'multi_char_equ'), 'EQUATION_{0}')
         self.assertRaises(ValueError, lambda: lang.get('en', 'unknown_tag'))
+
+    def test_tex_to_unicode(self) -> None:
+        """
+        Test tex to unicode.
+        """
+        s = '\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7'
+        self.assertEqual(ut.tex_to_unicode(s), 'α² ⋅ α²⁺³ ≡ α⁷')
+        s = '\itA \in \\bbR^{nxn}, \\bfv \in \\bbR^n, \lambda_i \in \\bbR: \itA\\bfv = \lambda_i\\bfv'
+        self.assertEqual(ut.tex_to_unicode(s), '𝐴 ∈ ℝⁿˣⁿ, 𝐯 ∈ ℝⁿ, λᵢ ∈ ℝ: 𝐴𝐯 = λᵢ𝐯')
+        s = '\\bf{boldface} \it{italic} \\bb{blackboard} \cal{calligraphic} \\frak{fraktur} \mono{monospace}'
+        self.assertEqual(ut.tex_to_unicode(s),
+                         '𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞 𝑖𝑡𝑎𝑙𝑖𝑐 𝕓𝕝𝕒𝕔𝕜𝕓𝕠𝕒𝕣𝕕 𝓬𝓪𝓵𝓵𝓲𝓰𝓻𝓪𝓹𝓱𝓲𝓬 𝔣𝔯𝔞𝔨𝔱𝔲𝔯 𝚖𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎')
+        s = 'bf This is all boldface'
+        self.assertEqual(ut.tex_to_unicode(s), '𝐓𝐡𝐢𝐬 𝐢𝐬 𝐚𝐥𝐥 𝐛𝐨𝐥𝐝𝐟𝐚𝐜𝐞')
+        s = '\\frac{a}{b}'
+        self.assertEqual(ut.tex_to_unicode(s), 'a/b')
+        s = '                 '
+        self.assertEqual(ut.tex_to_unicode(s), s)
+        s = '\\sqrt{a+b}'
+        self.assertEqual(ut.tex_to_unicode(s), '√a+b')
+        s = '\\alpha'
+        self.assertEqual(ut.tex_to_unicode(s), 'α')
+        s = 'alpha'
+        self.assertEqual(ut.tex_to_unicode(s), 'α')
+        s = '\\frac a2 + \\frac b3 = \sqrt{10}'
+        self.assertEqual(ut.tex_to_unicode(s), 'ᵃ⁄₂ + ᵇ⁄₃ = √10')
+
+    def test_progress_bar(self) -> None:
+        """
+        Tests the progress bar.
+        """
+        pb = ut.ProgressBar(3)
+        pb.update('A')
+        pb.update('B')
+        pb.update('C')
+        self.assertEqual(pb._current, 3)
+        pb.update('none')
+        self.assertEqual(pb._current, 3)
+        pb.detail_times()
+        pb.reset()
+        self.assertEqual(pb._current, 0)

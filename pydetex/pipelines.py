@@ -13,49 +13,83 @@ __all__ = [
 ]
 
 import pydetex.parsers as par
+from pydetex.utils import ProgressBar
 from typing import Callable
 
-PipelineType = Callable[[str, str], str]
+PipelineType = Callable
 
 
-def simple(s: str, lang: str = 'en') -> str:
+def simple(
+        s: str,
+        lang: str = 'en',
+        show_progress: bool = False,
+        replace_pydetex_tags: bool = True,
+        remove_common_tags: bool = True,
+        **kwargs
+) -> str:
     """
     The most simple pipeline ever.
 
     :param s: String latex
     :param lang: Language tag of the code
+    :param show_progress: Show progress bar
+    :param replace_pydetex_tags: Replace cite tags
+    :param remove_common_tags: Call ``remove_common_tags`` parser
     :return: String with no latex!
     """
     if len(s) == 0:
         return s
-    s = '\n'.join(s.splitlines())
-    s = par.remove_comments(s)
-    s = par.simple_replace(s)
-    s = par.remove_common_tags(s)
-    s = par.process_cite(s)
-    s = par.process_ref(s)
-    s = par.process_labels(s)
-    s = par.remove_comments(s)
-    s = par.process_quotes(s)
-    s = par.process_inputs(s)
-    s = par.process_chars_equations(s, lang, True)
-    if len(s) > 0 and s[-1] == '\\':
+    pb = kwargs.get('progressbar', ProgressBar(steps=16)) if show_progress else None
+    s = '\n'.join(s.splitlines())  # Removes \r\n
+    s = par.process_inputs(s, pb=pb)
+    s = par.remove_comments(s, pb=pb)
+    s = par.process_begin_document(s, pb=pb)
+    s = par.simple_replace(s, pb=pb)
+    s = par.process_def(s, pb=pb, replace=kwargs.get('replace_defs', False))
+    if remove_common_tags:
+        s = par.remove_common_tags(s, pb=pb)
+    s = par.process_cite(s, pb=pb)
+    s = par.process_ref(s, pb=pb)
+    s = par.process_labels(s, pb=pb)
+    s = par.process_items(s, pb=pb)
+    s = par.process_quotes(s, pb=pb)
+    s = par.process_chars_equations(s, lang, True, pb=pb)
+    s = par.unicode_chars_equations(s, pb=pb)
+    s = par.remove_comments(s, pb=pb)  # comments, replace tags, strip
+    if replace_pydetex_tags:
+        s = par.replace_pydetex_tags(s, pb=pb)
+    s = par.strip_punctuation(s, pb=pb)
+    if s[-1] == '\\':
         s = s[0:len(s) - 1]
     return s
 
 
-def strict(s: str, lang: str = 'en') -> str:
+def strict(
+        s: str,
+        lang: str = 'en',
+        show_progress: bool = False,
+        **kwargs
+) -> str:
     """
-    Applies simple + removes all commands.
+    Apply simple + removes all commands.
 
     :param s: String latex
     :param lang: Language tag of the code
+    :param show_progress: Show progress bar
     :return: String with no latex!
     """
-    s = simple(s, lang)
-    s = par.process_chars_equations(s, lang, False)
-    s = par.remove_commands_char(s, '$')
-    s = par.remove_commands_param(s, lang)
-    s = par.remove_commands_param_noargv(s)
-    s = par.remove_comments(s)
+    pb = ProgressBar(steps=21) if show_progress else None
+    if 'progressbar' not in kwargs.keys():
+        # noinspection PyTypeChecker
+        kwargs['progressbar'] = pb
+    s = simple(s, lang, replace_pydetex_tags=False, remove_common_tags=False,
+               show_progress=show_progress, **kwargs)
+    s = par.process_chars_equations(s, lang, False, pb=pb)
+    s = par.remove_equations(s, pb=pb)
+    s = par.remove_environments(s, pb=pb)
+    s = par.remove_commands_param(s, lang, pb=pb)
+    s = par.remove_commands_param_noargv(s, pb=pb)
+    s = par.remove_comments(s, pb=pb)
+    s = par.replace_pydetex_tags(s, pb=pb)
+    s = par.strip_punctuation(s, pb=pb)
     return s

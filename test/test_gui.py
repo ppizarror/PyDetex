@@ -27,19 +27,19 @@ class GuiTest(BaseTest):
         """
         Gui test.
         """
-        if 'TRAVIS' in os.environ:
+        if 'GITHUB' in os.environ:
             return
         gui = PyDetexGUI()
         cfg = gui._cfg
         cfg.set(cfg.CFG_CHECK_REPETITION, False)
         cfg.set(cfg.CFG_OUTPUT_FONT_FORMAT, False)
         gui._clear()
-        self.assertEqual(gui.pipeline, pip.simple)
+        self.assertEqual(gui.pipeline, pip.strict)
         self.assertFalse(gui._ready)
 
         # Process the pipeline
         gui._text_in.insert(0.0, 'This is \\textbf{Latex}')
-        gui._process()
+        gui._process_inner()
         self.assertEqual(gui._get_pipeline_results(), 'This is Latex')
         self.assertTrue(gui._ready)
 
@@ -62,7 +62,7 @@ class GuiTest(BaseTest):
         Test the app settings.
         """
         cfg = Settings(ignore_file=True)
-        self.assertEqual(cfg.get(cfg.CFG_PIPELINE), pip.simple)
+        self.assertEqual(cfg.get(cfg.CFG_PIPELINE), pip.strict)
         self.assertFalse(cfg.get(cfg.CFG_CHECK_REPETITION))
         cfg.save()
 

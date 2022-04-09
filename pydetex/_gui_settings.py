@@ -31,11 +31,12 @@ _PIPELINES = {
     'pipeline_strict': pip.strict
 }
 
-# Store the window sizes (w, h, height_richtext, type)
+# Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin)
 _WINDOW_SIZE = {
-    'window_size_small': [700, 425, 140],
-    'window_size_medium': [900, 513, 183],
-    'window_size_large': [1200, 613, 233]
+    'window_size_small': [720, 480, 175, 3, 6],
+    'window_size_medium': [960, 540, 200, 5, 10],
+    'window_size_large': [1280, 720, 285, 5, 15],
+    'window_size_xlarge': [1440, 850, 343, 10, 19]
 }
 
 
@@ -60,14 +61,17 @@ class _LangManager(object):
                 'about_ver_latest': 'Software version up-to-date',
                 'about_ver_upgrade': 'Note: You are using an outdated version, consider upgrading to v{0}',
                 'cfg_check': 'Check',
+                'cfg_error_auto_copy': 'Invalid auto copy process value',
                 'cfg_error_font_size': 'Invalid font size value',
                 'cfg_error_lang': 'Invalid lang value',
                 'cfg_error_output_format': 'Invalid output font format value',
                 'cfg_error_pipeline': 'Invalid pipeline value',
+                'cfg_error_pipeline_replace_defs': 'Invalid replace \def value',
                 'cfg_error_repetition': 'Invalid repetition value',
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
                 'cfg_error_repetition_distance': 'Repetition distance must be greater than 2 and lower than 50',
                 'cfg_error_repetition_words': 'Invalid ignore words',
+                'cfg_error_show_line_numbers': 'Invalid show line numbers value',
                 'cfg_error_stemming': 'Invalid repetition stemming value',
                 'cfg_error_stopwords': 'Invalid repetition stopwords value',
                 'cfg_error_window_size': 'Invalid window size value',
@@ -75,7 +79,12 @@ class _LangManager(object):
                 'cfg_font_size': 'Font size',
                 'cfg_lang': 'Language',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_replace_defs': 'Replace \def',
+                'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
+                'cfg_show_line_numbers': 'Show line numbers',
+                'cfg_tab_pipeline': 'Pipeline',
+                'cfg_tab_ui': 'UI',
                 'cfg_window_size': 'Window size',
                 'cfg_words_repetition': 'Words repetition',
                 'cfg_words_repetition_distance': 'Repetition distance',
@@ -84,9 +93,10 @@ class _LangManager(object):
                 'cfg_words_repetition_stemming': 'Use stemming',
                 'cfg_words_repetition_stopwords': 'Use stopwords',
                 'clear': 'Clear',
+                'clip_empty': 'Clipboard is empty',
                 'copy_from_clip': 'Copying from clipboard',
                 'detected_lang': 'Detected language: {0} ({1})',
-                'detected_lang_write': 'Write something to start recognizing the language',
+                'detected_lang_write': 'Write something to recognize the language',
                 'dictionary': 'Dictionary',
                 'dictionary_antonym': 'Antonym',
                 'dictionary_loading': 'Loading ...',
@@ -110,13 +120,15 @@ class _LangManager(object):
                 'pipeline_simple_description': 'Removes common Tex commands, replaces cites and references',
                 'pipeline_strict': 'Strict',
                 'pipeline_strict_description': 'An extension of the Simple pipeline which removes all Tex commands and environments',
-                'placeholder': 'Write or paste here your \\texttt{LaTeX} code. It simply removes all tex-things and returns a friendly plain text!',
+                'placeholder': ut.open_file(ut.RESOURCES_PATH + 'placeholder_en.tex'),
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
                 'process_copy': 'Copy to clipboard',
+                'process_error': 'An error has occured while processing the text.\nPlease create a new issue in the GitHub page ({0}) with full defails and minimal working example.\n\nError traceback:\n{1}\n',
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
+                'status_copy_to_clip': 'Copying to clip',
                 'status_cursor': 'Cursor: {0}:{1}',
                 'status_cursor_input_focusout': 'Input not selected',
                 'status_cursor_input_focusout_min': 'Not selected',
@@ -139,7 +151,8 @@ class _LangManager(object):
                 'version_upgrade_title': 'Oudated PyDetex version',
                 'window_size_large': 'Large',
                 'window_size_medium': 'Medium',
-                'window_size_small': 'Small'
+                'window_size_small': 'Small',
+                'window_size_xlarge': 'Extra Large'
             },
             'es': {
                 'about': 'Acerca de',
@@ -152,14 +165,17 @@ class _LangManager(object):
                 'about_ver_latest': 'Software actualizado a la última versión',
                 'about_ver_upgrade': 'Nota: Estás usando una versión desactualizada, considera actualizar a la v{0}',
                 'cfg_check': 'Activar',
+                'cfg_error_auto_copy': 'Valor auto copiado al procesar incorrecto',
                 'cfg_error_font_size': 'Tamaño fuente incorrecta',
                 'cfg_error_lang': 'Valor idioma incorrecto',
                 'cfg_error_output_format': 'Valor formato output incorrecto',
                 'cfg_error_pipeline': 'Valor pipeline incorrecto',
+                'cfg_error_pipeline_replace_defs': 'Valor reemplazo \def incorrecto',
                 'cfg_error_repetition': 'Valor repetición incorrecto',
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
                 'cfg_error_repetition_distance': 'Distancia de repetición debe ser superior o igual a 2, y menor que 50',
                 'cfg_error_repetition_words': 'Repetición palabras incorrectas',
+                'cfg_error_show_line_numbers': 'Valor mostrar número de líneas incorrecto',
                 'cfg_error_stemming': 'Valor stemming incorrecto',
                 'cfg_error_stopwords': 'Valor stopwords incorrecto',
                 'cfg_error_window_size': 'Tamaño ventana incorrecto',
@@ -167,18 +183,24 @@ class _LangManager(object):
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_replace_defs': 'Reemplazar \def',
+                'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
+                'cfg_show_line_numbers': 'Mostrar nº líneas',
+                'cfg_tab_pipeline': 'Pipeline',
+                'cfg_tab_ui': 'UI',
                 'cfg_window_size': 'Tamaño de ventana',
-                'cfg_words_repetition': 'Repetición de palabras',
+                'cfg_words_repetition': 'Rep. palabras',
                 'cfg_words_repetition_distance': 'Distancia de repetición',
                 'cfg_words_repetition_ignorew': 'Palabras ignoradas',
                 'cfg_words_repetition_minchars': 'Mínimo de carácteres',
                 'cfg_words_repetition_stemming': 'Usar stemming',
                 'cfg_words_repetition_stopwords': 'Usar stopwords',
                 'clear': 'Limpiar',
+                'clip_empty': 'Portapapeles vacío',
                 'copy_from_clip': 'Copiando desde portapapeles',
                 'detected_lang': 'Idioma detectado: {0} ({1})',
-                'detected_lang_write': 'Escribe algo para iniciar detección idioma',
+                'detected_lang_write': 'Escribe algo para detectar el idioma',
                 'dictionary': 'Diccionario',
                 'dictionary_antonym': 'Antónimos',
                 'dictionary_loading': 'Cargando ...',
@@ -202,13 +224,15 @@ class _LangManager(object):
                 'pipeline_simple_description': 'Elimina comandos Tex comunes, remplaza citas y referencias',
                 'pipeline_strict': 'Estricto',
                 'pipeline_strict_description': 'Una extensión del pipeline simple que elimina todos los entornos y comandos',
-                'placeholder': 'Escribe o pega aquí tu código \\texttt{LaTeX}. El programa simplemente eliminará todo lo relacionado a tex y retornará un lindo texto plano!',
+                'placeholder': ut.open_file(ut.RESOURCES_PATH + 'placeholder_es.tex'),
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',
                 'process_copy': 'Copiar al portapapeles',
+                'process_error': 'Un error ha ocurrido mientras se procesaba el texto.\nPor favor crea un nuevo issue en la página de GitHub ({0}) con los detalles completos y un ejemplo mínimo para probar las soluciones.\n\nDetalles del error:\n{1}\n',
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
+                'status_copy_to_clip': 'Copiando al portapapeles',
                 'status_cursor': 'Cursor: {0}:{1}',
                 'status_cursor_input_focusout': 'Texto entrada no seleccionado',
                 'status_cursor_input_focusout_min': 'No seleccionado',
@@ -231,12 +255,19 @@ class _LangManager(object):
                 'version_upgrade_title': 'Versión desactualizada de PyDetex',
                 'window_size_large': 'Grande',
                 'window_size_medium': 'Mediano',
-                'window_size_small': 'Pequeño'
+                'window_size_small': 'Pequeño',
+                'window_size_xlarge': 'Extra Grande'
             }
         }
 
         # Extend languages if not defined
         ut.complete_langs_dict(self._lang)
+
+        # Update window sizes
+        for la in self._lang.keys():
+            for tok in self._lang[la].keys():
+                if tok in _WINDOW_SIZE.keys():
+                    self._lang[la][tok] += f' ({_WINDOW_SIZE[tok][0]}x{_WINDOW_SIZE[tok][1]})'
 
     def get_available(self) -> List[str]:
         """
@@ -312,6 +343,9 @@ class Settings(object):
         self.CFG_LAST_OPENED_FOLDER = 'LAST_OPENED_FOLDER'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_PIPELINE_REPLACE_DEFS = 'PIPELINE_REPLACE_DEFS'
+        self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
+        self.CFG_SHOW_LINE_NUMBERS = 'SHOW_LINE_NUMBERS'
         self.CFG_WINDOW_SIZE = 'WINDOW_SIZE'
 
         # Words repetition
@@ -332,17 +366,20 @@ class Settings(object):
 
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
-            self.CFG_FONT_SIZE: (11, int, self._valid_font_sizes),
+            self.CFG_FONT_SIZE: (12 if ut.IS_OSX else 11, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
-            self.CFG_PIPELINE: (self._available_pipelines[0], str, self._available_pipelines),
+            self.CFG_PIPELINE: (self._available_pipelines[1], str, self._available_pipelines),
+            self.CFG_PIPELINE_REPLACE_DEFS: (False, bool, [True, False]),
+            self.CFG_PROCESS_AUTO_COPY: (False, bool, [True, False]),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),
             self.CFG_REPETITION_IGNORE_WORDS: ('ignored_word_1, ignored_word_2', str, None),
             self.CFG_REPETITION_MIN_CHAR: (4, int, lambda x: x > 0),
             self.CFG_REPETITION_USE_STEMMING: (True, bool, [True, False]),
             self.CFG_REPETITION_USE_STOPWORDS: (True, bool, [True, False]),
+            self.CFG_SHOW_LINE_NUMBERS: (True, bool, [True, False]),
             self.CFG_TOTAL_OPENED_APP: (0, int, lambda x: x >= 0),
             self.CFG_TOTAL_PROCESSED_WORDS: (0, int, lambda x: x >= 0),
             self.CFG_WINDOW_SIZE: (self._valid_window_sizes[1], str, self._valid_window_sizes)

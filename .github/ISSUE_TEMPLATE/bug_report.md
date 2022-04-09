@@ -11,8 +11,7 @@ assignees: ''
 Describe your environment information, such as:
 - SO: win/linux
 - python version: v3.x
-- pygame version: v2.x
-- pygame-menu version: v3.x.x
+- pydetex version: v0.x.x
 
 **Describe the bug**
 A clear and concise description of what the bug is.

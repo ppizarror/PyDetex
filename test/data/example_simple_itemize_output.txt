@@ -1,0 +1,4 @@
+- The academic databases
+Web of Science, Scopus, IEEE/IET Xplore, Science Direct, ACM Digital Library, ASCE Library, ProQuest, and Springer were used for article search and selection. Also, online tools Semantic Scholar and Connected Papers were employed to retrieve similar articles powered by AI and visual graphs.
+- Keywords such as "floor plan analysis", "floor plan recognition and interpretation", "floor plan segmentation", "floor plan image", "apartment structure", "wall segmentation", "architectural plan vectorization", "room and wall retrieval", "apartment graph", "object detection in floor plans", and "parsing floor plan images" were used to search the databases. The search date period ranged from 1995 to
+fecha. For each article, its cross-references and similar works were also considered for revision.

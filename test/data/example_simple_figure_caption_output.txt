@@ -1,0 +1,6 @@
+Write or paste here your LaTeX code. It simply removes all tex-things and returns a friendly plain text!
+The following is a excellent figure:
+
+CAPTION: A picture of the same gull looking the other way!
+
+well EQUATION_0 epic α
