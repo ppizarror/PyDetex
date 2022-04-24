@@ -12,6 +12,7 @@ __all__ = [
     'process_begin_document',
     'process_chars_equations',
     'process_cite',
+    'process_citeauthor',
     'process_def',
     'process_inputs',
     'process_items',
@@ -45,6 +46,7 @@ _PRINT_LOCATION = False
 
 # Tags
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
+_TAG_DOLLAR_SYMBOL = '⇱DOLLAR_SYMBOL⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
 _TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
 _TAG_NEW_LINE = '⇱NEW_LINE⇲'
@@ -216,7 +218,7 @@ def remove_common_tags(
     for tag in replace_tags:
         s = remove_tag(s, tag)
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing common tags')
     return s
 
@@ -252,7 +254,7 @@ def process_cite(
                 run_j = j
                 break
         if k == -1:
-            if kwargs.get('pb'):
+            if kwargs.get('pb'):  # Update progressbar
                 kwargs.get('pb').update('Processing cites')
             return s
         for j in range(len(s)):
@@ -306,6 +308,47 @@ def process_cite(
                 break
 
 
+def process_citeauthor(
+        s: str,
+        lang: str,
+        **kwargs
+) -> str:
+    """
+    Transforms all citeauthor to [cite]. For example:
+    ``'This is from \\cite{Pizarro}'`` to ``'This is from [1]'``.
+
+    :param s: Latex string code
+    :param lang: Language tag of the code
+    :return: Latex with replaced cites
+    """
+    look = ['\\citeauthor{']
+    k = -1
+    while True:
+        run_j = ''
+        for j in look.copy():
+            k = find_str(s, j)
+            if k == -1:
+                look.remove(j)
+            else:
+                run_j = j
+                break
+        if k == -1:
+            if kwargs.get('pb'):  # Update progressbar
+                kwargs.get('pb').update('Processing citeauthor')
+            return s
+        for j in range(len(s)):
+            if s[k + j] == '}':
+                c = s[k + len(run_j):k + j].split(',')
+
+                # Count the number of cites
+                c = LANG_TT_TAGS.get(lang, 'citeauthor_single' if len(c) == 1 else 'citeauthor_multiple')
+
+                # Write cite
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
+                    _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
+                break
+
+
 def replace_pydetex_tags(
         s: str,
         cite_format: Tuple[str, str] = ('[', ']'),
@@ -324,7 +367,8 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     s = s.replace(_TAG_NEW_LINE, '\n')
-    if kwargs.get('pb'):
+    s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Replacing pydetex tags')
     return s
 
@@ -339,7 +383,7 @@ def process_labels(s: str, **kwargs) -> str:
     while True:
         k = find_str(s, '\\label{')
         if k == -1:
-            if kwargs.get('pb'):
+            if kwargs.get('pb'):  # Update progressbar
                 kwargs.get('pb').update('Processing labels')
             return s
         for j in range(len(s)):
@@ -368,7 +412,7 @@ def process_ref(s: str, **kwargs) -> str:
                 run_j = j
                 break
         if k == -1:
-            if kwargs.get('pb'):
+            if kwargs.get('pb'):  # Update progressbar
                 kwargs.get('pb').update('Processing references')
             return s
         for j in range(len(s)):
@@ -389,9 +433,9 @@ def process_quotes(s: str, **kwargs) -> str:
     :return: String with "quotes"
     """
     while True:
-        k = find_str(s, ['\\quotes{', '\\doublequotes{'])
+        k = find_str(s, ['\\quotes{', '\\doublequotes{', '\\enquote{'])
         if k == -1:
-            if kwargs.get('pb'):
+            if kwargs.get('pb'):  # Update progressbar
                 kwargs.get('pb').update('Processing quotes')
             return s
         m = 0
@@ -465,7 +509,7 @@ def remove_comments(s: str, **kwargs) -> str:
     s = '\n'.join(w).strip()
     s = s.replace(newline_symbol, '\\\\')
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing comments')
     return s
 
@@ -496,6 +540,7 @@ def simple_replace(s: str, **kwargs) -> str:
     s = s[0:len(s) - 1].replace(invalid_tag, '')
 
     # Replace equation symbols
+    s = s.replace('\$', _TAG_DOLLAR_SYMBOL)
     tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     new_s = ''
     k = 0  # Moves through tags
@@ -521,7 +566,7 @@ def simple_replace(s: str, **kwargs) -> str:
         else:
             new_s += s[i]
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Replacing simple tokens')
     return new_s
 
@@ -568,7 +613,7 @@ def process_inputs(
     while True:
         k = find_str(s, '\\input{')
         if k == -1:
-            if kwargs.get('pb'):
+            if kwargs.get('pb'):  # Update progressbar
                 kwargs.get('pb').update('Processing \\input')
             return s.replace(symbol, '\\input{')
         m = 0
@@ -634,12 +679,15 @@ def remove_equations(s: str, **kwargs) -> str:
     :return: Latex without equation
     """
     s = remove_commands_char(s, chars=ut.TEX_EQUATION_CHARS)
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing equations')
     return s
 
 
-def output_text_for_some_commands(s: str, lang: str) -> str:
+def output_text_for_some_commands(
+        s: str,
+        lang: str
+) -> str:
     """
     Replaces the command for a particular text.
 
@@ -735,7 +783,7 @@ def remove_environments(
         env_list = ['tikzpicture', 'tabular', 'thebibiliography', 'references']
     tex_tags = ut.find_tex_environments(s)
     if len(tex_tags) == 0 or len(env_list) == 0:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No environment found in code')
         return s
     new_s = ''
@@ -771,7 +819,7 @@ def remove_environments(
         if not is_in_tags(i):
             new_s += s[i]
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing environments')
     return new_s
 
@@ -792,7 +840,7 @@ def remove_commands_param(
     """
     tex_tags = ut.find_tex_commands(s)
     if len(tex_tags) == 0:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No parameter commands found in code')
         return s
     new_s = ''
@@ -852,7 +900,7 @@ def remove_commands_param(
     new_s = new_s.replace(parenthesis_sq_open_symbol, '\\[')
     new_s = new_s.replace(parenthesis_sq_close_symbol, '\\]')
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing command with parameters')
     return new_s
 
@@ -866,7 +914,7 @@ def remove_commands_param_noargv(s: str, **kwargs) -> str:
     """
     tex_tags = ut.find_tex_commands_noargv(s)
     if len(tex_tags) == 0:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No command without arguments were found in code')
         return s
     new_s = ''
@@ -883,7 +931,7 @@ def remove_commands_param_noargv(s: str, **kwargs) -> str:
         else:
             new_s += s[i]
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Removing command without arguments')
     return new_s
 
@@ -917,7 +965,7 @@ def unicode_chars_equations(s: str, **kwargs) -> str:
         else:
             new_s += s[i]
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Processing unicode equations')
     return new_s
 
@@ -938,7 +986,7 @@ def process_chars_equations(
     """
     tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     if len(tex_tags) == 0:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No char equtions found')
         return s
 
@@ -974,7 +1022,7 @@ def process_chars_equations(
         else:
             new_s += s[i]
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Processing char equations')
     return new_s
 
@@ -990,7 +1038,7 @@ def strip_punctuation(s: str, **kwargs) -> str:
         s = s.replace(f' {j}', j)
     s = s.replace('\n\n\n', '\n\n')
     s = s.strip()
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Stripping punctuation')
     return s
 
@@ -1010,7 +1058,7 @@ def process_def(
     :return: Latex without definitions
     """
     if '\\def' not in s:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No definitions found in code')
         return s
     if clear_learned:
@@ -1074,7 +1122,7 @@ def process_def(
                 k += 1
             new_s = new_s_def
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Processing definitions')
 
     return new_s
@@ -1088,7 +1136,7 @@ def process_items(s: str, **kwargs) -> str:
     :return: Processed items
     """
     if not ('itemize' in s or 'enumerate' in s or 'tablenotes' in s):
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No item found')
         return s
 
@@ -1149,7 +1197,7 @@ def process_items(s: str, **kwargs) -> str:
         if not conv:
             break
 
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Processing item/enumerate environments')
     return s
 
@@ -1277,7 +1325,7 @@ def process_begin_document(s: str, **kwargs) -> str:
     :return: Removes all data outside the document
     """
     if '{document}' not in s:
-        if kwargs.get('pb'):
+        if kwargs.get('pb'):  # Update progressbar
             kwargs.get('pb').update('No document environment found')
         return s
 
@@ -1304,7 +1352,7 @@ def process_begin_document(s: str, **kwargs) -> str:
                 break
 
     # If document has been found
-    if kwargs.get('pb'):
+    if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Processing {document} environment')
     if -1 < i <= w:
         return s[i:w]
