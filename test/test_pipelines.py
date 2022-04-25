@@ -68,6 +68,9 @@ class ParserTest(BaseTest):
         self.assertEqual(pip.strict(s, show_progress=True),
                          'This contains commands, but must be removed!')
 
+        s = 'This \$12bn is very \citeauthor{nice!} nice'
+        self.assertEqual(pip.strict(s), 'This $12bn is very [author] nice')
+
         s = 'This \\quoteepic{code removed!}is removed\\totally. Not epic \\cite{nice}'
         self.assertEqual(pip.strict(s), 'This is removed. Not epic [1]')
 
@@ -119,7 +122,7 @@ class ParserTest(BaseTest):
                          par._load_file_search('data/example_complex_envs_output.txt'))
 
         # Exclusive tests
-        test_complex = False
+        test_complex = True
         if 'GITHUB' in os.environ:
             return
         example_files = [

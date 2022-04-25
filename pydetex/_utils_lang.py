@@ -77,13 +77,17 @@ class LangTexTextTags(object):
         self._lang = {
             'en': {
                 'caption': 'CAPTION: {0}',
+                'citeauthor_multiple': 'authors',
+                'citeauthor_single': 'author',
                 'figure_caption': 'FIGURE_CAPTION: {0}',
                 'link': 'LINK: {0}',
                 'multi_char_equ': 'EQUATION_{0}',
                 'sub_figure_title': 'SUB_FIGURE TITLE: {0}'
             },
-            'ens': {
+            'es': {
                 'caption': 'LEYENDA: {0}',
+                'citeauthor_multiple': 'autores',
+                'citeauthor_single': 'autor',
                 'figure_caption': 'LEYENDA_FIGURA: {0}',
                 'link': 'ENLACE: {0}',
                 'multi_char_equ': 'ECUACIÓN_{0}',

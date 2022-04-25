@@ -72,6 +72,17 @@ class ParserTest(BaseTest):
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, sort_cites=False)),
                          'This is an example [1] [2, 1, 3-5]')
 
+    def test_process_citeauthor(self) -> None:
+        """
+        Removes citeauthor from text.
+        """
+        s = 'hello \\citeauthor{number1,number2} epic'
+        self.assertEqual(par.replace_pydetex_tags(par.process_citeauthor(par.process_cite(s), 'en')),
+                         'hello [authors] epic')
+        s = 'hello \\citeauthor{number1} epic'
+        self.assertEqual(par.replace_pydetex_tags(par.process_citeauthor(par.process_cite(s), 'en')),
+                         'hello [author] epic')
+
     def test_process_ref(self) -> None:
         """
         Removes references from text.
@@ -141,6 +152,7 @@ class ParserTest(BaseTest):
         Test quotes.
         """
         self.assertEqual(par.process_quotes('This is \\quotes{a quoted} string'), 'This is "a quoted" string')
+        self.assertEqual(par.process_quotes('This is \\enquote{a quoted} string'), 'This is "a quoted" string')
 
     def test_parse_inputs(self) -> None:
         """
