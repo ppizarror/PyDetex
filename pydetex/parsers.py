@@ -232,7 +232,7 @@ def process_cite(
 ) -> str:
     """
     Transforms all cites to a text-based with numbers. For example:
-    ``'This is from \\cite{Pizarro}'`` to ``'This is from [1]'``.
+    ``'This is from \cite{Pizarro}'`` to ``'This is from [1]'``.
 
     :param s: Latex string code
     :param sort_cites: Sort the cite numbers
@@ -315,7 +315,8 @@ def process_citeauthor(
 ) -> str:
     """
     Transforms all citeauthor to [cite]. For example:
-    ``'This is from \\cite{Pizarro}'`` to ``'This is from [1]'``.
+    ``'This is from \citeauthor{Pizarro}, and that is from \citeauthor{cite1, cite2}'`` to
+    ``'This is from [author], and that is from [authors]'``.
 
     :param s: Latex string code
     :param lang: Language tag of the code
