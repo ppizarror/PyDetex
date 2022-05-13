@@ -206,12 +206,14 @@ def remove_common_tags(
         replace_tags = [
             'chapter',
             'emph',
+            'hl',
             'section',
             'subsection',
             'subsubsection',
             'subsubsubsection',
             'textbf',
             'textit',
+            'textsuperscript',
             'texttt'
         ]
 
@@ -368,7 +370,8 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     s = s.replace(_TAG_NEW_LINE, '\n')
-    s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
+    if kwargs.get('replace_pydetex_tag_dollar_symbol', True):
+        s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
     if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Replacing pydetex tags')
     return s
@@ -720,6 +723,7 @@ def output_text_for_some_commands(
         ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
         ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
         ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -1009,7 +1013,9 @@ def process_chars_equations(
                 else:
                     equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
-                        new_s += LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        new_s += FONT_FORMAT_SETTINGS['equation'] + \
+                                 LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number) + \
+                                 FONT_FORMAT_SETTINGS['normal']
                         eqn_number += 1
                     else:
                         new_s += equ
@@ -1089,7 +1095,7 @@ def process_def(
                     # Check the name, if not a command, store
                     def_name = s[a + 4:b].strip()
                     if '#' not in def_name:
-                        _DEFS[def_name] = s[b + 1:c]
+                        _DEFS[def_name] = remove_common_tags(s[b + 1:c])
                     found_def = False
             continue
 

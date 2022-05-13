@@ -264,7 +264,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\hat{\\phantom{x}}', '̂'),
     ('\\hbar', 'ℏ'),
     ('\\heartsuit', '♡'),
-    ('\\hl', ''),
     ('\\hookleftarrow', '↩'),
     ('\\hookrightarrow', '↪'),
     ('\\iddots', '⋰'),
