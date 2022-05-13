@@ -33,13 +33,13 @@ def simple(
     :param s: String latex
     :param lang: Language tag of the code
     :param show_progress: Show progress bar
-    :param replace_pydetex_tags: Replace cite tags
+    :param replace_pydetex_tags: Replace pydetex tags like symbols, cites
     :param remove_common_tags: Call ``remove_common_tags`` parser
     :return: String with no latex!
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=17)) if show_progress else None
+    pb = kwargs.get('progressbar', ProgressBar(steps=17 if replace_pydetex_tags else 16)) if show_progress else None
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
