@@ -868,6 +868,7 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\wr', '≀'),
     ('\\Xi', 'Ξ'),
     ('\\xi', 'ξ'),
+    ('\\xspace', ' '),
     ('\\Yup', '⅄'),
     ('\\zeta', 'ζ')
 ]
