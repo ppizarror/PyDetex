@@ -9,6 +9,7 @@ Test utils.
 from test._base import BaseTest
 
 import pydetex.utils as ut
+from pydetex import version as ver
 from typing import Tuple, List
 
 
@@ -714,3 +715,11 @@ class UtilsTest(BaseTest):
         pb.detail_times()
         pb.reset()
         self.assertEqual(pb._current, 0)
+
+    def test_version(self) -> None:
+        """
+        Test version.
+        """
+        v = ver.Version(1, 0, 0)
+        print(v.__repr__())
+        self.assertEqual(str(v), '1.0.0')
