@@ -37,7 +37,6 @@ import pydetex.version
 
 from pydetex._fonts import FONT_TAGS
 from pydetex._gui_settings import Settings
-from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
 # Settings
 _MAX_PASTE_RETRY: int = 3
@@ -517,14 +516,14 @@ class PyDetexGUI(object):
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
-        PARSER_FONT_FORMAT['bold'] = FONT_TAGS['bold'] if font_format else ''
-        PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
-        PARSER_FONT_FORMAT['equation'] = FONT_TAGS['equation_inside'] if font_format else ''
-        PARSER_FONT_FORMAT['italic'] = FONT_TAGS['italic'] if font_format else ''
-        PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
-        PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
-        PARSER_FONT_FORMAT['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
-        PARSER_FONT_FORMAT['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['bold'] = FONT_TAGS['bold'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['cite'] = FONT_TAGS['link'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['equation'] = FONT_TAGS['equation_inside'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['italic'] = FONT_TAGS['italic'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['normal'] = FONT_TAGS['normal'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['ref'] = FONT_TAGS['link'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
 
         # Process the text and get the language
         # noinspection PyBroadException
