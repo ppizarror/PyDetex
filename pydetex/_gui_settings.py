@@ -6,9 +6,7 @@ GUI SETTINGS
 Provides settings for the gui.
 """
 
-__all__ = [
-    'Settings'
-]
+__all__ = ['Settings']
 
 import os
 
