@@ -188,6 +188,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_compress_cite': 'Comprimir \cite',
                 'cfg_pipeline_replace_defs': 'Reemplazar \def',
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
