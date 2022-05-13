@@ -33,13 +33,13 @@ def simple(
     :param s: String latex
     :param lang: Language tag of the code
     :param show_progress: Show progress bar
-    :param replace_pydetex_tags: Replace cite tags
+    :param replace_pydetex_tags: Replace pydetex tags like symbols, cites
     :param remove_common_tags: Call ``remove_common_tags`` parser
     :return: String with no latex!
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=17)) if show_progress else None
+    pb = kwargs.get('progressbar', ProgressBar(steps=17 if replace_pydetex_tags else 16)) if show_progress else None
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
@@ -48,7 +48,7 @@ def simple(
     s = par.process_def(s, pb=pb, replace=kwargs.get('replace_defs', False))
     if remove_common_tags:
         s = par.remove_common_tags(s, pb=pb)
-    s = par.process_cite(s, pb=pb)
+    s = par.process_cite(s, pb=pb, compress_cite=kwargs.get('compress_cite', True))
     s = par.process_citeauthor(s, lang, pb=pb)
     s = par.process_ref(s, pb=pb)
     s = par.process_labels(s, pb=pb)
@@ -58,7 +58,7 @@ def simple(
     s = par.unicode_chars_equations(s, pb=pb)
     s = par.remove_comments(s, pb=pb)  # comments, replace tags, strip
     if replace_pydetex_tags:
-        s = par.replace_pydetex_tags(s, pb=pb)
+        s = par.replace_pydetex_tags(s, pb=pb, **kwargs)
     s = par.strip_punctuation(s, pb=pb)
     if s[-1] == '\\':
         s = s[0:len(s) - 1]
@@ -91,6 +91,6 @@ def strict(
     s = par.remove_commands_param(s, lang, pb=pb)
     s = par.remove_commands_param_noargv(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
-    s = par.replace_pydetex_tags(s, pb=pb)
+    s = par.replace_pydetex_tags(s, pb=pb, **kwargs)
     s = par.strip_punctuation(s, pb=pb)
     return s

@@ -67,7 +67,7 @@ class ParserTest(BaseTest):
         # Test multiple cites
         s = 'This is an example \\cite{b} \\cite{a,    b,    c    , d, e}'
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)), 'This is an example [1] [1-5]')
-        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, compress_cites=False)),
+        self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, compress_cite=False)),
                          'This is an example [1] [1, 2, 3, 4, 5]')
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s, sort_cites=False)),
                          'This is an example [1] [2, 1, 3-5]')
@@ -89,6 +89,13 @@ class ParserTest(BaseTest):
         """
         self.assertEqual(par.process_ref('this is a \\ref{myref}'), 'this is a 1')
         self.assertEqual(par.process_ref('this is a \\ref{myref} and \\ref*{myref}'), 'this is a 1 and 1')
+
+    def test_remove_common_tags(self) -> None:
+        """
+        Remove common tags.
+        """
+        self.assertEqual(par.remove_common_tags('this is \\hl{a}'), 'this is a')
+        self.assertEqual(par.remove_common_tags('this is \\textsuperscript{\\hl{nice}}'), 'this is nice')
 
     def test_remove_comments(self) -> None:
         """
@@ -121,8 +128,10 @@ class ParserTest(BaseTest):
         \section{Introduction}
         
         Architectural floor plans are documents that result from an iterative design, planning, and engineering pro"""
-        self.assertEqual(par.remove_comments(s),
-                         '\\section{Introduction}\n\nArchitectural floor plans are documents that result from an iterative design, planning, and engineering pro')
+        self.assertEqual(
+            par.remove_comments(s),
+            '\\section{Introduction}\n\nArchitectural floor plans are documents that result from an iterative design, '
+            'planning, and engineering pro')
 
         # Comment right to newline
         s = 'Therefore, the scope was restricted to analyzing vector-based CAD files or retrieving individual elements ' \
@@ -303,6 +312,8 @@ class ParserTest(BaseTest):
         self.assertEqual(out(s), 'FIGURE_CAPTION: A U-Net model.')
         s = 'This is a \\href{https://google.com}{A link}'
         self.assertEqual(out(s), 'LINK: A link')
+        s = '\section{a}\section*{a}]'
+        self.assertEqual(out(s), 'a\n\na')
 
     def test_unicode_chars_equations(self) -> None:
         """
@@ -562,6 +573,10 @@ class ParserTest(BaseTest):
         # Invalid defs
         s = '\def\\a{a} and \def\\b{b} and \\def   \nc{c} and \\defee\\d{d}: \\a\\b\\c\\d.'
         self.assertEqual(par.process_def(s, replace=True), ' and  and  and \defee\d{d}: ab\c\d.')
+
+        # Def with commands
+        s = '\def\\a{\\textsuperscript{a}nice!!} epic \\a'
+        self.assertEqual(par.process_def(s, replace=True), ' epic anice!!')
 
     def test_begin_document(self) -> None:
         """

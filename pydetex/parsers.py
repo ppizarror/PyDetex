@@ -206,12 +206,14 @@ def remove_common_tags(
         replace_tags = [
             'chapter',
             'emph',
+            'hl',
             'section',
             'subsection',
             'subsubsection',
             'subsubsubsection',
             'textbf',
             'textit',
+            'textsuperscript',
             'texttt'
         ]
 
@@ -226,7 +228,7 @@ def remove_common_tags(
 def process_cite(
         s: str,
         sort_cites: bool = True,
-        compress_cites: bool = True,
+        compress_cite: bool = True,
         cite_separator: str = ', ',
         **kwargs
 ) -> str:
@@ -236,7 +238,7 @@ def process_cite(
 
     :param s: Latex string code
     :param sort_cites: Sort the cite numbers
-    :param compress_cites: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
+    :param compress_cite: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
     :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
     """
@@ -277,7 +279,7 @@ def process_cite(
                 new_cites: List[str] = []
 
                 # Compress
-                if compress_cites:
+                if compress_cite:
                     cont = False  # Cite number continues
                     prev_c = -1  # Previous cite
                     compr_range = -1  # First compress
@@ -368,7 +370,8 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     s = s.replace(_TAG_NEW_LINE, '\n')
-    s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
+    if kwargs.get('replace_pydetex_tag_dollar_symbol', True):
+        s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
     if kwargs.get('pb'):  # Update progressbar
         kwargs.get('pb').update('Replacing pydetex tags')
     return s
@@ -712,6 +715,7 @@ def output_text_for_some_commands(
     commands: List[Tuple[str, List[Tuple[int, bool]], str, int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
         ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
@@ -720,11 +724,15 @@ def output_text_for_some_commands(
         ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
         ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
         ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
@@ -754,8 +762,7 @@ def output_text_for_some_commands(
                     if len(args) == len(cmd_args):
                         # Add format text
                         for a in range(len(args)):
-                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + \
-                                      FONT_FORMAT_SETTINGS[font_tag]
+                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + FONT_FORMAT_SETTINGS[font_tag]
                         text = cmd_tag.format(*args)
                         text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
                         if cmd_newline[0]:
@@ -850,8 +857,11 @@ def remove_commands_param(
     # invalid commands that will not call output_text_for_some_commands
     if not invalid_commands:
         invalid_commands = [
-            'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter',
-            'newenvironment'
+            'DeclareUnicodeCharacter',
+            'ifthenelse',
+            'newcommand',
+            'newenvironment',
+            'usepackage'
         ]
 
     for i in range(len(s)):
@@ -1009,7 +1019,9 @@ def process_chars_equations(
                 else:
                     equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
-                        new_s += LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number)
+                        new_s += FONT_FORMAT_SETTINGS['equation'] + \
+                                 LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number) + \
+                                 FONT_FORMAT_SETTINGS['normal']
                         eqn_number += 1
                     else:
                         new_s += equ
@@ -1089,7 +1101,7 @@ def process_def(
                     # Check the name, if not a command, store
                     def_name = s[a + 4:b].strip()
                     if '#' not in def_name:
-                        _DEFS[def_name] = s[b + 1:c]
+                        _DEFS[def_name] = remove_common_tags(s[b + 1:c])
                     found_def = False
             continue
 

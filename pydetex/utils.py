@@ -170,7 +170,7 @@ def syntax_highlight(s: str) -> str:
     :return: Code with format
     """
     # Add initial normal
-    s = _FONT_TAGS['normal'] + s
+    s = _FONT_TAGS['normal'] + s.strip()
 
     # Format equations
     s = apply_tag_between_inside_char_command(
