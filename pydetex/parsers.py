@@ -715,6 +715,7 @@ def output_text_for_some_commands(
     commands: List[Tuple[str, List[Tuple[int, bool]], str, int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
         ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
@@ -727,8 +728,11 @@ def output_text_for_some_commands(
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
         ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
@@ -758,8 +762,7 @@ def output_text_for_some_commands(
                     if len(args) == len(cmd_args):
                         # Add format text
                         for a in range(len(args)):
-                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + \
-                                      FONT_FORMAT_SETTINGS[font_tag]
+                            args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + FONT_FORMAT_SETTINGS[font_tag]
                         text = cmd_tag.format(*args)
                         text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
                         if cmd_newline[0]:
@@ -854,8 +857,11 @@ def remove_commands_param(
     # invalid commands that will not call output_text_for_some_commands
     if not invalid_commands:
         invalid_commands = [
-            'newcommand', 'usepackage', 'ifthenelse', 'DeclareUnicodeCharacter',
-            'newenvironment'
+            'DeclareUnicodeCharacter',
+            'ifthenelse',
+            'newcommand',
+            'newenvironment',
+            'usepackage'
         ]
 
     for i in range(len(s)):
