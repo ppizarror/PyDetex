@@ -58,7 +58,7 @@ def simple(
     s = par.unicode_chars_equations(s, pb=pb)
     s = par.remove_comments(s, pb=pb)  # comments, replace tags, strip
     if replace_pydetex_tags:
-        s = par.replace_pydetex_tags(s, pb=pb)
+        s = par.replace_pydetex_tags(s, pb=pb, **kwargs)
     s = par.strip_punctuation(s, pb=pb)
     if s[-1] == '\\':
         s = s[0:len(s) - 1]
@@ -91,6 +91,6 @@ def strict(
     s = par.remove_commands_param(s, lang, pb=pb)
     s = par.remove_commands_param_noargv(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
-    s = par.replace_pydetex_tags(s, pb=pb)
+    s = par.replace_pydetex_tags(s, pb=pb, **kwargs)
     s = par.strip_punctuation(s, pb=pb)
     return s
