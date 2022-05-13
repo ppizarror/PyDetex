@@ -53,6 +53,7 @@ class SettingsWindow(object):
     _var_lang: 'tk.StringVar'
     _var_output_font_format: 'tk.BooleanVar'
     _var_pipeline: 'tk.StringVar'
+    _var_pipeline_compress_cite: 'tk.BooleanVar'
     _var_pipeline_replace_defs: 'tk.BooleanVar'
     _var_process_auto_copy: 'tk.BooleanVar'
     _var_repetition_distance: 'tk.Entry'
@@ -226,6 +227,15 @@ class SettingsWindow(object):
         self._var_process_auto_copy.set(self._cfg.get(self._cfg.CFG_PROCESS_AUTO_COPY))
         ttk.Checkbutton(f, variable=self._var_process_auto_copy).pack(side=tk.LEFT)
 
+        # Compress cite
+        f = ttk.Frame(tab, border=0)
+        f.pack(fill='both', pady=(0, 0))
+        ttk.Label(f, text=self._cfg.lang('cfg_pipeline_compress_cite'), width=label_wz,
+                  anchor='w').pack(side=tk.LEFT, padx=(5, 9 if ut.IS_OSX else 7))
+        self._var_pipeline_compress_cite = tk.BooleanVar(self.root)
+        self._var_pipeline_compress_cite.set(self._cfg.get(self._cfg.CFG_PIPELINE_COMPRESS_CITE))
+        ttk.Checkbutton(f, variable=self._var_pipeline_compress_cite).pack(side=tk.LEFT)
+
         # Replace defs
         f = ttk.Frame(tab, border=0)
         f.pack(fill='both', pady=(0, 0))
@@ -373,6 +383,8 @@ class SettingsWindow(object):
              self._cfg.lang('cfg_error_auto_copy')),
             (self._cfg.CFG_SHOW_LINE_NUMBERS, self._var_show_line_numbers.get(),
              self._cfg.lang('cfg_error_show_line_numbers')),
+            (self._cfg.CFG_PIPELINE_COMPRESS_CITE, self._var_pipeline_compress_cite.get(),
+             self._cfg.lang('cfg_error_pipeline_compress_cite')),
             (self._cfg.CFG_PIPELINE_REPLACE_DEFS, self._var_pipeline_replace_defs.get(),
              self._cfg.lang('cfg_error_pipeline_replace_defs'))
         )

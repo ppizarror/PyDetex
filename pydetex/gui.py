@@ -534,7 +534,8 @@ class PyDetexGUI(object):
                 self._detected_lang_tag,
                 show_progress=True,
                 replace_defs=self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS),
-                replace_pydetex_tag_dollar_symbol=False  # Avoid highlight problems
+                replace_pydetex_tag_dollar_symbol=False,  # Avoid highlight problems
+                compress_cite=self._cfg.get(self._cfg.CFG_PIPELINE_COMPRESS_CITE)
             )
         except Exception:
             err = self._cfg.lang('process_error').format(

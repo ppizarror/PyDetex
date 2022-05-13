@@ -228,7 +228,7 @@ def remove_common_tags(
 def process_cite(
         s: str,
         sort_cites: bool = True,
-        compress_cites: bool = True,
+        compress_cite: bool = True,
         cite_separator: str = ', ',
         **kwargs
 ) -> str:
@@ -238,7 +238,7 @@ def process_cite(
 
     :param s: Latex string code
     :param sort_cites: Sort the cite numbers
-    :param compress_cites: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
+    :param compress_cite: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
     :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
     """
@@ -279,7 +279,7 @@ def process_cite(
                 new_cites: List[str] = []
 
                 # Compress
-                if compress_cites:
+                if compress_cite:
                     cont = False  # Cite number continues
                     prev_c = -1  # Previous cite
                     compr_range = -1  # First compress

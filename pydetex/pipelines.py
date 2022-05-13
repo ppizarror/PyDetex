@@ -48,7 +48,7 @@ def simple(
     s = par.process_def(s, pb=pb, replace=kwargs.get('replace_defs', False))
     if remove_common_tags:
         s = par.remove_common_tags(s, pb=pb)
-    s = par.process_cite(s, pb=pb)
+    s = par.process_cite(s, pb=pb, compress_cite=kwargs.get('compress_cite', True))
     s = par.process_citeauthor(s, lang, pb=pb)
     s = par.process_ref(s, pb=pb)
     s = par.process_labels(s, pb=pb)
