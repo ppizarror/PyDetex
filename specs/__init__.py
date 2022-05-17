@@ -60,6 +60,7 @@ excluded_binaries_contains = [
     'pandas',
     'pygame',
     # 'sklearn',
+    'Windows Performance Toolkit',
     f'zmq{sep}backend{sep}cython'
 ]
 excluded_modules = [

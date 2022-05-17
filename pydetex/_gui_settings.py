@@ -6,9 +6,7 @@ GUI SETTINGS
 Provides settings for the gui.
 """
 
-__all__ = [
-    'Settings'
-]
+__all__ = ['Settings']
 
 import os
 
@@ -66,6 +64,7 @@ class _LangManager(object):
                 'cfg_error_lang': 'Invalid lang value',
                 'cfg_error_output_format': 'Invalid output font format value',
                 'cfg_error_pipeline': 'Invalid pipeline value',
+                'cfg_error_pipeline_compress_cite': 'Invalid compress \cite value',
                 'cfg_error_pipeline_replace_defs': 'Invalid replace \def value',
                 'cfg_error_repetition': 'Invalid repetition value',
                 'cfg_error_repetition_chars': 'Repetition min chars must be greater than zero',
@@ -79,6 +78,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Font size',
                 'cfg_lang': 'Language',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_compress_cite': 'Compress \cite',
                 'cfg_pipeline_replace_defs': 'Replace \def',
                 'cfg_process_auto_copy': 'Auto-copy after process',
                 'cfg_save': 'Save',
@@ -124,7 +124,8 @@ class _LangManager(object):
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
                 'process_copy': 'Copy to clipboard',
-                'process_error': 'An error has occured while processing the text.\nPlease create a new issue in the GitHub page ({0}) with full defails and minimal working example.\n\nError traceback:\n{1}\n',
+                'process_error': 'An error has occured while processing the text.\nPlease create a new issue in the GitHub '
+                                 'page ({0}) with full defails and minimal working example.\n\nError traceback:\n{1}\n',
                 'reload_message_message': 'To apply these changes, the app must be reloaded',
                 'reload_message_title': 'Reload is required',
                 'settings': 'Settings',
@@ -147,7 +148,8 @@ class _LangManager(object):
                 'status_words': 'Words: {0}',
                 'status_writing': 'Writing',
                 'tag_repeated': 'repeated',
-                'version_upgrade': 'You are using an outdated PyDetex version, consider upgrading to v{0}.\n\nTo update, run "pip install --upgrade pydetex" in your terminal',
+                'version_upgrade': 'You are using an outdated PyDetex version, consider upgrading to v{0}.\n\nTo update, '
+                                   'run "pip install --upgrade pydetex" in your terminal',
                 'version_upgrade_title': 'Oudated PyDetex version',
                 'window_size_large': 'Large',
                 'window_size_medium': 'Medium',
@@ -170,6 +172,7 @@ class _LangManager(object):
                 'cfg_error_lang': 'Valor idioma incorrecto',
                 'cfg_error_output_format': 'Valor formato output incorrecto',
                 'cfg_error_pipeline': 'Valor pipeline incorrecto',
+                'cfg_error_pipeline_compress_cite': 'Valor compresión \cite incorrecto',
                 'cfg_error_pipeline_replace_defs': 'Valor reemplazo \def incorrecto',
                 'cfg_error_repetition': 'Valor repetición incorrecto',
                 'cfg_error_repetition_chars': 'Caracter mínimo de repetición debe ser mayor a cero',
@@ -183,6 +186,7 @@ class _LangManager(object):
                 'cfg_font_size': 'Tamaño de la fuente',
                 'cfg_lang': 'Idioma',
                 'cfg_pipeline': 'Pipeline',
+                'cfg_pipeline_compress_cite': 'Comprimir \cite',
                 'cfg_pipeline_replace_defs': 'Reemplazar \def',
                 'cfg_process_auto_copy': 'Auto-copiado al procesar',
                 'cfg_save': 'Guardar',
@@ -228,7 +232,9 @@ class _LangManager(object):
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',
                 'process_copy': 'Copiar al portapapeles',
-                'process_error': 'Un error ha ocurrido mientras se procesaba el texto.\nPor favor crea un nuevo issue en la página de GitHub ({0}) con los detalles completos y un ejemplo mínimo para probar las soluciones.\n\nDetalles del error:\n{1}\n',
+                'process_error': 'Un error ha ocurrido mientras se procesaba el texto.\nPor favor crea un nuevo issue en'
+                                 ' la página de GitHub ({0}) con los detalles completos y un ejemplo mínimo para probar'
+                                 ' las soluciones.\n\nDetalles del error:\n{1}\n',
                 'reload_message_message': 'Para aplicar estos cambios, la aplicación se debe reiniciar',
                 'reload_message_title': 'Se requiere de un reinicio',
                 'settings': 'Configuraciones',
@@ -251,7 +257,8 @@ class _LangManager(object):
                 'status_words': 'Palabras: {0}',
                 'status_writing': 'Escribiendo',
                 'tag_repeated': 'repetido',
-                'version_upgrade': 'Estás usando una versión desactualizada de PyDetex, considera actualizar a v{0}.\n\nPara esto, ejecuta "pip install --upgrade pydetex" en tu terminal',
+                'version_upgrade': 'Estás usando una versión desactualizada de PyDetex, considera actualizar a v{0}.'
+                                   '\n\nPara esto, ejecuta "pip install --upgrade pydetex" en tu terminal',
                 'version_upgrade_title': 'Versión desactualizada de PyDetex',
                 'window_size_large': 'Grande',
                 'window_size_medium': 'Mediano',
@@ -343,6 +350,7 @@ class Settings(object):
         self.CFG_LAST_OPENED_FOLDER = 'LAST_OPENED_FOLDER'
         self.CFG_OUTPUT_FONT_FORMAT = 'OUTPUT_FONT_FORMAT'
         self.CFG_PIPELINE = 'PIPELINE'
+        self.CFG_PIPELINE_COMPRESS_CITE = 'PIPELINE_COMPRESS_CITE'
         self.CFG_PIPELINE_REPLACE_DEFS = 'PIPELINE_REPLACE_DEFS'
         self.CFG_PROCESS_AUTO_COPY = 'PROCESS_AUTO_COPY'
         self.CFG_SHOW_LINE_NUMBERS = 'SHOW_LINE_NUMBERS'
@@ -372,6 +380,7 @@ class Settings(object):
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
             self.CFG_OUTPUT_FONT_FORMAT: (True, bool, [True, False]),
             self.CFG_PIPELINE: (self._available_pipelines[1], str, self._available_pipelines),
+            self.CFG_PIPELINE_COMPRESS_CITE: (True, bool, [True, False]),
             self.CFG_PIPELINE_REPLACE_DEFS: (False, bool, [True, False]),
             self.CFG_PROCESS_AUTO_COPY: (False, bool, [True, False]),
             self.CFG_REPETITION_DISTANCE: (15, int, lambda x: 50 > x > 1),

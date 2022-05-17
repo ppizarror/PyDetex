@@ -47,7 +47,7 @@ class ParserTest(BaseTest):
         self.assertEqual(pip.simple('This is epic\\\nThis is epic\\'), 'This is epic\nThis is epic')
 
         # Test replacers
-        s = 'This is a \\Thetamagic but also \\Theta is not or \\Theta\\Epic or \\Theta\n sad'
+        s = 'This is a \\Thetamagic but\\xspace also \\Theta is not or \\Theta\\Epic or \\Theta\n sad'
         t = 'This is a \\Thetamagic but also Θ is not or Θ\Epic or Θ\nsad'
         self.assertEqual(pip.simple(s), t)
 

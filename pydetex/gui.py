@@ -30,13 +30,13 @@ from warnings import warn
 sys.path.append('../')
 
 import pydetex._gui_utils as gui_ut
+import pydetex.parsers as par
 import pydetex.pipelines as pip
 import pydetex.utils as ut
 import pydetex.version
 
 from pydetex._fonts import FONT_TAGS
 from pydetex._gui_settings import Settings
-from pydetex.parsers import FONT_FORMAT_SETTINGS as PARSER_FONT_FORMAT
 
 # Settings
 _MAX_PASTE_RETRY: int = 3
@@ -516,14 +516,14 @@ class PyDetexGUI(object):
 
         # Font format
         font_format = self._cfg.get(self._cfg.CFG_OUTPUT_FONT_FORMAT)
-        PARSER_FONT_FORMAT['bold'] = FONT_TAGS['bold'] if font_format else ''
-        PARSER_FONT_FORMAT['cite'] = FONT_TAGS['link'] if font_format else ''
-        PARSER_FONT_FORMAT['equation'] = FONT_TAGS['italic'] if font_format else ''
-        PARSER_FONT_FORMAT['italic'] = FONT_TAGS['italic'] if font_format else ''
-        PARSER_FONT_FORMAT['normal'] = FONT_TAGS['normal'] if font_format else ''
-        PARSER_FONT_FORMAT['ref'] = FONT_TAGS['link'] if font_format else ''
-        PARSER_FONT_FORMAT['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
-        PARSER_FONT_FORMAT['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['bold'] = FONT_TAGS['bold'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['cite'] = FONT_TAGS['link'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['equation'] = FONT_TAGS['equation_inside'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['italic'] = FONT_TAGS['italic'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['normal'] = FONT_TAGS['normal'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['ref'] = FONT_TAGS['link'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
 
         # Process the text and get the language
         # noinspection PyBroadException
@@ -532,7 +532,9 @@ class PyDetexGUI(object):
                 text,
                 self._detected_lang_tag,
                 show_progress=True,
-                replace_defs=self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS)
+                replace_defs=self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS),
+                replace_pydetex_tag_dollar_symbol=False,  # Avoid highlight problems
+                compress_cite=self._cfg.get(self._cfg.CFG_PIPELINE_COMPRESS_CITE)
             )
         except Exception:
             err = self._cfg.lang('process_error').format(
@@ -562,7 +564,7 @@ class PyDetexGUI(object):
             )
 
         # Apply syntax highlight
-        out = ut.syntax_highlight(out)
+        out = par.replace_pydetex_tags(ut.syntax_highlight(out))
 
         # Insert the text
         self._text_out.insert_highlighted_text(out, True, font_format)
