@@ -213,6 +213,7 @@ def remove_common_tags(
             'subsubsubsection',
             'textbf',
             'textit',
+            'emph',
             'textsuperscript',
             'texttt'
         ]
@@ -735,6 +736,7 @@ def output_text_for_some_commands(
         ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
+        ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''
