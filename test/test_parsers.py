@@ -314,6 +314,8 @@ class ParserTest(BaseTest):
         self.assertEqual(out(s), 'LINK: A link')
         s = '\section{a}\section*{a}]'
         self.assertEqual(out(s), 'a\n\na')
+        s = '\\texttt{nice!} and \emph{nice!}'
+        self.assertEqual(out(s), 'nice!nice!')
 
     def test_unicode_chars_equations(self) -> None:
         """

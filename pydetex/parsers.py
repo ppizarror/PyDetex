@@ -206,6 +206,7 @@ def remove_common_tags(
         replace_tags = [
             'chapter',
             'emph',
+            'emph',
             'hl',
             'section',
             'subsection',
@@ -213,7 +214,6 @@ def remove_common_tags(
             'subsubsubsection',
             'textbf',
             'textit',
-            'emph',
             'textsuperscript',
             'texttt'
         ]
@@ -718,6 +718,7 @@ def output_text_for_some_commands(
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
+        ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
         ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
         ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),
@@ -736,7 +737,6 @@ def output_text_for_some_commands(
         ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
-        ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''
