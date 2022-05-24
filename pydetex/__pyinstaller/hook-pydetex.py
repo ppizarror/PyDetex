@@ -59,7 +59,6 @@ res_files = [
     'res/u_textcal.txt',
     'res/u_textfrak.txt',
     'res/u_textit.txt',
-    'res/u_emph.txt',
     'res/u_textmono.txt'
 ]
 

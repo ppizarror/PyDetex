@@ -40,7 +40,6 @@ _TEX_TO_UNICODE: Dict[str, Union[Dict[Any, str], List[Tuple[str, str]]]] = {
     'textcal': {},
     'textfrak': {},
     'textit': {},
-    'emph': {},
     'textmono': {}
 }
 
@@ -692,13 +691,15 @@ def _apply_all_modifiers(s: str) -> str:
     """
     s = _apply_modifier(s, '^', _TEX_TO_UNICODE['superscripts'])
     s = _apply_modifier(s, '_', _TEX_TO_UNICODE['subscripts'])
+
     s = _apply_modifier(s, '\\bb', _TEX_TO_UNICODE['textbb'])
     s = _apply_modifier(s, '\\bf', _TEX_TO_UNICODE['textbf'])
-    s = _apply_modifier(s, '\\it', _TEX_TO_UNICODE['textit'])
-    s = _apply_modifier(s, '\\emph', _TEX_TO_UNICODE['emph'])
     s = _apply_modifier(s, '\\cal', _TEX_TO_UNICODE['textcal'])
+    s = _apply_modifier(s, '\\emph', _TEX_TO_UNICODE['textit'])
     s = _apply_modifier(s, '\\frak', _TEX_TO_UNICODE['textfrak'])
+    s = _apply_modifier(s, '\\it', _TEX_TO_UNICODE['textit'])
     s = _apply_modifier(s, '\\mono', _TEX_TO_UNICODE['textmono'])
+
     return s
 
 
