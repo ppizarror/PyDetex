@@ -18,6 +18,7 @@ __all__ = [
     'save_zip'
 ]
 
+from pydetex import __file__
 from pydetex.version import ver
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
@@ -74,6 +75,29 @@ excluded_modules = [
 ]
 
 
+def _append_to_datas(datas: list, file_path: str, target_folder: str,
+                     base_target_folder: str = 'pydetex', relative: bool = True) -> None:
+    """
+    Add path to datas.
+
+    :param datas: Data list
+    :param file_path: File path
+    :param target_folder: Folder to paste the resources
+    :param base_target_folder: Base folder of the resource
+    :param relative: If True append pydetex_folder
+    """
+    if relative:
+        res_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path)
+    else:
+        res_path = file_path
+    if target_folder == '':
+        target_folder = os.path.basename(os.path.dirname(res_path))
+    if os.path.exists(res_path):
+        datas.append((res_path, os.path.join(base_target_folder, target_folder)))
+    else:
+        raise FileNotFoundError(f'{file_path} does not exist')
+
+
 def _file_sz(f: str) -> str:
     """
     Computes the file size in KB.
@@ -97,12 +121,33 @@ def get_analysis(analysis, toc):
     """
     Return the ANALYSIS object.
     """
+    datas = []
+    for f in [
+        'res/cog.ico',
+        'res/dictionary.ico',
+        'res/icon.gif',
+        'res/icon.ico',
+        'res/placeholder_en.tex',
+        'res/placeholder_es.tex',
+        'res/stopwords.json',
+        'res/u_subscripts.txt',
+        'res/u_superscripts.txt',
+        'res/u_symbols.txt',
+        'res/u_textbb.txt',
+        'res/u_textbf.txt',
+        'res/u_textcal.txt',
+        'res/u_textfrak.txt',
+        'res/u_textit.txt',
+        'res/u_textmono.txt'
+    ]:
+        _append_to_datas(datas, f, target_folder='')
+
     # Make object
     a = analysis(
         ['../gui.py'],
         binaries=[],
         cipher=block_cipher,
-        datas=[],
+        datas=datas,
         excludes=excluded_modules,
         hiddenimports=['pydetex'],
         hooksconfig={},
