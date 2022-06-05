@@ -74,8 +74,5 @@ setup(
     ],
     options={
         'bdist_wheel': {'universal': False}
-    },
-    entry_points={
-        'pyinstaller40': ['hook-dirs = pydetex.__pyinstaller:get_hook_dirs']
     }
 )
