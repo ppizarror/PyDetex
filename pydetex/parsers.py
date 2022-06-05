@@ -576,11 +576,12 @@ def simple_replace(s: str, **kwargs) -> str:
     return new_s
 
 
-def _load_file_search(tex_file: str) -> str:
+def _load_file_search(tex_file: str, print_error: bool = False) -> str:
     """
     Search and load a file.
 
     :param tex_file: Name of the file
+    :param print_error: Prints if file not found
     :return: Loaded file or tag error
     """
     tx = _TAG_FILE_ERROR
@@ -590,7 +591,8 @@ def _load_file_search(tex_file: str) -> str:
     for f in folders:
         tx = _load_file(tex_file, f)
         if tx == _TAG_FILE_ERROR:
-            print(f'\tFile not found in {f}')
+            if print_error:
+                print(f'\tFile not found in {f}')
         else:
             break
     return tx
@@ -602,7 +604,7 @@ def process_inputs(
         **kwargs
 ) -> str:
     """
-    Process inputs, and try to copy the content.
+    Process inputs, which find the input files and retrieve its contents.
 
     :param s: Latex string code with inputs
     :param clear_not_found_files: Clear the not found files. Used when changing the path
@@ -613,6 +615,7 @@ def process_inputs(
         _LAST_NOT_FOUND_FILES_PATH[0] = os.getcwd()
         _NOT_FOUND_FILES.clear()
         _PRINT_LOCATION = False
+    print_ = kwargs.get('print', True)
     symbol = '⇱INPUT_FILE_TAG⇲'
     s = remove_comments(s)
     while True:
@@ -631,15 +634,18 @@ def process_inputs(
                     tex_file += '.tex'
                 if tex_file not in _NOT_FOUND_FILES and '\jobname' not in tex_file:
                     if not _PRINT_LOCATION:
-                        print(f'Current path location:\n\t{os.getcwd()}')
+                        if print_:
+                            print(f'Current path location:\n\t{os.getcwd()}')
                         _PRINT_LOCATION = True
-                    print(f'Detected file {tex_file}:')
-                    tx = _load_file_search(tex_file)
+                    if print_:
+                        print(f'Detected file {tex_file}:')
+                    tx = _load_file_search(tex_file, print_error=print_)
                     if tx == _TAG_FILE_ERROR:
                         _NOT_FOUND_FILES.append(tex_file)
                         s = s[:k] + symbol + s[k + m + 1:]
                     else:
-                        print('\tFile found and loaded')
+                        if print_:
+                            print('\tFile found and loaded')
                         tx = '\n'.join(tx.splitlines())
                         tx = remove_comments(tx)
                         s = s[:k] + tx + s[k + j + 1:]
