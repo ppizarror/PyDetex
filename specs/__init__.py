@@ -54,6 +54,7 @@ excluded_binaries = [
     'yaml._yaml'
 ]
 excluded_binaries_contains = [
+    'api-ms-win-',
     # 'lib-dynload',
     'lxml',
     'markupsafe',
@@ -165,7 +166,7 @@ def get_analysis(analysis, toc):
     for i in a.binaries:
         ex_contains = False
         for j in excluded_binaries_contains:
-            if j + sep in i[1]:
+            if j in i[1]:
                 ex_contains = True
                 break
         if 'sklearn' in i[0] and i[0] != 'sklearn.__check_build._check_build':
