@@ -325,6 +325,9 @@ class ParserTest(BaseTest):
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $α² ⋅ α²⁺³ ≡ α⁷$ equation')
         s = 'This is my $x$ equation'
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $x$ equation')
+        s = 'This is my $\{a+b\}=min\{t\}$ equation'
+        self.assertEqual(par.replace_pydetex_tags(par.unicode_chars_equations(s)),
+                         'This is my ${a+b}=min{t}$ equation')
         s = 'This is my $$ equation'
         self.assertEqual(par.unicode_chars_equations(s), 'This is my $$ equation')
         s = 'This is my \\begin{align}\\alpha^2 \cdot \\alpha^{2+3} \equiv \\alpha^7\\end{align} equation'
