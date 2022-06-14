@@ -45,6 +45,8 @@ _NOT_FOUND_FILES = []
 _PRINT_LOCATION = False
 
 # Tags
+_TAG_BRACE_CLOSE = '⇱BRACE_CLOSE⇲'
+_TAG_BRACE_OPEN = '⇱BRACE_OPEN⇲'
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
 _TAG_DOLLAR_SYMBOL = '⇱DOLLAR_SYMBOL⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
@@ -359,7 +361,7 @@ def replace_pydetex_tags(
         **kwargs
 ) -> str:
     """
-    Replaces font tags to a specific format.
+    Replaces tags to text.
 
     :param s: Latex string code
     :param cite_format: Cite format
@@ -370,6 +372,8 @@ def replace_pydetex_tags(
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
+    s = s.replace(_TAG_BRACE_OPEN, '{')
+    s = s.replace(_TAG_BRACE_CLOSE, '}')
     s = s.replace(_TAG_NEW_LINE, '\n')
     if kwargs.get('replace_pydetex_tag_dollar_symbol', True):
         s = s.replace(_TAG_DOLLAR_SYMBOL, '$')
@@ -796,7 +800,16 @@ def remove_environments(
     :return: Code without given environments
     """
     if not env_list:
-        env_list = ['tikzpicture', 'tabular', 'thebibiliography', 'references']
+        env_list = [
+            'lstlisting',
+            'references',
+            'minted',
+            'sourcecode',
+            'tabular',
+            'thebibiliography',
+            'tikzpicture',
+            'verbatim'
+        ]
     tex_tags = ut.find_tex_environments(s)
     if len(tex_tags) == 0 or len(env_list) == 0:
         if kwargs.get('pb'):  # Update progressbar
@@ -973,7 +986,9 @@ def unicode_chars_equations(s: str, **kwargs) -> str:
             elif tex_tags[k][1] <= i < tex_tags[k][2] and not added_s or tex_tags[k][1] == i == tex_tags[k][2]:
                 if not added_s:
                     k_s: str = s[tex_tags[k][1]:tex_tags[k][2] + 1]
-                    new_s += ut.tex_to_unicode(k_s)
+                    k_s_tex = ut.tex_to_unicode(k_s)
+                    k_s_tex = k_s_tex.replace('\{', _TAG_BRACE_OPEN).replace('\}', _TAG_BRACE_CLOSE)
+                    new_s += k_s_tex
                 added_s = True
             elif tex_tags[k][2] < i < tex_tags[k][3]:
                 new_s += s[i]
