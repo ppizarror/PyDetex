@@ -247,7 +247,7 @@ def process_cite(
     """
     assert isinstance(cite_separator, str)
     cites = {}
-    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{']
+    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{', '\\newcite{','\\newcite*{']
     k = -1
     while True:
         run_j = ''
