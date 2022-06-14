@@ -54,7 +54,7 @@ def simple(
     s = par.process_labels(s, pb=pb)
     s = par.process_items(s, pb=pb)
     s = par.process_quotes(s, pb=pb)
-    s = par.process_chars_equations(s, lang, True, pb=pb)
+    s = par.process_chars_equations(s, lang, single_only=True, pb=pb)
     s = par.unicode_chars_equations(s, pb=pb)
     s = par.remove_comments(s, pb=pb)  # comments, replace tags, strip
     if replace_pydetex_tags:
