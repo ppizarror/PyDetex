@@ -1,7 +1,7 @@
 beautifulsoup4 >= 4.11.1
 flatlatex >= 0.15
 langdetect >= 1.0.9
-nltk == 3.6.7
+nltk >= 3.7
 outdated >= 0.2.2
 PyMultiDictionary>=1.2.0
 pyperclip >= 1.8.2
