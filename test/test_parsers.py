@@ -310,12 +310,26 @@ class ParserTest(BaseTest):
         self.assertEqual(out(s), 'FIGURE_CAPTION: legend')
         s = 'Nice\n\insertimage[\label{unetmodel}]{unet_compressed}{width=\linewidth}{A U-Net model.}'
         self.assertEqual(out(s), 'FIGURE_CAPTION: A U-Net model.')
+
+        # Test other
         s = 'This is a \\href{https://google.com}{A link}'
         self.assertEqual(out(s), 'LINK: A link')
         s = '\section{a}\section*{a}]'
         self.assertEqual(out(s), 'a\n\na')
         s = '\\texttt{nice!} and \emph{nice!}'
         self.assertEqual(out(s), 'nice!nice!')
+        s = '\\textit{\href{a}{link}}'
+        self.assertEqual(out(s), 'LINK: link')
+
+        # Test MakeUppercase
+        s = '\\MakeUppercase{this is a Test}'
+        self.assertEqual(out(s), 'THIS IS A TEST')
+        s = '\\uppercase{this is a Test}'
+        self.assertEqual(out(s), 'THIS IS A TEST')
+        s = '\\MakeLowercase{THIS is a Test}'
+        self.assertEqual(out(s), 'this is a test')
+        s = '\\lowercase{THIS is a Test}'
+        self.assertEqual(out(s), 'this is a test')
 
     def test_unicode_chars_equations(self) -> None:
         """

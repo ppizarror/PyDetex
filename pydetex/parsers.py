@@ -247,7 +247,7 @@ def process_cite(
     """
     assert isinstance(cite_separator, str)
     cites = {}
-    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{', '\\newcite{','\\newcite*{']
+    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{', '\\newcite{', '\\newcite*{']
     k = -1
     while True:
         run_j = ''
@@ -734,6 +734,9 @@ def output_text_for_some_commands(
         ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),
         ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),
         ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
+        ('lowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
+        ('MakeLowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
+        ('MakeUppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False)),
         ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -747,7 +750,8 @@ def output_text_for_some_commands(
         ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
-        ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False))
+        ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
+        ('uppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''
 
@@ -775,7 +779,10 @@ def output_text_for_some_commands(
                         # Add format text
                         for a in range(len(args)):
                             args[a] = FONT_FORMAT_SETTINGS[font_content] + args[a] + FONT_FORMAT_SETTINGS[font_tag]
-                        text = cmd_tag.format(*args)
+                        if callable(cmd_tag):
+                            text = cmd_tag(*args)
+                        else:
+                            text = cmd_tag.format(*args)
                         text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
                         if cmd_newline[0]:
                             text = _TAG_NEW_LINE + text
