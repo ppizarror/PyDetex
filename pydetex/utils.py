@@ -22,6 +22,7 @@ __all__ = [
     'format_number_d',
     'get_diff_startend_word',
     'get_language_name',
+    'get_local_path',
     'get_number_of_day',
     'get_tex_commands_args',
     'get_word_from_cursor',
@@ -47,6 +48,7 @@ import platform
 import sys
 import time
 
+from pathlib import Path
 from typing import List, Tuple, Dict
 
 from pydetex._fonts import FONT_TAGS as _FONT_TAGS
@@ -232,6 +234,37 @@ def open_file(f: str) -> str:
     text = ''.join(o.readlines())
     o.close()
     return text
+
+
+def make_path_if_not_exists(path: str) -> str:
+    """
+    Create path if not exists.
+
+    :param path: Path
+    :return: Path
+    """
+    if not os.path.isdir(path):
+        Path(path).mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def get_local_path() -> str:
+    """
+    :return: Returns the app local path
+    """
+    appdata = os.getenv('LOCALAPPDATA')
+    if appdata is None:
+        appdata = os.path.join(get_user_path(), 'Applications')
+
+    path = os.path.join(appdata, 'PyDetex')
+    return make_path_if_not_exists(path)
+
+
+def get_user_path() -> str:
+    """
+    :return: Returns the user path
+    """
+    return os.path.expanduser('~')
 
 
 class ProgressBar(object):

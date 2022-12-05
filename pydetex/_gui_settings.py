@@ -20,8 +20,8 @@ import pydetex.version as ver
 
 from pydetex import __author__
 
-_SETTINGS_FILE = [os.path.expanduser('~/') + '.pydetex.cfg']
-_SETTINGS_TEST = ut.RESOURCES_PATH + '.pydetex.cfg'
+_SETTINGS_FILE = [os.path.join(ut.get_local_path(), '.pydetex.cfg')]
+_SETTINGS_TEST = os.path.join(ut.RESOURCES_PATH, '.pydetex.cfg')
 
 # Store the pipelines
 _PIPELINES = {
