@@ -29,7 +29,7 @@ requirements_docs.extend([
 requirements_tests = requirements.copy()
 requirements_tests.extend([
     'codecov',
-    'nose'
+    'nose2'
 ])
 
 # Setup library
@@ -56,6 +56,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python',
         'Topic :: Multimedia',
         'Topic :: Text Processing'
