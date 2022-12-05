@@ -39,7 +39,7 @@ def simple(
     """
     if len(s) == 0:
         return s
-    pb = kwargs.get('progressbar', ProgressBar(steps=17 if replace_pydetex_tags else 16)) if show_progress else None
+    pb = kwargs.get('progressbar', ProgressBar(steps=16 if replace_pydetex_tags else 15)) if show_progress else None
     s = '\n'.join(s.splitlines())  # Removes \r\n
     s = par.process_inputs(s, pb=pb)
     s = par.remove_comments(s, pb=pb)
@@ -52,8 +52,7 @@ def simple(
     s = par.process_citeauthor(s, lang, pb=pb)
     s = par.process_ref(s, pb=pb)
     s = par.process_labels(s, pb=pb)
-    s = par.process_items(s, pb=pb)
-    s = par.process_quotes(s, pb=pb)
+    s = par.process_items(s, lang, pb=pb)
     s = par.process_chars_equations(s, lang, single_only=True, pb=pb)
     s = par.unicode_chars_equations(s, pb=pb)
     s = par.remove_comments(s, pb=pb)  # comments, replace tags, strip
@@ -79,7 +78,7 @@ def strict(
     :param show_progress: Show progress bar
     :return: String with no latex!
     """
-    pb = ProgressBar(steps=22) if show_progress else None
+    pb = ProgressBar(steps=21) if show_progress else None
     if 'progressbar' not in kwargs.keys():
         # noinspection PyTypeChecker
         kwargs['progressbar'] = pb

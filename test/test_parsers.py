@@ -156,13 +156,6 @@ class ParserTest(BaseTest):
         self.assertEqual(par.simple_replace('This is a $x_0$ and \(x^2\)'), 'This is a $x₀$ and \(x²\)')
         self.assertEqual(par.simple_replace('This is $\\alpha$'), 'This is $α$')
 
-    def test_process_quotes(self) -> None:
-        """
-        Test quotes.
-        """
-        self.assertEqual(par.process_quotes('This is \\quotes{a quoted} string'), 'This is "a quoted" string')
-        self.assertEqual(par.process_quotes('This is \\enquote{a quoted} string'), 'This is "a quoted" string')
-
     def test_parse_inputs(self) -> None:
         """
         Parse inputs.
@@ -331,6 +324,16 @@ class ParserTest(BaseTest):
         s = '\\lowercase{THIS is a Test}'
         self.assertEqual(out(s), 'this is a test')
 
+        # Test quotes
+        s = '\quotes{a quoted}'
+        self.assertEqual(out(s), '"a quoted"')
+        s = '\enquote{a quoted}'
+        self.assertEqual(out(s), '"a quoted"')
+        s = '\quotes{\href{a}{link}}'
+        self.assertEqual(out(s), '"LINK: link"')
+        s = '\doublequotes{\href{a}{link}}'
+        self.assertEqual(out(s), '"LINK: link"')
+
     def test_unicode_chars_equations(self) -> None:
         """
         Test unicode char equations.
@@ -358,15 +361,15 @@ class ParserTest(BaseTest):
         Test process items.
         """
         s = '\\begin{itemize}\item a \item b\\begin{itemize}\item a \item b\end{itemize}\end{itemize}'
-        self.assertEqual(par.replace_pydetex_tags(par.process_items(s)),
+        self.assertEqual(par.replace_pydetex_tags(par.process_items(s, lang='en')),
                          '\n-  a \n-  b\n   •  a\n   •  b')
 
         s = """\\begin{itemize}[font=\\bfseries]
            \item As shown in Figure \\ref{fignumber}
            \item Proposed
         \end{itemize}"""
-        self.assertEqual(par.replace_pydetex_tags(par.process_items(s)),
-                         '\n-  As shown in Figure \\ref{fignumber}\n-  Proposed')
+        self.assertEqual(par.replace_pydetex_tags(par.process_items(s, lang='en')),
+                         '\n-  As shown in Figure \n-  Proposed')
 
         s = """\\begin{enumerate}
             \\item a
@@ -399,7 +402,7 @@ class ParserTest(BaseTest):
         \\end{enumerate}
         """
 
-        t = par.replace_pydetex_tags(par.process_items(s))
+        t = par.replace_pydetex_tags(par.process_items(s, lang='en'))
         self.assertEqual(
             t, '\n1. a\n   a) a\n   b) b\n      i. a\n      ii. b\n      iii. c\n'
                '         A) a\n         B) b\n         C) c\n            I. a\n '
@@ -424,7 +427,7 @@ class ParserTest(BaseTest):
         epic
         """
         self.assertEqual(
-            par.replace_pydetex_tags(par.process_items(s)),
+            par.replace_pydetex_tags(par.process_items(s, lang='en')),
             '\n        \n1. b\n        \n        \n-  a\n        \n        Note:'
             ' Res - Resolution in pixels (px).\n        \n        epic\n        '
         )
@@ -464,7 +467,7 @@ class ParserTest(BaseTest):
              ('nice', 461, 473, 482, 490, '', 0, -1))
         )
         self.assertEqual(
-            par.replace_pydetex_tags(par.process_items(s)).strip(),
+            par.replace_pydetex_tags(par.process_items(s, lang='en')).strip(),
             '1. a\n        \n1. a\n        \n1. b\n        \n1. a\n        \n1. '
             'b\n   •  c\n2. d\n        \\begin{nice}\n        \\end{nice}')
 
