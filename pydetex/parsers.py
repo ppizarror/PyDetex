@@ -17,7 +17,6 @@ __all__ = [
     'process_inputs',
     'process_items',
     'process_labels',
-    'process_quotes',
     'process_ref',
     'remove_commands_char',
     'remove_commands_param',
@@ -37,7 +36,7 @@ import os
 import pydetex.utils as ut
 
 from pydetex._symbols import *
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Callable
 
 # Files
 _LAST_NOT_FOUND_FILES_PATH = [os.getcwd()]
@@ -434,28 +433,6 @@ def process_ref(s: str, **kwargs) -> str:
                 break
 
 
-def process_quotes(s: str, **kwargs) -> str:
-    """
-    Process quotes.
-
-    :param s: Latex string code
-    :return: String with "quotes"
-    """
-    while True:
-        k = find_str(s, ['\\quotes{', '\\doublequotes{', '\\enquote{'])
-        if k == -1:
-            if kwargs.get('pb'):  # Update progressbar
-                kwargs.get('pb').update('Processing quotes')
-            return s
-        m = 0
-        for j in range(len(s)):
-            if s[k + j] == '{':
-                m = j
-            if s[k + j] == '}':
-                s = s[:k] + '"' + s[k + m + 1:k + j] + '"' + s[k + j + 1:]
-                break
-
-
 def remove_comments(s: str, **kwargs) -> str:
     """
     Remove comments from text.
@@ -723,21 +700,27 @@ def output_text_for_some_commands(
     # The font format is like .... [font tag]YOUR TAG {[font content]YOUR CONTENT} ...[font normal]. In that case, tag to be
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
-    commands: List[Tuple[str, List[Tuple[int, bool]], str, int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
+    commands: List[Tuple[str, List[Tuple[int, bool]], Union[str, Callable[[str, ...], str]], int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('doublequotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
+        ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
-        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),
-        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),
-        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),
-        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),
+        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # Template-Informe
+        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # Template-Informe
+        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),  # Template-Informe
+        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),  # Template-Informe
+        ('institutionentry', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # Professional-CV
+        ('institutionentryshort', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # Professional-CV
         ('lowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
         ('MakeLowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
         ('MakeUppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False)),
+        ('otherentry', [(1, False), (2, False)], '{0} {1}', 2, 'normal', 'normal', (False, False)),  # Professional-CV
         ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('quotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
@@ -782,7 +765,10 @@ def output_text_for_some_commands(
                         if callable(cmd_tag):
                             text = cmd_tag(*args)
                         else:
-                            text = cmd_tag.format(*args)
+                            try:
+                                text = cmd_tag.format(*args)
+                            except IndexError:
+                                text = cmd_tag
                         text = FONT_FORMAT_SETTINGS[font_tag] + text + FONT_FORMAT_SETTINGS['normal']
                         if cmd_newline[0]:
                             text = _TAG_NEW_LINE + text
@@ -1171,11 +1157,12 @@ def process_def(
     return new_s
 
 
-def process_items(s: str, **kwargs) -> str:
+def process_items(s: str, lang: str, **kwargs) -> str:
     """
     Process itemize and enumerate.
 
     :param s: Latex string code
+    :param lang: Language tag
     :return: Processed items
     """
     if not ('itemize' in s or 'enumerate' in s or 'tablenotes' in s):
@@ -1234,7 +1221,7 @@ def process_items(s: str, **kwargs) -> str:
             t = _get_name(t)
             if t == '':
                 continue
-            s = s[0:a] + _process_item(s[b:c].strip(), t) + s[d + 2:]
+            s = s[0:a] + remove_commands_param(_process_item(s[b:c].strip(), t), lang) + s[d + 2:]
             conv = True
             break
         if not conv:

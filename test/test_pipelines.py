@@ -57,8 +57,7 @@ class ParserTest(BaseTest):
             ('data/example_simple_comments.txt', 'data/example_simple_comments_output.txt')
         ]
         for f in example_files:
-            self.assertEqual(pip.simple(par._load_file_search(f[0])),
-                             par._load_file_search(f[1]))
+            self.assertEqual(pip.simple(par._load_file_search(f[0])), par._load_file_search(f[1]))
 
     def test_strict(self) -> None:
         """
