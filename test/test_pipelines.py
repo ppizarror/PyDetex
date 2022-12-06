@@ -130,5 +130,4 @@ class ParserTest(BaseTest):
         if not test_complex:
             example_files = []
         for f in example_files:
-            self.assertEqual(pip.strict(par._load_file_search(f[0])),
-                             par._load_file_search(f[1]))
+            self.assertEqual(pip.strict(par._load_file_search(f[0])), par._load_file_search(f[1]))
