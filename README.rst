@@ -18,7 +18,7 @@ PyDetex
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
-.. image:: https://img.shields.io/github/workflow/status/ppizarror/PyDetex/Run%20Tests
+.. image:: https://img.shields.io/github/actions/workflow/status/ppizarror/PyDetex/tests.yml?branch=master
     :target: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml
     :alt: Build status
     
@@ -29,14 +29,6 @@ PyDetex
 .. image:: https://readthedocs.org/projects/pydetex/badge/?version=latest
     :target: https://pydetex.readthedocs.io
     :alt: Documentation Status
-
-.. image:: https://img.shields.io/lgtm/alerts/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/PyDetex/alerts
-    :alt: Total alerts
-
-.. image:: https://img.shields.io/lgtm/grade/python/g/ppizarror/PyDetex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/ppizarror/PyDetex/context:python
-    :alt: Language grade: Python
 
 .. image:: https://codecov.io/gh/ppizarror/PyDetex/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/ppizarror/PyDetex
