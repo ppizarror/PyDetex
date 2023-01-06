@@ -18,8 +18,8 @@ PyDetex
     :target: https://pypi.org/project/pydetex
     :alt: PyPi package
 
-.. image:: https://img.shields.io/github/actions/workflow/status/ppizarror/PyDetex/tests.yml?branch=master
-    :target: https://github.com/ppizarror/PyDetex/actions/workflows/tests.yml
+.. image:: https://img.shields.io/github/actions/workflow/status/ppizarror/PyDetex/ci.yml?branch=master
+    :target: https://github.com/ppizarror/PyDetex/actions/workflows/ci.yml
     :alt: Build status
     
 .. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fppizarror%2FPyDetex.svg?type=shield
