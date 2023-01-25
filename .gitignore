@@ -1,12 +1,12 @@
-.idea/
-__pycache__
+__pycache__/
 ._*
 .DS_Store
+.idea/
 
 # Build
+**.egg-info
 build/
 dist/
-**.egg-info
 
 # Settings
 pydetex/res/.pydetex.cfg
