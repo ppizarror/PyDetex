@@ -17,13 +17,50 @@ jobs:
     uses: ppizarror/workflow-actions/.github/workflows/test_python.yml@master
     strategy:
       matrix:
-        python: [ 3.7, 3.8, 3.9, '3.10' ]
+        python: [3.7, 3.8, 3.9, '3.10']
     with:
       env-vars: GITHUB=true
       os: ubuntu-latest
       python-version: ${{ matrix.python }}
 
+  build:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: pip
+          python-version: 3.8
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install .
+          echo "PYDETEX_VERSION=$(python -c "import pydetex; print(pydetex.__version__)")" >> $GITHUB_ENV
+
+      - name: Build
+        run: python build.py pyinstaller
+
+      - name: Upload release
+        uses: actions/upload-artifact@v3
+        with:
+          name: PyDetex-${{ matrix.os }}-v${{ env.PYDETEX_VERSION }}
+          path: dist
+
   codeql:
     uses: ppizarror/workflow-actions/.github/workflows/codeql.yml@master
     with:
       language: python
+
+  delete-artifacts:
+    needs: build
+    uses: ppizarror/workflow-actions/.github/workflows/delete_artifacts.yml@master
