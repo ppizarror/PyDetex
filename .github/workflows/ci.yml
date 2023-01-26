@@ -20,6 +20,7 @@ jobs:
         python: [3.7, 3.8, 3.9, '3.10']
     with:
       env-vars: GITHUB=true
+      install-extras: test
       os: ubuntu-latest
       python-version: ${{ matrix.python }}
 
@@ -44,7 +45,7 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          pip install .
+          pip install -e .[installer]
           echo "PYDETEX_VERSION=$(python -c "import pydetex; print(pydetex.__version__)")" >> $GITHUB_ENV
 
       - name: Build

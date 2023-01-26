@@ -54,6 +54,7 @@ setup(
     install_requires=requirements,
     extras_require={
         'docs': ['sphinx', 'sphinx-autodoc-typehints>=1.2.0', 'sphinx-rtd-theme'],
+        'installer': ['pyinstaller==4.10'],
         'test': ['codecov', 'nose2']
     },
     setup_requires=[
