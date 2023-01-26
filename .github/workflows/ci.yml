@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: PyDetex-${{ matrix.os }}-v${{ env.PYDETEX_VERSION }}
-          path: dist
+          path: dist/out_zip
 
   codeql:
     uses: ppizarror/workflow-actions/.github/workflows/codeql.yml@master
