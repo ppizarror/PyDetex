@@ -65,8 +65,8 @@ TEX_EQUATION_CHARS = [
 
 
 def find_tex_command_char(
-        s: str,
-        symbols_char: List[Tuple[str, str, bool]],
+    s: str,
+    symbols_char: List[Tuple[str, str, bool]],
 ) -> Tuple[Tuple[int, int, int, int], ...]:
     """
     Find symbols command positions.
@@ -148,9 +148,9 @@ def find_tex_command_char(
 
 
 def apply_tag_between_inside_char_command(
-        s: str,
-        symbols_char: List[Tuple[str, str, bool]],
-        tags: Union[Tuple[str, str, str, str], str]
+    s: str,
+    symbols_char: List[Tuple[str, str, bool]],
+    tags: Union[Tuple[str, str, str, str], str]
 ) -> str:
     """
     Apply tag between symbols.
@@ -438,8 +438,8 @@ def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, i
 
 
 def get_tex_commands_args(
-        s: str,
-        pos: bool = False
+    s: str,
+    pos: bool = False
 ) -> Tuple[Tuple[Union[str, Tuple[str, bool], Tuple[int, int]], ...], ...]:
     """
     Get all the arguments from a tex command. Each command argument has a boolean
@@ -535,8 +535,8 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
 
 
 def apply_tag_tex_commands(
-        s: str,
-        tags: Union[Tuple[str, str, str, str, str], str]
+    s: str,
+    tags: Union[Tuple[str, str, str, str, str], str]
 ) -> str:
     """
     Apply tag to tex command.
@@ -592,8 +592,8 @@ def apply_tag_tex_commands(
 
 
 def apply_tag_tex_commands_no_argv(
-        s: str,
-        tags: Union[Tuple[str, str], str]
+    s: str,
+    tags: Union[Tuple[str, str], str]
 ) -> str:
     """
     Apply tag to tex command.

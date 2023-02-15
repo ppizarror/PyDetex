@@ -192,9 +192,9 @@ def remove_tag(s: str, tagname: str) -> str:
 
 
 def remove_common_tags(
-        s: str,
-        replace_tags: Optional[List] = None,
-        **kwargs
+    s: str,
+    replace_tags: Optional[List] = None,
+    **kwargs
 ) -> str:
     """
     Remove common tags from string.
@@ -228,11 +228,11 @@ def remove_common_tags(
 
 
 def process_cite(
-        s: str,
-        sort_cites: bool = True,
-        compress_cite: bool = True,
-        cite_separator: str = ', ',
-        **kwargs
+    s: str,
+    sort_cites: bool = True,
+    compress_cite: bool = True,
+    cite_separator: str = ', ',
+    **kwargs
 ) -> str:
     """
     Transforms all cites to a text-based with numbers. For example:
@@ -313,9 +313,9 @@ def process_cite(
 
 
 def process_citeauthor(
-        s: str,
-        lang: str,
-        **kwargs
+    s: str,
+    lang: str,
+    **kwargs
 ) -> str:
     """
     Transforms all citeauthor to [cite]. For example:
@@ -355,9 +355,9 @@ def process_citeauthor(
 
 
 def replace_pydetex_tags(
-        s: str,
-        cite_format: Tuple[str, str] = ('[', ']'),
-        **kwargs
+    s: str,
+    cite_format: Tuple[str, str] = ('[', ']'),
+    **kwargs
 ) -> str:
     """
     Replaces tags to text.
@@ -580,9 +580,9 @@ def _load_file_search(tex_file: str, print_error: bool = False) -> str:
 
 
 def process_inputs(
-        s: str,
-        clear_not_found_files: bool = False,
-        **kwargs
+    s: str,
+    clear_not_found_files: bool = False,
+    **kwargs
 ) -> str:
     """
     Process inputs, which find the input files and retrieve its contents.
@@ -677,8 +677,8 @@ def remove_equations(s: str, **kwargs) -> str:
 
 
 def output_text_for_some_commands(
-        s: str,
-        lang: str
+    s: str,
+    lang: str
 ) -> str:
     """
     Replaces the command for a particular text.
@@ -781,9 +781,9 @@ def output_text_for_some_commands(
 
 
 def remove_environments(
-        s: str,
-        env_list: Optional[List[str]] = None,
-        **kwargs
+    s: str,
+    env_list: Optional[List[str]] = None,
+    **kwargs
 ) -> str:
     """
     Remove a selection of environments.
@@ -847,10 +847,10 @@ def remove_environments(
 
 
 def remove_commands_param(
-        s: str,
-        lang: str,
-        invalid_commands: Optional[List[str]] = None,
-        **kwargs
+    s: str,
+    lang: str,
+    invalid_commands: Optional[List[str]] = None,
+    **kwargs
 ) -> str:
     """
     Remove all commands with params.
@@ -998,10 +998,10 @@ def unicode_chars_equations(s: str, **kwargs) -> str:
 
 
 def process_chars_equations(
-        s: str,
-        lang: str,
-        single_only: bool,
-        **kwargs
+    s: str,
+    lang: str,
+    single_only: bool,
+    **kwargs
 ) -> str:
     """
     Process single char equations, removing the symbols.
@@ -1073,10 +1073,10 @@ def strip_punctuation(s: str, **kwargs) -> str:
 
 
 def process_def(
-        s: str,
-        clear_learned: bool = True,
-        replace: bool = False,
-        **kwargs
+    s: str,
+    clear_learned: bool = True,
+    replace: bool = False,
+    **kwargs
 ) -> str:
     """
     Process \defs. Store the definition, among others.

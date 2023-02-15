@@ -178,18 +178,18 @@ def make_stemmer(lang: str) -> Optional['SnowballStemmer']:
 
 
 def check_repeated_words(
-        s: str,
-        lang: str,
-        min_chars: int,
-        window: int,
-        stopwords: bool,
-        stemming: bool,
-        ignore: Optional[List[str]] = None,
-        remove_tokens: Optional[List[str]] = None,
-        font_tag_format: str = '',
-        font_param_format: str = '',
-        font_normal_format: str = '',
-        tag: str = 'repeated'
+    s: str,
+    lang: str,
+    min_chars: int,
+    window: int,
+    stopwords: bool,
+    stemming: bool,
+    ignore: Optional[List[str]] = None,
+    remove_tokens: Optional[List[str]] = None,
+    font_tag_format: str = '',
+    font_param_format: str = '',
+    font_normal_format: str = '',
+    tag: str = 'repeated'
 ) -> str:
     """
     Check repeated words.

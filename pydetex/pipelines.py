@@ -20,12 +20,12 @@ PipelineType = Callable
 
 
 def simple(
-        s: str,
-        lang: str = 'en',
-        show_progress: bool = False,
-        replace_pydetex_tags: bool = True,
-        remove_common_tags: bool = True,
-        **kwargs
+    s: str,
+    lang: str = 'en',
+    show_progress: bool = False,
+    replace_pydetex_tags: bool = True,
+    remove_common_tags: bool = True,
+    **kwargs
 ) -> str:
     """
     The most simple pipeline ever.
@@ -65,10 +65,10 @@ def simple(
 
 
 def strict(
-        s: str,
-        lang: str = 'en',
-        show_progress: bool = False,
-        **kwargs
+    s: str,
+    lang: str = 'en',
+    show_progress: bool = False,
+    **kwargs
 ) -> str:
     """
     Apply simple + removes all commands.

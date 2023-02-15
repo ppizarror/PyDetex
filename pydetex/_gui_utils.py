@@ -399,10 +399,12 @@ class SettingsWindow(object):
                 do_close = False
 
         # Check if lang has changed
-        if lang_value != current_lang or \
-                int(fontsize_value) != current_fontsize or \
-                windowsz_value != current_windowsz or \
-                showlnum_value != current_showlnum_value:
+        if (
+            lang_value != current_lang or
+            int(fontsize_value) != current_fontsize or
+            windowsz_value != current_windowsz or
+            showlnum_value != current_showlnum_value
+        ):
             messagebox.showinfo(title=self._cfg.lang('reload_message_title'),
                                 message=self._cfg.lang('reload_message_message'))
 
@@ -1185,13 +1187,13 @@ def center_window(root: 'tk.Tk', window_size: Union[Tuple[int, int], List[int]])
 
 
 def make_label_ttk(
-        master: Union['tk.Tk', 'tk.Frame'],
-        h: int,
-        w: int,
-        side: str,
-        pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
-        separator: bool = False,
-        pack: bool = True
+    master: Union['tk.Tk', 'tk.Frame'],
+    h: int,
+    w: int,
+    side: str,
+    pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
+    separator: bool = False,
+    pack: bool = True
 ) -> 'tk.StringVar':
     """
     Makes a label with defined width/height.
@@ -1219,14 +1221,14 @@ def make_label_ttk(
 
 
 def make_label(
-        master: Union['tk.Tk', 'tk.Frame'],
-        h: int,
-        w: int,
-        *args,
-        side: 'str',
-        pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
-        separator: bool = False,
-        **kwargs
+    master: Union['tk.Tk', 'tk.Frame'],
+    h: int,
+    w: int,
+    *args,
+    side: 'str',
+    pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
+    separator: bool = False,
+    **kwargs
 ) -> 'tk.Label':
     """
     Makes a label with defined width/height.
