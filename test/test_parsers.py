@@ -334,6 +334,16 @@ class ParserTest(BaseTest):
         s = '\doublequotes{\href{a}{link}}'
         self.assertEqual(out(s), '"LINK: link"')
 
+        # Test acronym
+        s = '\\ac{XYZ}'
+        self.assertEqual(out(s), 'XYZ')
+        s = '\\acf{XYZ}'
+        self.assertEqual(out(s), 'XYZ')
+        s = '\\acs{XYZ}'
+        self.assertEqual(out(s), 'XYZ')
+        s = '\\acl{XYZ}'
+        self.assertEqual(out(s), 'XYZ')
+
     def test_unicode_chars_equations(self) -> None:
         """
         Test unicode char equations.
