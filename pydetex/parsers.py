@@ -701,7 +701,10 @@ def output_text_for_some_commands(
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
     commands: List[Tuple[str, List[Tuple[int, bool]], Union[str, Callable[[str, ...], str]], int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
-        ('ac', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
+        ('ac', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
+        ('acf', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
+        ('acl', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
+        ('acs', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -710,16 +713,16 @@ def output_text_for_some_commands(
         ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
-        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # Template-Informe
-        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # Template-Informe
-        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),  # Template-Informe
-        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),  # Template-Informe
-        ('institutionentry', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # Professional-CV
-        ('institutionentryshort', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # Professional-CV
+        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # (Template) Informe
+        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # (Template) Informe
+        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),  # (Template) Informe
+        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),  # (Template) Informe
+        ('institutionentry', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
+        ('institutionentryshort', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
         ('lowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
         ('MakeLowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
         ('MakeUppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False)),
-        ('otherentry', [(1, False), (2, False)], '{0} {1}', 2, 'normal', 'normal', (False, False)),  # Professional-CV
+        ('otherentry', [(1, False), (2, False)], '{0} {1}', 2, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
         ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('quotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),

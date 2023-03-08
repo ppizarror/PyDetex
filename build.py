@@ -6,6 +6,7 @@ BUILD.
 """
 
 import os
+import shutil
 import struct
 import sys
 
@@ -36,7 +37,7 @@ elif mode == 'pip':
     if os.path.isdir('build'):
         for k in os.listdir('build'):
             if 'bdist.' in k or k == 'lib':
-                os.system(f'rm -rf build/{k}')
+                shutil.rmtree(f'build/{k}')
     os.system(f'python setup.py sdist --dist-dir dist/pip bdist_wheel --dist-dir dist/pip')
 
 elif mode == 'twine':
