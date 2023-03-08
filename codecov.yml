@@ -1,4 +1,7 @@
 ignore:
-  - "pydetex/gui.py"
+  - "build.py"
+  - "gui.py"
   - "pydetex/_gui_utils.py"
+  - "pydetex/gui.py"
+  - "setup.py"
   - "test/*.py"
