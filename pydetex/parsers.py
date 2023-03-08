@@ -701,6 +701,7 @@ def output_text_for_some_commands(
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
     commands: List[Tuple[str, List[Tuple[int, bool]], Union[str, Callable[[str, ...], str]], int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
+        ('ac', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
