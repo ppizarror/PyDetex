@@ -9,9 +9,9 @@ version: 2
 sphinx:
   configuration: docs/conf.py
 
-# Build documentation with MkDocs
-#mkdocs:
-#  configuration: mkdocs.yml
+# Configure os
+build:
+  os: ubuntu-22.04
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
