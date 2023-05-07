@@ -131,3 +131,11 @@ class ParserTest(BaseTest):
             example_files = []
         for f in example_files:
             self.assertEqual(pip.strict(par._load_file_search(f[0])), par._load_file_search(f[1]))
+
+    def test_strict_eqn(self) -> None:
+        """
+        Test strict eqn pipeline.
+        """
+        self.assertEqual(
+            pip.strict_eqn('My value is: $0.4375\ \\frac{\\text{tonf}}{{\\text{m}}^2}$. Nice!'),
+            'My value is: 0.4375 (tonf)/(m²). Nice!')

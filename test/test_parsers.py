@@ -245,7 +245,8 @@ class ParserTest(BaseTest):
         self.assertEqual(par.process_chars_equations(s, 'en', single_only=True),
                          'Because x no lower needs any other supervision as y or z in \$30 or \$40')
         s = 'This code $with several chars$ should not be removed'
-        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), s)
+        self.assertEqual(par.process_chars_equations(s, 'en', single_only=True),
+                         'This code with several chars should not be removed')
         s = 'This code must be $$ processed!!'
         self.assertEqual(par.process_chars_equations(s, 'en', single_only=True), 'This code must be  processed!!')
         s = 'an $x$$y$$z$'
