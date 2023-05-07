@@ -64,6 +64,11 @@ class ParserTest(BaseTest):
         self.assertEqual(
             par.replace_pydetex_tags(par.process_cite(s)),
             'This is another example, [1] et al. suggests that yes, but [2] not')
+        # Test equation cite
+        s = 'Here, we test an equation with \\eqref{mycite}'
+        self.assertEqual(
+            par.replace_pydetex_tags(par.process_cite(s)),
+            'Here, we test an equation with (1)')
         # Test multiple cites
         s = 'This is an example \\cite{b} \\cite{a,    b,    c    , d, e}'
         self.assertEqual(par.replace_pydetex_tags(par.process_cite(s)), 'This is an example [1] [1-5]')

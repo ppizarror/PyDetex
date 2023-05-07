@@ -47,11 +47,13 @@ _PRINT_LOCATION = False
 _TAG_BRACE_CLOSE = '⇱BRACE_CLOSE⇲'
 _TAG_BRACE_OPEN = '⇱BRACE_OPEN⇲'
 _TAG_CLOSE_CITE = '⇱CLOSE_CITE⇲'
+_TAG_CLOSE_CITE_EQN = '⇱CLOSE_CITE_EQN⇲'
 _TAG_DOLLAR_SYMBOL = '⇱DOLLAR_SYMBOL⇲'
 _TAG_FILE_ERROR = '⇱FILE_ERROR⇲'
 _TAG_ITEM_SPACE = '⇱ITEM_SPACE⇲'
 _TAG_NEW_LINE = '⇱NEW_LINE⇲'
 _TAG_OPEN_CITE = '⇱OPEN_CITE⇲'
+_TAG_OPEN_CITE_EQN = '⇱OPEN_CITE_EQN⇲'
 _TAG_PERCENTAGE_SYMBOL = '⇱COMMENT_PERCENTAGE_SYMBOL⇲'
 
 # Others
@@ -246,7 +248,10 @@ def process_cite(
     """
     assert isinstance(cite_separator, str)
     cites = {}
-    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{', '\\newcite{', '\\newcite*{']
+    look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{',
+            '\\newcite{', '\\newcite*{']
+    look_eqn = ['\\eqref{']
+    look += look_eqn
     k = -1
     while True:
         run_j = ''
@@ -307,8 +312,11 @@ def process_cite(
                         new_cites.append(str(w))
 
                 c = cite_separator.join(new_cites)
-                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + _TAG_OPEN_CITE + c + \
-                    _TAG_CLOSE_CITE + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
+                eqn_mode = run_j in look_eqn
+                open_cite = _TAG_OPEN_CITE if not eqn_mode else _TAG_OPEN_CITE_EQN
+                close_cite = _TAG_CLOSE_CITE if not eqn_mode else _TAG_CLOSE_CITE_EQN
+                s = s[:k] + FONT_FORMAT_SETTINGS['cite'] + open_cite + c + \
+                    close_cite + FONT_FORMAT_SETTINGS['normal'] + s[k + j + 1:]
                 break
 
 
@@ -368,7 +376,9 @@ def replace_pydetex_tags(
     """
     assert len(cite_format) == 2
     s = s.replace(_TAG_OPEN_CITE, (cite_format[0]))
+    s = s.replace(_TAG_OPEN_CITE_EQN, '(')
     s = s.replace(_TAG_CLOSE_CITE, (cite_format[1]))
+    s = s.replace(_TAG_CLOSE_CITE_EQN, ')')
     s = s.replace(_TAG_ITEM_SPACE, ' ')
     s = s.replace(_TAG_PERCENTAGE_SYMBOL, '%')
     s = s.replace(_TAG_BRACE_OPEN, '{')

@@ -77,7 +77,7 @@ def split_tags(s: str, tags: List[str]) -> List[Tuple[str, str]]:
     [TAG1]new line[TAG2]this is[TAG1]very epic
 
     Output:
-    [('TAG1', 'newline'), ('TAG', 'this is), ('TAG1', 'very epic')]
+    [('TAG1', 'newline'), ('TAG', 'this is), ('TAG1', 'very epic') ... ]
 
     :param s: String
     :param tags: Tag list
