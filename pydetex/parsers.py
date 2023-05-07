@@ -712,6 +712,7 @@ def output_text_for_some_commands(
         ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
+        ('frac', [(1, False), (2, False)], '{0}/{1}', 2, 'normal', 'normal', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
         ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # (Template) Informe
         ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # (Template) Informe
@@ -1037,7 +1038,6 @@ def process_chars_equations(
                 if len(equ) == 1:
                     new_s += FONT_FORMAT_SETTINGS['equation'] + s[i] + FONT_FORMAT_SETTINGS['normal']
                 else:
-                    equ = s[tex_tags[k][0]:tex_tags[k][3] + 1]
                     if not single_only:
                         new_s += FONT_FORMAT_SETTINGS['equation'] + \
                                  LANG_TT_TAGS.get(lang, 'multi_char_equ').format(eqn_number) + \
