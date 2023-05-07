@@ -26,7 +26,8 @@ _SETTINGS_TEST = os.path.join(ut.RESOURCES_PATH, '.pydetex.cfg')
 # Store the pipelines
 _PIPELINES = {
     'pipeline_simple': pip.simple,
-    'pipeline_strict': pip.strict
+    'pipeline_strict': pip.strict,
+    'pipeline_strict_eqn': pip.strict_eqn
 }
 
 # Store the window sizes (w, h, height_richtext, margin_between_richtext, button_margin)
@@ -119,7 +120,9 @@ class _LangManager(object):
                 'pipeline_simple': 'Simple',
                 'pipeline_simple_description': 'Removes common Tex commands, replaces cites and references',
                 'pipeline_strict': 'Strict',
-                'pipeline_strict_description': 'An extension of the Simple pipeline which removes all Tex commands and environments',
+                'pipeline_strict_description': 'An extension of the simple pipeline which removes all Tex commands and environments',
+                'pipeline_strict_eqn': 'Strict + equation',
+                'pipeline_strict_eqn_description': 'An extension of the strict pipeline which converts also the equations',
                 'placeholder': ut.open_file(ut.RESOURCES_PATH + 'placeholder_en.tex'),
                 'process': 'Process',
                 'process_clip': 'Process from clipboard',
@@ -228,6 +231,8 @@ class _LangManager(object):
                 'pipeline_simple_description': 'Elimina comandos Tex comunes, remplaza citas y referencias',
                 'pipeline_strict': 'Estricto',
                 'pipeline_strict_description': 'Una extensión del pipeline simple que elimina todos los entornos y comandos',
+                'pipeline_strict_eqn': 'Estricto + ecuación',
+                'pipeline_strict_eqn_description': 'Pipeline estricto que además reemplaza las ecuaciones',
                 'placeholder': ut.open_file(ut.RESOURCES_PATH + 'placeholder_es.tex'),
                 'process': 'Procesar',
                 'process_clip': 'Procesar desde portapapeles',
