@@ -83,11 +83,14 @@ FONT_FORMAT_SETTINGS = {
     'bold': '',
     'cite': '',
     'equation': '',
+    'hl': '',
     'italic': '',
     'normal': '',
     'ref': '',
+    'strike': '',
     'tex_text_tag': '',
-    'tex_text_tag_content': ''
+    'tex_text_tag_content': '',
+    'underline': ''
 }
 
 LANG_TT_TAGS = ut.LangTexTextTags()
@@ -723,6 +726,7 @@ def output_text_for_some_commands(
         ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('frac', [(1, False), (2, False)], '{0}/{1}', 2, 'normal', 'normal', (False, False)),
+        ('hl', [(1, False)], '{0}', 1, 'normal', 'hl', (False, False)),
         ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
         ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # (Template) Informe
         ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # (Template) Informe
@@ -738,6 +742,8 @@ def output_text_for_some_commands(
         ('quotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('so', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
+        ('st', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
         ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -749,6 +755,7 @@ def output_text_for_some_commands(
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
+        ('underline', [(1, False)], '{0}', 1, 'normal', 'underline', (False, False)),
         ('uppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False))
     ]
     new_s = ''

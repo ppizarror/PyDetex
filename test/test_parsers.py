@@ -341,14 +341,12 @@ class ParserTest(BaseTest):
         self.assertEqual(out(s), '"LINK: link"')
 
         # Test acronym
-        s = '\\ac{XYZ}'
-        self.assertEqual(out(s), 'XYZ')
-        s = '\\acf{XYZ}'
-        self.assertEqual(out(s), 'XYZ')
-        s = '\\acs{XYZ}'
-        self.assertEqual(out(s), 'XYZ')
-        s = '\\acl{XYZ}'
-        self.assertEqual(out(s), 'XYZ')
+        for i in ('ac', 'acf', 'acs', 'acl'):
+            self.assertEqual(out(f'\\{i}{{XYZ}}'), 'XYZ')
+
+        # Test underline/strike
+        for i in ('underline', 'so', 'st', 'hl'):
+            self.assertEqual(out(f'\\{i}{{XYZ}}'), 'XYZ')
 
     def test_unicode_chars_equations(self) -> None:
         """
