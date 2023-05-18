@@ -718,6 +718,7 @@ def output_text_for_some_commands(
         ('acf', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
         ('acl', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
         ('acs', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
+        ('cancel', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
         ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
         ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -743,6 +744,7 @@ def output_text_for_some_commands(
         ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('so', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
+        ('sout', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
         ('st', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
         ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
         ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
@@ -752,6 +754,7 @@ def output_text_for_some_commands(
         ('subsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
         ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
+        ('text', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
         ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
         ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
         ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
