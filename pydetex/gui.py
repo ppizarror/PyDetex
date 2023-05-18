@@ -519,11 +519,14 @@ class PyDetexGUI(object):
         par.FONT_FORMAT_SETTINGS['bold'] = FONT_TAGS['bold'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['cite'] = FONT_TAGS['link'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['equation'] = FONT_TAGS['equation_inside'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['hl'] = FONT_TAGS['highlight'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['italic'] = FONT_TAGS['italic'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['normal'] = FONT_TAGS['normal'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['ref'] = FONT_TAGS['link'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['strike'] = FONT_TAGS['strike'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['tex_text_tag'] = FONT_TAGS['bold'] if font_format else ''
         par.FONT_FORMAT_SETTINGS['tex_text_tag_content'] = FONT_TAGS['italic'] if font_format else ''
+        par.FONT_FORMAT_SETTINGS['underline'] = FONT_TAGS['underlined'] if font_format else ''
 
         # Process the text and get the language
         # noinspection PyBroadException
