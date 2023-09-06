@@ -22,6 +22,7 @@ REPLACE_SYMBOLS_LIBRARY: List[Tuple[str, str]] = [
     # Letters
     ('--', '–'),
     ('---', '—'),
+    ('\#', '#'),
     ('\&', '&'),
     ('~', ' '),
     ('ﬁ', 'fi')
