@@ -121,14 +121,11 @@ class ParserTest(BaseTest):
                          par._load_file_search('data/example_complex_envs_output.txt'))
 
         # Exclusive tests
-        test_complex = True
-        if 'GITHUB' in os.environ:
-            return
         example_files = [
             ('data/example_complex_template.txt', 'data/example_complex_template_output.txt')
         ]
-        if not test_complex:
-            example_files = []
+        if not (True and 'GITHUB' not in os.environ):  # If not test complex
+            example_files.clear()
         for f in example_files:
             self.assertEqual(pip.strict(par._load_file_search(f[0])), par._load_file_search(f[1]))
 

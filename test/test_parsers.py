@@ -160,6 +160,7 @@ class ParserTest(BaseTest):
                          'The following example $α₀+β²=0$')
         self.assertEqual(par.simple_replace('This is a $x_0$ and \(x^2\)'), 'This is a $x₀$ and \(x²\)')
         self.assertEqual(par.simple_replace('This is $\\alpha$'), 'This is $α$')
+        self.assertEqual(par.simple_replace('This is \#my\_var'), 'This is #my_var')
 
     def test_parse_inputs(self) -> None:
         """
