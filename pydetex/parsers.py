@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 PARSERS
-Defines parsers, which perform a single task for removal LaTex things.
+Defines parsers, which perform a single task for removal of LaTex things.
 """
 
 __all__ = [
@@ -151,7 +151,7 @@ def find_str(s: str, char: Union[str, List[str], Tuple[str, ...]]) -> int:
     Finds a sequence within a string, and returns the position. If not exists, returns ``-1``.
 
     :param s: Latex string code
-    :param char: Sequence or List of sequences
+    :param char: Sequence or List of sequence
     :return: Position
     """
     if isinstance(char, str):
@@ -240,11 +240,11 @@ def process_cite(
     **kwargs
 ) -> str:
     """
-    Transforms all cites to a text-based with numbers. For example:
+    Transforms all cites to a text-based with numbers. For example,
     ``'This is from \cite{Pizarro}'`` to ``'This is from [1]'``.
 
     :param s: Latex string code
-    :param sort_cites: Sort the cite numbers
+    :param sort_cites: Sorts the cite numbers
     :param compress_cite: Compress the cite numbers, ex ``[1, 2, 3, 10]`` to ``[1-3, 10]``
     :param cite_separator: Separator of cites, for example ``[1{sep}2{sep}3]``
     :return: Latex with cite as numbers
@@ -252,7 +252,8 @@ def process_cite(
     assert isinstance(cite_separator, str)
     cites = {}
     look = ['\\cite*{', '\\citet*{', '\\citep*{', '\\cite{', '\\citet{', '\\citep{',
-            '\\newcite{', '\\newcite*{']
+            '\\newcite{', '\\newcite*{', '\\cite* {', '\\citet* {', '\\citep* {',
+            '\\cite {', '\\citet {', '\\citep {', '\\newcite {', '\\newcite* {']
     look_eqn = ['\\eqref{']
     look += look_eqn
     k = -1
@@ -415,7 +416,7 @@ def process_labels(s: str, **kwargs) -> str:
 
 def process_ref(s: str, **kwargs) -> str:
     """
-    Process references, same as cites, replaces by numbers.
+    Process references, same as cites, replace by numbers.
 
     :param s: Latex string code
     :return: String with numbers instead of references.
@@ -448,7 +449,7 @@ def process_ref(s: str, **kwargs) -> str:
 
 def remove_comments(s: str, **kwargs) -> str:
     """
-    Remove comments from text.
+    Remove comments from the text.
 
     :param s: Latex string code
     :return: String without comments
@@ -465,7 +466,7 @@ def remove_comments(s: str, **kwargs) -> str:
     line_merge: List[bool] = []
     for r in range(len(k)):
         sp = k[r].split('%')
-        k[r] = sp[0]  # Removes all comments from list
+        k[r] = sp[0]  # Removes all comments from the list
         line_merge.append(len(sp) > 1)
     line_merge.append(False)
     line_merge2: List[bool] = line_merge.copy()
@@ -558,7 +559,7 @@ def simple_replace(s: str, **kwargs) -> str:
                 added_s = True
             elif tex_tags[k][2] < i < tex_tags[k][3]:
                 new_s += s[i]
-            elif i == tex_tags[k][3]:  # Advance to other tag
+            elif i == tex_tags[k][3]:  # Advance to another tag
                 new_s += s[i]
                 k += 1
                 added_s = False
@@ -882,7 +883,7 @@ def remove_commands_param(
 
     :param s: Latex string code
     :param lang: Language tag of the code
-    :param invalid_commands: Invalid commands that will not call output_text_for_some_commands. If ``None`` use defaults
+    :param invalid_commands: Invalid commands that will not call output_text_for_some_commands. If ``None`` use default
     :return: Code with removed chars
     """
     tex_tags = ut.find_tex_commands(s)
