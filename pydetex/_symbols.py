@@ -793,7 +793,6 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\supsetneq', '⊋'),
     ('\\swarrow', '↙'),
     ('\\tau', 'τ'),
-    ('\\text', ''),
     ('\\textasciimacron', '¯'),
     ('\\textbardbl', '‖'),
     ('\\textbrokenbar', '¦'),
@@ -816,7 +815,7 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\textquoteleft', '‘'),
     ('\\textquoteright', '’'),
     ('\\textreferencemark', '※'),
-    ('\\textregistered', '®'),
+    ('\\textsuperscript{\\textregistered}', '®'),
     ('\\textrquill', '⁆'),
     ('\\textsuperscript{1}', '¹'),
     ('\\textsuperscript{2}', '²'),
@@ -874,3 +873,12 @@ REPLACE_TEX_COMMANDS_LIBRARY: List[Tuple[str, str]] = [
     ('\\Yup', '⅄'),
     ('\\zeta', 'ζ')
 ]
+
+# Add conflicting tokens
+for _ in [
+    ('\\textregistered', '®'),
+]:
+    REPLACE_TEX_COMMANDS_LIBRARY.append(_)
+
+# Add final token for text
+REPLACE_TEX_COMMANDS_LIBRARY.append(('\\text', ''))
