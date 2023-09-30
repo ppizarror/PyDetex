@@ -230,7 +230,7 @@ def open_file(f: str) -> str:
     :param f: Filename
     :return: File content
     """
-    o = open(f, 'r', encoding='utf-8')
+    o = open(f, encoding='utf-8')
     text = ''.join(o.readlines())
     o.close()
     return text

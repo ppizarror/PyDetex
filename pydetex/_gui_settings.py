@@ -327,7 +327,7 @@ class Settings(object):
             """
             _load = []
             try:
-                _f = open(_SETTINGS_FILE[0], 'r')
+                _f = open(_SETTINGS_FILE[0])
                 _load = _f.readlines()
                 _f.close()
             except FileNotFoundError:

@@ -14,6 +14,7 @@ from tkinter import filedialog
 from tkinter import ttk
 from tkinter import messagebox
 
+import ctypes
 import os
 import pyperclip
 import requests
@@ -80,6 +81,12 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         # Creates the window
         # ----------------------------------------------------------------------
+        if os.name == 'nt':
+            # noinspection PyBroadException
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(1)
+            except Exception:
+                ctypes.windll.user32.SetProcessDPIAware()
         self._root = tk.Tk()
 
         # Dictionary
@@ -164,9 +171,9 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         # Commands buttons
         # ----------------------------------------------------------------------
-        command_btn_packx = 15  # margin px
+        command_btn_packx = 15  # Margin px
         f3 = tk.Frame(self._root, border=2)
-        f3.pack(pady=(window_size[4], window_size[4] + 5))
+        f3.pack(pady=(window_size[4], window_size[4]))
 
         # Process
         self._process_button = ut.Button(f3, text=ut.button_text(self._cfg.lang('process')),
@@ -338,7 +345,7 @@ class PyDetexGUI(object):
 
     def _process_cursor_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
         """
-        Process cursor on input text.
+        Process cursor on the input text.
 
         :param event: Event
         :return: Event
@@ -348,7 +355,7 @@ class PyDetexGUI(object):
 
     def _process_focusin_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
         """
-        Process focus in on input text.
+        Process focus in on the input text.
 
         :param event: Event
         :return: Event
@@ -358,7 +365,7 @@ class PyDetexGUI(object):
 
     def _process_focusout_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
         """
-        Process focus out on input text.
+        Process focus out on the input text.
 
         :param event: Event
         :return: Event
@@ -577,7 +584,7 @@ class PyDetexGUI(object):
 
     def _process_final(self, words: int = 0) -> None:
         """
-        Function executed after process finished.
+        Function executed after the process finished.
 
         :param words: Total processed words
         """
@@ -759,7 +766,7 @@ class PyDetexGUI(object):
 
     def _about(self) -> None:
         """
-        Show about window.
+        Show about' window.
         """
         _, _, ver = self._check_version()
         # f'{self._cfg.lang("about_author")}: {pydetex.__author__}\n\n' \
@@ -775,7 +782,7 @@ class PyDetexGUI(object):
 
     def _check_version(self) -> Tuple[bool, str, str]:
         """
-        Check software version.
+        Check the software version.
 
         :return: (Needs software update, new version, version text about)
         """

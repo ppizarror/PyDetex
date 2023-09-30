@@ -269,7 +269,7 @@ def check_repeated_words(
         if w in ignored_words:
             w = ''
 
-        # Check if the word exist on list
+        # Check if the word exists on the list
         if w in wordswin and w != '':
             ww = wordswin[::-1].index(w) + 1
             stemmed_word = tokenize(original_w)
@@ -344,7 +344,7 @@ def get_phrase_from_cursor(s: str, pos_init: int, pos_end: int) -> str:
     """
     assert pos_init <= pos_end
 
-    # Get first word
+    # Get the first word
     s0, i, _ = get_word_from_cursor(s, pos_init)
     j = i
 
