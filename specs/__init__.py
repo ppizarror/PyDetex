@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 SPECS
-Defines spec constructor.
+Define spec constructor.
 """
 
 __all__ = [
@@ -79,7 +79,7 @@ excluded_modules = [
 def _append_to_datas(datas: list, file_path: str, target_folder: str,
                      base_target_folder: str = 'pydetex', relative: bool = True) -> None:
     """
-    Add path to datas.
+    Add a path to datas.
 
     :param datas: Data list
     :param file_path: File path
