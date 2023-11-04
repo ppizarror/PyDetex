@@ -673,7 +673,7 @@ class PyDetexGUI(object):
         if self._settings_window:
             self._settings_window.root.lift()
             return
-        self._settings_window = gui_ut.SettingsWindow((420, 330), self._cfg)
+        self._settings_window = gui_ut.SettingsWindow((420, 350), self._cfg)
         self._settings_window.on_destroy = self._close_settings
         try:
             # self._settings_window.root.mainloop(1)
