@@ -459,6 +459,7 @@ def remove_comments(s: str, **kwargs) -> str:
     s = s.replace('\\\\', newline_symbol)
     s = s.replace('\\%', _TAG_PERCENTAGE_SYMBOL)
     s = s.replace('\\\n', '\n')
+    # s = s.replace('%\n', '')
     k = s.split('\n')
 
     for r in range(len(k)):
@@ -714,53 +715,53 @@ def output_text_for_some_commands(
     # The font format is like .... [font tag]YOUR TAG {[font content]YOUR CONTENT} ...[font normal]. In that case, tag to be
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
-    commands: List[Tuple[str, List[Tuple[int, bool]], Union[str, Callable[[str, ...], str]], int, Optional[str], Optional[str], Tuple[bool, bool]]] = [
-        ('ac', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
-        ('acf', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
-        ('acl', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
-        ('acs', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),  # Acronym
-        ('cancel', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
-        ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), 1, None, None, (False, True)),
-        ('chapter', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('chapter*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('doublequotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
-        ('em', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
-        ('emph', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
-        ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
-        ('frac', [(1, False), (2, False)], '{0}/{1}', 2, 'normal', 'normal', (False, False)),
-        ('hl', [(1, False)], '{0}', 1, 'normal', 'hl', (False, False)),
-        ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), 2, None, None, (False, False)),
-        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 3, None, None, (False, True)),  # (Template) Informe
-        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, False)),  # (Template) Informe
-        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 4, None, None, (False, True)),  # (Template) Informe
-        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), 5, None, None, (False, True)),  # (Template) Informe
-        ('institutionentry', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
-        ('institutionentryshort', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 4, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
-        ('lowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
-        ('MakeLowercase', [(1, False)], lambda t: t.lower(), 1, 'normal', 'normal', (False, False)),
-        ('MakeUppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False)),
-        ('otherentry', [(1, False), (2, False)], '{0} {1}', 2, 'normal', 'normal', (False, False)),  # (Template) Professional-CV
-        ('paragraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('quotes', [(1, False)], lambda t: '"{0}"'.format(t), 1, 'normal', 'normal', (False, False)),
-        ('section', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('section*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('so', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
-        ('sout', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
-        ('st', [(1, False)], '{0}', 1, 'normal', 'strike', (False, False)),
-        ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), 1, None, None, (False, True)),
-        ('subparagraph', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsubsubsection', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('subsubsubsection*', [(1, False)], '{0}', 1, 'normal', 'bold', (True, True)),
-        ('text', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
-        ('textbf', [(1, False)], '{0}', 1, 'normal', 'bold', (False, False)),
-        ('textit', [(1, False)], '{0}', 1, 'normal', 'italic', (False, False)),
-        ('texttt', [(1, False)], '{0}', 1, 'normal', 'normal', (False, False)),
-        ('underline', [(1, False)], '{0}', 1, 'normal', 'underline', (False, False)),
-        ('uppercase', [(1, False)], lambda t: t.upper(), 1, 'normal', 'normal', (False, False))
+    commands: List[Tuple[str, List[Tuple[int, bool]], Union[str, Callable[[str, ...], str]], Optional[str], Optional[str], Tuple[bool, bool]]] = [
+        ('ac', [(1, False)], '{0}', 'normal', 'normal', (False, False)),  # Acronym
+        ('acf', [(1, False)], '{0}', 'normal', 'normal', (False, False)),  # Acronym
+        ('acl', [(1, False)], '{0}', 'normal', 'normal', (False, False)),  # Acronym
+        ('acs', [(1, False)], '{0}', 'normal', 'normal', (False, False)),  # Acronym
+        ('cancel', [(1, False)], '{0}', 'normal', 'strike', (False, False)),
+        ('caption', [(1, False)], LANG_TT_TAGS.get(lang, 'caption'), None, None, (False, True)),
+        ('chapter', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('chapter*', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('doublequotes', [(1, False)], lambda t: '"{0}"'.format(t), 'normal', 'normal', (False, False)),
+        ('em', [(1, False)], '{0}', 'normal', 'bold', (False, False)),
+        ('emph', [(1, False)], '{0}', 'normal', 'italic', (False, False)),
+        ('enquote', [(1, False)], lambda t: '"{0}"'.format(t), 'normal', 'normal', (False, False)),
+        ('frac', [(1, False), (2, False)], '{0}/{1}', 'normal', 'normal', (False, False)),
+        ('hl', [(1, False)], '{0}', 'normal', 'hl', (False, False)),
+        ('href', [(2, False)], LANG_TT_TAGS.get(lang, 'link'), None, None, (False, False)),
+        ('insertimage', [(3, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
+        ('insertimage', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, False)),  # (Template) Informe
+        ('insertimageboxed', [(4, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
+        ('insertimageboxed', [(5, False)], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
+        ('institutionentry', [(1, False), (2, False), (3, False), (4, False)], '{0} ({1}-{2}). {3}', 'normal', 'normal', (False, False)),  # (Template) Professional-CV
+        ('institutionentrynodate', [(1, False), (2, False)], '{0}. {3}', 'normal', 'normal', (False, False)),  # (Template) Professional-CV
+        ('lowercase', [(1, False)], lambda t: t.lower(), 'normal', 'normal', (False, False)),
+        ('MakeLowercase', [(1, False)], lambda t: t.lower(), 'normal', 'normal', (False, False)),
+        ('MakeUppercase', [(1, False)], lambda t: t.upper(), 'normal', 'normal', (False, False)),
+        ('otherentry', [(1, False), (2, False)], '{0} {1}', 'normal', 'normal', (False, False)),  # (Template) Professional-CV
+        ('paragraph', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('quotes', [(1, False)], lambda t: '"{0}"'.format(t), 'normal', 'normal', (False, False)),
+        ('section', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('section*', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('so', [(1, False)], '{0}', 'normal', 'normal', (False, False)),
+        ('sout', [(1, False)], '{0}', 'normal', 'strike', (False, False)),
+        ('st', [(1, False)], '{0}', 'normal', 'strike', (False, False)),
+        ('subfloat', [(1, True)], LANG_TT_TAGS.get(lang, 'sub_figure_title'), None, None, (False, True)),
+        ('subparagraph', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsection', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsection*', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsubsection', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsubsection*', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsubsubsection', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('subsubsubsection*', [(1, False)], '{0}', 'normal', 'bold', (True, True)),
+        ('text', [(1, False)], '{0}', 'normal', 'normal', (False, False)),
+        ('textbf', [(1, False)], '{0}', 'normal', 'bold', (False, False)),
+        ('textit', [(1, False)], '{0}', 'normal', 'italic', (False, False)),
+        ('texttt', [(1, False)], '{0}', 'normal', 'normal', (False, False)),
+        ('underline', [(1, False)], '{0}', 'normal', 'underline', (False, False)),
+        ('uppercase', [(1, False)], lambda t: t.upper(), 'normal', 'normal', (False, False))
     ]
     new_s = ''
 
@@ -769,12 +770,15 @@ def output_text_for_some_commands(
     for c in cmd_args:
         for cmd in commands:
             if c[0] == cmd[0]:
-                _, cmd_args, cmd_tag, total_commands, font_tag, font_content, cmd_newline = cmd
+                _, cmd_args, cmd_tag, font_tag, font_content, cmd_newline = cmd
+                total_arguments = len(cmd_args)
+                for cc in cmd_args:
+                    total_arguments = max(cc[0], total_arguments)
                 if font_tag is None:
                     font_tag = 'tex_text_tag'
                 if font_content is None:
                     font_content = 'tex_text_tag_content'
-                if len(c) - 1 == total_commands:
+                if len(c) - 1 == total_arguments:
                     args = []
                     for j in cmd_args:
                         cmd_argnum, cmd_is_optional = j
@@ -782,8 +786,7 @@ def output_text_for_some_commands(
                             argv = c[cmd_argnum][0].replace('\n', ' ')  # Command's argument to process
                             argv = remove_commands_param(argv, lang)  # Remove commands within the argument
                             argv = argv.strip()
-                            if argv != '':
-                                args.append(argv)
+                            args.append(argv)
                     if len(args) == len(cmd_args):
                         # Add format text
                         for a in range(len(args)):

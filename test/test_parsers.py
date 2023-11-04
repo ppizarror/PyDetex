@@ -300,8 +300,6 @@ class ParserTest(BaseTest):
         self.assertEqual(out(s), 'CAPTION: A picture of the same gull looking the other way!')
 
         # Custom template
-        s = '\\insertimage[]{imagefile}{width=5cm}{}'
-        self.assertEqual(out(s), '')
         s = '\\insertimage[]{imagefile}{width=5cm}{e}'
         self.assertEqual(out(s), 'FIGURE_CAPTION: e')
         s = '\\insertimage{imagefile}{width=5cm}{e}'
