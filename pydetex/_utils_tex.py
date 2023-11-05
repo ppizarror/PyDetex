@@ -462,8 +462,7 @@ def get_tex_commands_args(
         if len(command) == 0:
             command.append(s[a + 1:b + 1].strip())
         arg = s[c - 1:d + 2]
-        optional = '[' in arg
-        command.append((arg[1:-1], optional))
+        command.append((arg[1:-1], len(arg) != 0 and arg[0] == '['))
         if not cont:
             if pos:
                 command.append((a, d + 2))

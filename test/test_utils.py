@@ -432,6 +432,10 @@ class UtilsTest(BaseTest):
         s = 'This is \\subfloat[a title]'
         self.assertEqual(ut.get_tex_commands_args(s), (('subfloat', ('a title', True)),))
         self.assertEqual(ut.get_tex_commands_args(s, True), (('subfloat', ('a title', True), (8, 26)),))
+        s = 'This is \\command{[not_optional]}'
+        self.assertEqual(ut.get_tex_commands_args(s), (('command', ('[not_optional]', False)),))
+        s = 'This is \\command [optional]'
+        self.assertEqual(ut.get_tex_commands_args(s), (('command', ('optional', True)),))
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
