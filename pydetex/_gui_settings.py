@@ -374,12 +374,12 @@ class Settings(object):
 
         # Stores default settings and the valid values
         self._available_pipelines = list(_PIPELINES.keys())
-        self._valid_font_sizes = [9, 10, 11, 12, 13, 14, 15]
+        self._valid_font_sizes = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
         self._valid_window_sizes = list(_WINDOW_SIZE.keys())
 
         self._default_settings = {
             self.CFG_CHECK_REPETITION: (False, bool, [True, False]),
-            self.CFG_FONT_SIZE: (12 if ut.IS_OSX else 11, int, self._valid_font_sizes),
+            self.CFG_FONT_SIZE: (11 if ut.IS_OSX else 10, int, self._valid_font_sizes),
             self.CFG_LANG: ('en', str, self._lang.get_available()),
             self.CFG_LAST_OPENED_DAY: (ut.get_number_of_day(), int, lambda x: x >= 0),
             self.CFG_LAST_OPENED_FOLDER: ('/', str, lambda x: os.path.isdir(x)),
