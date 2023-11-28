@@ -52,6 +52,14 @@ setup(
     packages=find_packages(exclude=['test']),
     python_requires='>=3.7, <4',
     install_requires=requirements,
+    entry_points={
+        'console_scripts': [
+            'pydetex = pydetex.gui:main',
+        ],
+        'gui_scripts': [
+            'pydetex = pydetex.gui:main',
+        ]
+    },
     extras_require={
         'docs': ['sphinx<7', 'sphinx-autodoc-typehints>=1.2.0', 'sphinx-rtd-theme'],
         'installer': ['pyinstaller==4.10'],

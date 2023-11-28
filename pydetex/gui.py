@@ -6,7 +6,7 @@ GUI
 Basic gui that convers and executes a given pipeline.
 """
 
-__all__ = ['PyDetexGUI']
+__all__ = ['PyDetexGUI', 'main']
 
 import concurrent.futures
 import tkinter as tk
@@ -815,5 +815,12 @@ class PyDetexGUI(object):
             )
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """
+    Main app entry.
+    """
     PyDetexGUI().start()
+
+
+if __name__ == '__main__':
+    main()

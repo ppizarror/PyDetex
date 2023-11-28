@@ -5,6 +5,6 @@ https://github.com/ppizarror/PyDetex
 MAIN FILE
 """
 
-from pydetex.gui import PyDetexGUI
+from pydetex.gui import main
 
-PyDetexGUI().start()
+main()
