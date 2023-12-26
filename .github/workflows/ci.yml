@@ -34,10 +34,10 @@ jobs:
           - windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           cache: pip
           python-version: 3.8
@@ -52,7 +52,7 @@ jobs:
         run: python build.py pyinstaller
 
       - name: Upload release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: PyDetex-${{ matrix.os }}-v${{ env.PYDETEX_VERSION }}
           path: dist/out_zip
