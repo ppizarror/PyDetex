@@ -3,7 +3,7 @@ PyDetex
 https://github.com/ppizarror/PyDetex
 
 GUI
-Basic gui that convers and executes a given pipeline.
+Basic gui that executes a given pipeline.
 """
 
 __all__ = ['PyDetexGUI', 'main']
