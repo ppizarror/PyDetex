@@ -530,6 +530,7 @@ def find_tex_commands_noargv(s: str) -> Tuple[Tuple[int, int], ...]:
         # noinspection PyUnresolvedReferences
         found[k] = tuple(found[k])
 
+    # noinspection PyTypeChecker
     return tuple(found)
 
 
