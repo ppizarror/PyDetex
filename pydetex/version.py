@@ -17,7 +17,7 @@ class Version(tuple):
     __slots__ = ()
     fields = 'major', 'minor', 'patch'
 
-    def __new__(cls, major, minor, patch) -> 'Version':
+    def __new__(cls, major, minor, patch) -> tuple:
         return tuple.__new__(cls, (major, minor, patch))
 
     def __repr__(self) -> str:
@@ -32,6 +32,6 @@ class Version(tuple):
     patch = property(lambda self: self[2])
 
 
-vernum = Version(1, 0, 8)
+vernum = Version(1, 0, 9)
 ver = str(vernum)
 rev = ''

@@ -1,9 +1,9 @@
-beautifulsoup4 >= 4.11.1
+beautifulsoup4 >= 4.12.2
 flatlatex >= 0.15
 langdetect >= 1.0.9
-nltk >= 3.7
+nltk >= 3.8.1
 outdated >= 0.2.2
-PyMultiDictionary>=1.2.3
+PyMultiDictionary>=1.2.4
 pyperclip >= 1.8.2
-requests >= 2.28.1
+requests >= 2.31.0
 tkmacosx >= 1.0.5
