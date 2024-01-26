@@ -63,7 +63,7 @@ setup(
     extras_require={
         'docs': ['sphinx<7', 'sphinx-autodoc-typehints>=1.2.0', 'sphinx-rtd-theme'],
         'installer': ['pyinstaller==4.10'],
-        'test': ['nose2[coverage_plugin]']
+        'test': ['nose2[coverage_plugin]', 'pytest']
     },
     setup_requires=[
         'setuptools',
