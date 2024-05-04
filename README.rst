@@ -56,7 +56,7 @@ and run it on `Repl.it <https://repl.it/github/ppizarror/PyDetex>`_
 Introduction
 ------------
 
-PyDetex is a Python application that transforms LaTeX code to plain text. It has multiple
+PyDetex is a Python application that transforms LaTeX code into plain text. It has multiple
 language support (15+), detects repeated words, offers a dictionary (synonyms, antonyms,
 definitions), and many things more to come!
 
@@ -87,13 +87,13 @@ Simply run this command anywhere to execute the application.
     :scale: 40%
     :align: center
 
-    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste into Google Docs, an email, or Grammarly ＼(^o^)／
+    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste it into Google Docs, an email, or Grammarly ＼(^o^)／
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_strict.png
     :scale: 40%
     :align: center
 
-    **(Strict Pipeline)** The strict pipeline removes all commands, or replaces by some known tags.
+    **(Strict Pipeline)** The strict pipeline removes all commands or replaces them with some known tags.
     
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/pydetex_windows.png
@@ -103,7 +103,7 @@ Simply run this command anywhere to execute the application.
     Multiple options to configure: Check repeated words, highlight undetected code, or use different pipelines.
 
 You can also import the library, and use the parsers (methods that take latex code
-and perform a single task) or the pipelines (combination of parsers). For more
+and perform a single task) or the pipelines (a combination of parsers). For more
 information, please visit the `documentation <https://pydetex.readthedocs.io>`_.
 
 .. code-block:: python
@@ -117,7 +117,7 @@ TO-DOs
 
 Currently, many things must be improved:
 
-- Add synthax checking for several languages, like `language-check <https://github.com/myint/language-check>`_.
+- Add syntax checking for several languages, like `language-check <https://github.com/myint/language-check>`_.
 - Custom support for environments, such as *table*.
 
 Author
