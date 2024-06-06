@@ -58,7 +58,7 @@ Introduction
 
 PyDetex is a Python application that transforms LaTeX code into plain text. It has multiple
 language support (15+), detects repeated words, offers a dictionary (synonyms, antonyms,
-definitions), and many things more to come!
+definitions), and many more things to come!
 
 Comprehensive documentation for the latest version (if you plan to use the API)
 is available at https://pydetex.readthedocs.io
@@ -66,18 +66,18 @@ is available at https://pydetex.readthedocs.io
 Install Instructions
 --------------------
 
-PyDetex can be installed via pip, for both MacOS, Windows & Linux. Simply run:
+PyDetex can be installed via pip for MacOS, Windows & Linux. Simply run:
 
 .. code-block:: bash
 
     $> python3 pip install pydetex -U
 
-Also, there're compiled binaries for Windows (x64) and macOS available through GitHub releases.
+Also, compiled binaries for Windows (x64) and macOS are available through GitHub releases.
 
-Launch the GUI, or use the library
+Launch the GUI or use the library.
 ----------------------------------
 
-Simply run this command anywhere to execute the application.
+Run this command anywhere to execute the application.
 
 .. code-block:: bash
 
@@ -102,7 +102,7 @@ Simply run this command anywhere to execute the application.
 
     Multiple options to configure: Check repeated words, highlight undetected code, or use different pipelines.
 
-You can also import the library, and use the parsers (methods that take latex code
+You can also import the library and use the parsers (methods that take latex code
 and perform a single task) or the pipelines (a combination of parsers). For more
 information, please visit the `documentation <https://pydetex.readthedocs.io>`_.
 
