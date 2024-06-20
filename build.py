@@ -18,7 +18,7 @@ if mode == 'pyinstaller':
     # Check upx
     upx = ''
     if sys.platform == 'win32' and sys_arch == 64:
-        upx = '--upx-dir build/upx_64'
+        upx = '--upx-dir specs'
     pyinstaller = f'python -m PyInstaller' if sys.platform == 'win32' else 'pyinstaller'
 
     # os.system(f'{pyinstaller} specs/PyDetex_Win.spec --noconfirm {upx}')
