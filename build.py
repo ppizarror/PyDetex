@@ -10,7 +10,7 @@ import shutil
 import struct
 import sys
 
-assert len(sys.argv) == 2, 'Argument is required, usage: build.py pyinstaller/pip/twine/gource'
+assert len(sys.argv) == 2, 'Argument is required, usage: build.py pyinstaller/pip/twine'
 mode = sys.argv[1].strip()
 sys_arch = struct.calcsize('P') * 8
 
@@ -21,7 +21,6 @@ if mode == 'pyinstaller':
         upx = '--upx-dir specs'
     pyinstaller = f'python -m PyInstaller' if sys.platform == 'win32' else 'pyinstaller'
 
-    # os.system(f'{pyinstaller} specs/PyDetex_Win.spec --noconfirm {upx}')
     os.system(f'{pyinstaller} specs/PyDetex_Win_Single.spec --noconfirm {upx}')
     os.system(f'{pyinstaller} specs/PyDetex_macOS.spec --noconfirm')
 
@@ -45,10 +44,6 @@ elif mode == 'twine':
         os.system(f'python -m twine upload dist/pip/*')
     else:
         raise FileNotFoundError('Not distribution been found, execute build.py pip')
-
-elif mode == 'gource':
-    os.system('gource -s 0.25 --title PyDetex --disable-auto-rotate --key '
-              '--highlight-users --disable-bloom --multi-sampling -w --transparent --path ./')
 
 else:
     raise ValueError(f'Unknown mode {mode}')
