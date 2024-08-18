@@ -3,6 +3,7 @@ flatlatex >= 0.15
 langdetect >= 1.0.9
 nltk >= 3.8.1
 outdated >= 0.2.2
+Pillow >= 9.4.0
 PyMultiDictionary>=1.2.4
 pyperclip >= 1.8.2
 requests >= 2.31.0
