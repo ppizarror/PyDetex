@@ -77,7 +77,7 @@ Also, compiled binaries for Windows (x64) and macOS are available through GitHub
 Launch the GUI or use the library.
 ----------------------------------
 
-Run this command anywhere to execute the application.
+You can just run this command anywhere to execute the application.
 
 .. code-block:: bash
 
@@ -87,7 +87,7 @@ Run this command anywhere to execute the application.
     :scale: 40%
     :align: center
 
-    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex, and paste it into Google Docs, an email, or Grammarly ＼(^o^)／
+    **(Simple Pipeline)** Tadada... !!! A simple GUI to process your LaTex and paste it into Google Docs, an email, or Grammarly ＼(^o^)／
 
 .. figure:: https://raw.githubusercontent.com/ppizarror/pydetex/master/docs/_static/example_strict.png
     :scale: 40%
