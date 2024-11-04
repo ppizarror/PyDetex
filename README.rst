@@ -1,3 +1,4 @@
+
 =======
 PyDetex
 =======
@@ -74,8 +75,8 @@ PyDetex can be installed via pip for MacOS, Windows & Linux. Simply run:
 
 Also, compiled binaries for Windows (x64) and macOS are available through GitHub releases.
 
-Launch the GUI or use the library.
-----------------------------------
+Launch the GUI or use the library
+---------------------------------
 
 You can just run this command anywhere to execute the application.
 
