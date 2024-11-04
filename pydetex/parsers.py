@@ -715,7 +715,9 @@ def output_text_for_some_commands(
     # The font format is like .... [font tag]YOUR TAG {[font content]YOUR CONTENT} ...[font normal]. In that case, tag to be
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
-    commands: List[Tuple[str, List[Union[int, Tuple[int, bool]]], Union[str, Callable[[str, ...], str]], Optional[str], Optional[str], Tuple[bool, bool]]] = [
+    commands: List[Tuple[
+        str, List[Union[int, Tuple[int, bool]]], Union[str, Callable[[str, ...], str]], Optional[str], Optional[str],  # type: ignore
+        Tuple[bool, bool]]] = [
         ('ac', [1], '{0}', 'normal', 'normal', (False, False)),  # Acronym
         ('acf', [1], '{0}', 'normal', 'normal', (False, False)),  # Acronym
         ('acl', [1], '{0}', 'normal', 'normal', (False, False)),  # Acronym
@@ -732,11 +734,16 @@ def output_text_for_some_commands(
         ('hl', [1], '{0}', 'normal', 'hl', (False, False)),
         ('href', [2], LANG_TT_TAGS.get(lang, 'link'), None, None, (False, False)),
         ('insertimage', [3], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
-        ('insertimage', [4], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, False)),  # (Template) Informe
-        ('insertimageboxed', [4], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
-        ('insertimageboxed', [5], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),  # (Template) Informe
-        ('institutionentry', [1, 2, 3, 4], '{0} ({1}-{2}). {3}', 'normal', 'normal', (False, False)),  # (Template) Professional-CV
-        ('institutionentrynodate', [1, 2], '{0}. {3}', 'normal', 'normal', (False, False)),  # (Template) Professional-CV
+        ('insertimage', [4], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, False)),
+        # (Template) Informe
+        ('insertimageboxed', [4], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),
+        # (Template) Informe
+        ('insertimageboxed', [5], LANG_TT_TAGS.get(lang, 'figure_caption'), None, None, (False, True)),
+        # (Template) Informe
+        ('institutionentry', [1, 2, 3, 4], '{0} ({1}-{2}). {3}', 'normal', 'normal', (False, False)),
+        # (Template) Professional-CV
+        ('institutionentrynodate', [1, 2], '{0}. {3}', 'normal', 'normal', (False, False)),
+        # (Template) Professional-CV
         ('lowercase', [1], lambda t: t.lower(), 'normal', 'normal', (False, False)),
         ('MakeLowercase', [1], lambda t: t.lower(), 'normal', 'normal', (False, False)),
         ('MakeUppercase', [1], lambda t: t.upper(), 'normal', 'normal', (False, False)),

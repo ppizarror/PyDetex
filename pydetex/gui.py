@@ -16,6 +16,7 @@ from tkinter import messagebox
 
 import ctypes
 import os
+import platform
 import pyperclip
 import requests
 import string
@@ -25,7 +26,7 @@ import traceback
 from nltk.tokenize import RegexpTokenizer
 from outdated import check_outdated
 from PyMultiDictionary import MultiDictionary
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 from warnings import warn
 
 sys.path.append('../')
@@ -36,6 +37,7 @@ import pydetex.pipelines as pip
 import pydetex.utils as ut
 import pydetex.version
 
+from pydetex import __url_bug_tracker__
 from pydetex._fonts import FONT_TAGS
 from pydetex._gui_settings import Settings
 
@@ -138,7 +140,7 @@ class PyDetexGUI(object):
         self._tab_spaces = 4
 
         # In text
-        f1 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
+        f1 = tk.Frame(self._root, width=window_size[0], height=window_size[2])
         f1.pack(fill='both', padx=10)
         f1.pack_propagate(False)
 
@@ -157,7 +159,7 @@ class PyDetexGUI(object):
         self._text_in.tab_spaces = self._tab_spaces
 
         # Out text
-        f2 = tk.Frame(self._root, border=0, width=window_size[0], height=window_size[2])
+        f2 = tk.Frame(self._root, width=window_size[0], height=window_size[2])
         f2.pack(fill='both', padx=10, pady=(window_size[3], 0))
         f2.pack_propagate(False)
 
@@ -199,7 +201,7 @@ class PyDetexGUI(object):
         # ----------------------------------------------------------------------
         # Status bar
         # ----------------------------------------------------------------------
-        ttk.Separator(self._root, orient='horizontal').pack(side='top', fill='x')
+        ttk.Separator(self._root).pack(side='top', fill='x')
         status_fg = '#999999' if ut.IS_OSX else '#666666'
 
         f4 = tk.Frame(self._root, width=window_size[0], height=26)
@@ -208,27 +210,32 @@ class PyDetexGUI(object):
 
         # Detected language
         show_status = 0.2 if window_size[0] > 750 else 0
-        self._status_bar_lang = gui_ut.make_label(f4, w=window_size[0] * (0.4 + (0.2 - show_status)), h=20,
-                                                  side=tk.LEFT, fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W,
-                                                  pad=(0, 0, 0, 10), separator=True)
+        self._status_bar_lang = gui_ut.make_label(
+            f4, w=window_size[0] * (0.4 + (0.2 - show_status)), h=20,
+            side=tk.LEFT, fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W,
+            pad=(0, 0, 0, 10), separator=True)
 
         # Status
-        self._status_bar_status = gui_ut.make_label(f4, w=window_size[0] * show_status, h=20, side=tk.LEFT,
-                                                    fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
-                                                    separator=True)
+        self._status_bar_status = gui_ut.make_label(
+            f4, w=window_size[0] * show_status, h=20, side=tk.LEFT,
+            fg=status_fg, bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
+            separator=True)
 
         # Cursor
-        self._status_bar_cursor = gui_ut.make_label(f4, w=window_size[0] * 0.11, h=20, side=tk.LEFT, fg=status_fg,
-                                                    bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+        self._status_bar_cursor = gui_ut.make_label(
+            f4, w=window_size[0] * 0.11, h=20, side=tk.LEFT, fg=status_fg,
+            bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
 
         # Cursor selected
-        self._status_bar_cursor_sel = gui_ut.make_label(f4, w=window_size[0] * 0.14, h=20, side=tk.LEFT, fg=status_fg,
-                                                        bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
-                                                        separator=True)
+        self._status_bar_cursor_sel = gui_ut.make_label(
+            f4, w=window_size[0] * 0.14, h=20, side=tk.LEFT, fg=status_fg,
+            bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5),
+            separator=True)
 
         # Total processed words
-        self._status_bar_words = gui_ut.make_label(f4, w=window_size[0] * 0.15, h=20, side=tk.LEFT, fg=status_fg,
-                                                   bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
+        self._status_bar_words = gui_ut.make_label(
+            f4, w=window_size[0] * 0.15, h=20, side=tk.LEFT, fg=status_fg,
+            bd=0, relief=tk.SUNKEN, anchor=tk.W, pad=(0, 0, 0, 5))
 
         # ----------------------------------------------------------------------
         # Final settings
@@ -240,10 +247,18 @@ class PyDetexGUI(object):
         self._clip = True
         try:
             pyperclip.paste()
-        except pyperclip.PyperclipException:
+        except Exception as e:
             self._clip = False
-            error = 'pyperclip is not available on your system (copy/paste mechanism). GUI buttons were disabled'
-            warn(error)
+            pyperclip_error: str = 'pyperclip is not available on your system (copy/paste mechanism). '
+            if os.getenv('XDG_SESSION_TYPE') == 'wayland':
+                pyperclip_error += 'Please install package "wl-clipboard"'
+            elif platform.system() == 'Linux':
+                pyperclip_error += 'On Linux, install "xclip" or "xsel"'
+            else:
+                pyperclip_error += (f'An unrecognized error happened ({e}). '
+                                    f'Please create a new issue on {__url_bug_tracker__}')
+            pyperclip_error += 'GUI buttons have been disabled'
+            warn(pyperclip_error)
             self._process_clip_button['state'] = tk.DISABLED
             self._copy_clip_button['state'] = tk.DISABLED
 
@@ -262,6 +277,21 @@ class PyDetexGUI(object):
         # Finals
         self._text_out['state'] = tk.DISABLED
         self._root.update()
+
+    def __after(self, ms: int, func: Callable) -> str:
+        """
+        Executes function after some milliseconds.
+
+        :param ms: Time delay
+        :param func: Function to be executed
+        :return: Call ID
+        """
+        try:
+            # noinspection PyTypeChecker
+            return self._root.after(ms, func)
+        except tk.TclError:
+            pass
+        return ''
 
     def _open_file(self) -> None:
         """
@@ -318,7 +348,7 @@ class PyDetexGUI(object):
             self._root.after_cancel(self._status_clear_event_id)
         self._status_bar_status['text'] = text
         if clear:
-            self._status_clear_event_id = self._root.after(clear_time, self._status_clear)
+            self._status_clear_event_id = self.__after(clear_time, self._status_clear)
 
     def _status_clear(self) -> None:
         """
@@ -339,7 +369,7 @@ class PyDetexGUI(object):
 
         if event.char in string.printable and event.char != '':
             self._status(self._cfg.lang('status_writing'), True, 1000)
-        self._detect_language_event_id = self._root.after(100, self._detect_language)
+        self._detect_language_event_id = self.__after(100, self._detect_language)
         self._process_cursor_in(event)
         return event
 
@@ -350,7 +380,7 @@ class PyDetexGUI(object):
         :param event: Event
         :return: Event
         """
-        self._root.after(50, self._process_cursor_event)
+        self.__after(50, self._process_cursor_event)
         return event
 
     def _process_focusin_in(self, event: Optional['tk.Event']) -> Optional['tk.Event']:
@@ -460,8 +490,8 @@ class PyDetexGUI(object):
         """
         # noinspection PyProtectedMember
         if self._cfg._last_opened_day_diff >= 7:
-            self._root.after(1000, self._check_version_event)
-        self._root.after(100, lambda: self._root.lift())
+            self.__after(1000, self._check_version_event)
+        self.__after(100, lambda: self._root.lift())
         self._text_in.redraw()
         self._text_out.redraw()
         self._root.mainloop()
@@ -510,7 +540,7 @@ class PyDetexGUI(object):
             self._root['cursor'] = 'wait'
         except tk.TclError:
             pass
-        self._root.after(1, lambda: self._process_inner())
+        self.__after(1, lambda: self._process_inner())
 
     def _process_inner(self) -> None:
         """
