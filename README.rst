@@ -124,4 +124,4 @@ Currently, many things must be improved:
 Author
 ------
 
-`Pablo Pizarro R. <https://ppizarror.com>`_ | 2021 - 2024
+`Pablo Pizarro R. <https://ppizarror.com>`_ | 2021 - 2025

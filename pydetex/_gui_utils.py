@@ -245,6 +245,7 @@ class SettingsWindow(object):
         self._var_pipeline_replace_defs.set(self._cfg.get(self._cfg.CFG_PIPELINE_REPLACE_DEFS))
         ttk.Checkbutton(f, variable=self._var_pipeline_replace_defs).pack(side=tk.LEFT)
 
+    # noinspection PyTypeChecker
     def _cfg_words_repetition(self, tab: 'ttk.Frame') -> None:
         """
         Set words repetition config.
@@ -470,7 +471,7 @@ class DictionaryGUI(object):
         f0.pack(fill='both')
 
         # Word
-        f = tk.Frame(f0, border=0)
+        f = tk.Frame(f0)
         f.pack(fill='both', pady=5)
         tk.Label(f, text=self._cfg.lang('dictionary_word'), width=5, anchor='w').pack(side=tk.LEFT, padx=(5, 9))
 
@@ -478,7 +479,7 @@ class DictionaryGUI(object):
         self._word.pack(side=tk.LEFT)
 
         # Add commands
-        f = tk.Frame(f0, border=0)
+        f = tk.Frame(f0)
         f.pack(fill='both', pady=(5, 2))
         btn_width = 9
         btn_pad = 5 if ut.IS_OSX else 15
@@ -496,7 +497,7 @@ class DictionaryGUI(object):
         # tk.Button(f, text=self._cfg.lang('dictionary_translation'), command=self._meaning, relief=tk.GROOVE, width=7).pack()
 
         # Out text
-        f = tk.Frame(f0, border=0, width=window_size[0], height=50)
+        f = tk.Frame(f0, width=window_size[0], height=50)
         f.pack(fill='both', pady=(5, 0))
         f.pack_propagate()
 
@@ -594,6 +595,7 @@ class DictionaryGUI(object):
                 after = 50
             self._query_active[key] += 1
             if self._query_active[key] <= self._query_repeat_after * self._query_max_trials:
+                # noinspection PyTypeChecker
                 self._query_events_id[key] = self.root.after(after, master)
             else:
                 self._write(self._cfg.lang('dictionary_timeout'))
@@ -711,6 +713,7 @@ class DictionaryGUI(object):
             stemmer = ut.make_stemmer(self._lang)
             if stemmer is not None and self._stemmer:
                 word = stemmer.stem(word)
+            # noinspection PyTypeChecker
             self.root.after(50, lambda: self._word.insert(0, word))
         except tk.TclError:
             pass
@@ -783,6 +786,7 @@ class RichText(tk.Text):
 
         # Add line numbers
         self._lnums = None
+        # noinspection PyTypeChecker
         if add_line_numbers:
             self._lnums = TextLineNumbers(add_line_numbers, width=40,
                                           bg=line_numbers_bg_color,
@@ -800,6 +804,7 @@ class RichText(tk.Text):
 
             # noinspection PyUnusedLocal
             def on_press_delay(*args):
+                # noinspection PyTypeChecker
                 self.after(2, self._lnums.redraw)
 
             self.bind('<MouseWheel>', on_press_delay)
@@ -1163,7 +1168,7 @@ class BorderedFrame(tk.Frame):
 
     def __init__(self, master, bordercolor=None, borderleft=0, bordertop=0, borderright=0, borderbottom=0,
                  interiorwidget=tk.Frame, **kwargs):
-        tk.Frame.__init__(self, master, background=bordercolor, bd=0, highlightthickness=0)
+        tk.Frame.__init__(self, master, background=bordercolor)
 
         self.interior = interiorwidget(self, **kwargs)
         self.interior.pack(padx=(borderleft, borderright), pady=(bordertop, borderbottom))
@@ -1222,10 +1227,10 @@ def make_label_ttk(
 
 def make_label(
     master: Union['tk.Tk', 'tk.Frame'],
-    h: int,
-    w: int,
+    h: Union[int, float],
+    w: Union[int, float],
     *args,
-    side: 'str',
+    side: str,
     pad: Tuple[int, int, int, int] = (0, 0, 0, 0),
     separator: bool = False,
     **kwargs
