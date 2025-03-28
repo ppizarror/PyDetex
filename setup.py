@@ -11,7 +11,8 @@ import pydetex
 
 # Load readme
 with open('README.rst', encoding='utf-8') as f:
-    long_description = f.read()
+    long_description: str = f.read()
+    long_description = long_description.split('Install Instructions')[0].strip()
 
 # Load requirements
 with open('requirements.txt', encoding='utf-8') as f:
