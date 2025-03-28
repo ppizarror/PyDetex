@@ -239,7 +239,7 @@ def process_cite(
     cite_separator: str = ', ',
     **kwargs
 ) -> str:
-    """
+    r"""
     Transforms all cites to a text-based with numbers. For example,
     ``'This is from \cite{Pizarro}'`` to ``'This is from [1]'``.
 
@@ -329,7 +329,7 @@ def process_citeauthor(
     lang: str,
     **kwargs
 ) -> str:
-    """
+    r"""
     Transforms all citeauthor to [cite]. For example:
     ``'This is from \citeauthor{Pizarro}, and that is from \citeauthor{cite1, cite2}'`` to
     ``'This is from [author], and that is from [authors]'``.
@@ -541,7 +541,7 @@ def simple_replace(s: str, **kwargs) -> str:
     s = s[0:len(s) - 1].replace(invalid_tag, '')
 
     # Replace equation symbols
-    s = s.replace('\$', _TAG_DOLLAR_SYMBOL)
+    s = s.replace(r'\$', _TAG_DOLLAR_SYMBOL)
     tex_tags = ut.find_tex_command_char(s, ut.TEX_EQUATION_CHARS)
     new_s = ''
     k = 0  # Moves through tags
@@ -628,7 +628,7 @@ def process_inputs(
                 tex_file = s[k + m + 1:k + j]
                 if '.tex' not in tex_file:
                     tex_file += '.tex'
-                if tex_file not in _NOT_FOUND_FILES and '\jobname' not in tex_file:
+                if tex_file not in _NOT_FOUND_FILES and r'\jobname' not in tex_file:
                     if not _PRINT_LOCATION:
                         if print_:
                             print(f'Current path location:\n\t{os.getcwd()}')
@@ -716,7 +716,8 @@ def output_text_for_some_commands(
     # relaced is 'YOUR TAG {0}, {1}
     # All *arguments will be formatted using the tag
     commands: List[Tuple[
-        str, List[Union[int, Tuple[int, bool]]], Union[str, Callable[[str, ...], str]], Optional[str], Optional[str],  # type: ignore
+        str, List[Union[int, Tuple[int, bool]]], Union[str, Callable[[str, ...], str]], Optional[str], Optional[
+            str],  # type: ignore
         Tuple[bool, bool]]] = [
         ('ac', [1], '{0}', 'normal', 'normal', (False, False)),  # Acronym
         ('acf', [1], '{0}', 'normal', 'normal', (False, False)),  # Acronym
@@ -1017,7 +1018,7 @@ def unicode_chars_equations(s: str, **kwargs) -> str:
                 if not added_s:
                     k_s: str = s[tex_tags[k][1]:tex_tags[k][2] + 1]
                     k_s_tex = ut.tex_to_unicode(k_s)
-                    k_s_tex = k_s_tex.replace('\{', _TAG_BRACE_OPEN).replace('\}', _TAG_BRACE_CLOSE)
+                    k_s_tex = k_s_tex.replace(r'\{', _TAG_BRACE_OPEN).replace(r'\}', _TAG_BRACE_CLOSE)
                     new_s += k_s_tex
                 added_s = True
             elif tex_tags[k][2] < i < tex_tags[k][3]:
@@ -1114,7 +1115,7 @@ def process_def(
     replace: bool = False,
     **kwargs
 ) -> str:
-    """
+    r"""
     Process \defs. Store the definition, among others.
 
     :param s: Latex with definitions
@@ -1288,9 +1289,7 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         :param x: Number
         :return: Number format by depth
         """
-        if depth % 5 == 0:
-            return f'{line}{x}. '
-        elif depth % 5 == 1:
+        if depth % 5 == 1:
             x = _int_to_alph(x).lower()
             return f'{line}{x}) '
         elif depth % 5 == 2:
@@ -1302,6 +1301,7 @@ def _process_item(s: str, t: str, depth: int = 0) -> str:
         elif depth % 5 == 4:
             x = _int_to_roman(x).upper()
             return f'{line}{x}. '
+        return f'{line}{x}. '
 
     def _itm() -> str:
         """

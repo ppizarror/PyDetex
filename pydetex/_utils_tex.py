@@ -51,16 +51,16 @@ TEX_COMMAND_CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
                      'W', 'X', 'Y', 'Z', '*', '@']
 TEX_EQUATION_CHARS = [
     ('$', '$', True),
-    ('\(', '\)', False),
-    ('\[', '\]', False),
-    ('\\begin{align*}', '\end{align*}', False),
-    ('\\begin{align}', '\end{align}', False),
-    ('\\begin{displaymath}', '\end{displaymath}', False),
+    (r'\(', r'\)', False),
+    (r'\[', r'\]', False),
+    ('\\begin{align*}', '\\end{align*}', False),
+    ('\\begin{align}', '\\end{align}', False),
+    ('\\begin{displaymath}', '\\end{displaymath}', False),
     ('\\begin{equation*}', '\\end{equation*}', False),
     ('\\begin{equation}', '\\end{equation}', False),
     ('\\begin{gather*}', '\\end{gather*}', False),
     ('\\begin{gather}', '\\end{gather}', False),
-    ('\\begin{math}', '\end{math}', False)
+    ('\\begin{math}', '\\end{math}', False)
 ]
 
 
@@ -348,7 +348,7 @@ def _find_tex_env_recursive(original_s: str, s: str, offset: int = 0, depth: int
 
 
 def find_tex_environments(s: str) -> Tuple[Tuple[str, int, int, int, int, str, int, int], ...]:
-    """
+    r"""
     Find all tex commands within a code.
 
     Example:
@@ -441,7 +441,7 @@ def get_tex_commands_args(
     s: str,
     pos: bool = False
 ) -> Tuple[Tuple[Union[str, Tuple[str, bool], Tuple[int, int]], ...], ...]:
-    """
+    r"""
     Get all the arguments from a tex command. Each command argument has a boolean
     indicating if that is optional or not.
 
