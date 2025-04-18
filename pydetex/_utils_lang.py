@@ -346,12 +346,14 @@ def get_phrase_from_cursor(s: str, pos_init: int, pos_end: int) -> str:
 
     # Get the first word
     s0, i, _ = get_word_from_cursor(s, pos_init)
-    j = i
+    # noinspection PyUnusedLocal
+    j: int = i
 
     if s[pos_end].strip() == '':  # Is empty, find the previous word
         for k in range(1, pos_end):
             _k = pos_end - k
             if s[_k].strip() != '':
+                # noinspection PyUnusedLocal
                 j = _k + 1
                 break
     else:

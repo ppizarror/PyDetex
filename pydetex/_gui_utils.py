@@ -36,6 +36,7 @@ import pydetex.utils as ut
 from pydetex._gui_settings import Settings as _Settings
 
 
+# noinspection PyTypeChecker
 class SettingsWindow(object):
     """
     Settings window.
@@ -416,7 +417,7 @@ class SettingsWindow(object):
             self.close()
 
 
-# noinspection PyProtectedMember
+# noinspection PyProtectedMember,PyTypeChecker
 class DictionaryGUI(object):
     """
     Dictionary gui.
@@ -562,9 +563,7 @@ class DictionaryGUI(object):
         :param event: Event
         :return: Event
         """
-        # noinspection PyUnresolvedReferences
-        if event.char == '':
-            return event
+        return event if event.char == '' else None
 
     def _get_word(self) -> str:
         """
@@ -633,7 +632,7 @@ class DictionaryGUI(object):
         self._query_thread(key, _process, self._meaning, self._get_word())
         data = self._query_output_pop(key)
         if data is None:
-            return
+            return None
         style, mean, wiki = data
         if mean == '':
             return self._write(self._cfg.lang('dictionary_no_results'))
@@ -648,6 +647,7 @@ class DictionaryGUI(object):
             self._text_out.insert('end', f'{self._cfg.lang("dictionary_wikipedia")}:\n', 'italic')
             self._text_out.insert('end', f'{wiki}', 'normal')
         self._text_out['state'] = tk.DISABLED
+        return None
 
     def _synonym(self) -> None:
         """
@@ -666,16 +666,16 @@ class DictionaryGUI(object):
         self._query_thread(key, _process, self._synonym, self._get_word())
         syn = self._query_output_pop(key)
         if syn is None:
-            return
-        if len(syn) == 0:
+            return None
+        elif len(syn) == 0:
             return self._write(self._cfg.lang('dictionary_no_results'))
-        self._write(', '.join(syn))
+        return self._write(', '.join(syn))
 
     def _antonym(self) -> None:
         """
         Word aynonym.
         """
-        key = 'antonym'
+        key: str = 'antonym'
 
         def _process(word: str):
             self._query_output[key] = self._dictionary.antonym(self._lang, word)
@@ -685,10 +685,10 @@ class DictionaryGUI(object):
         self._query_thread(key, _process, self._antonym, self._get_word())
         ant = self._query_output_pop(key)
         if ant is None:
-            return
-        if len(ant) == 0:
+            return None
+        elif len(ant) == 0:
             return self._write(self._cfg.lang('dictionary_no_results'))
-        self._write(', '.join(ant))
+        return self._write(', '.join(ant))
 
     def _write(self, text: str) -> None:
         """
@@ -727,7 +727,7 @@ class DictionaryGUI(object):
         self.root.destroy()
 
 
-# noinspection PyShadowingNames,PyMissingOrEmptyDocstring
+# noinspection PyShadowingNames,PyMissingOrEmptyDocstring,PyTypeChecker
 class RichText(tk.Text):
     """
     Rich text.
@@ -1191,6 +1191,7 @@ def center_window(root: 'tk.Tk', window_size: Union[Tuple[int, int], List[int]])
                                        (root.winfo_screenheight() - window_size[1]) / 2))
 
 
+# noinspection PyTypeChecker
 def make_label_ttk(
     master: Union['tk.Tk', 'tk.Frame'],
     h: int,
@@ -1225,6 +1226,7 @@ def make_label_ttk(
     return labelvar
 
 
+# noinspection PyTypeChecker
 def make_label(
     master: Union['tk.Tk', 'tk.Frame'],
     h: Union[int, float],

@@ -76,6 +76,7 @@ class PyDetexGUI(object):
     _text_out: 'gui_ut.RichText'
     _tokenizer: 'RegexpTokenizer'
 
+    # noinspection PyTypeChecker
     def __init__(self) -> None:
         """
         Constructor.
@@ -309,7 +310,7 @@ class PyDetexGUI(object):
         try:
             filename_dir = os.path.dirname(filename)
         except TypeError:  # Linux
-            return
+            return None
         self._cfg.set(self._cfg.CFG_LAST_OPENED_FOLDER, filename_dir)
         try:
             text = ut.open_file(filename)
@@ -319,6 +320,7 @@ class PyDetexGUI(object):
             os.chdir(filename_dir)
         except PermissionError:
             pass
+        return None
 
     def _insert_in(self, text: str, clear: bool = False) -> None:
         """
@@ -457,9 +459,7 @@ class PyDetexGUI(object):
         :param event: Event
         :return: Event
         """
-        # noinspection PyUnresolvedReferences
-        if event.char == '':
-            return event
+        return event if event.char == '' else None
 
     def _detect_language(self) -> None:
         """
@@ -610,7 +610,7 @@ class PyDetexGUI(object):
         self._text_out.insert_highlighted_text(out, True, font_format)
 
         # Final
-        self._process_final(words)
+        return self._process_final(words)
 
     def _process_final(self, words: int = 0) -> None:
         """
@@ -646,7 +646,7 @@ class PyDetexGUI(object):
         Process from clipboard. Tries with pooling.
         """
         if not self._clip:
-            return
+            return None
 
         def _paste():
             return pyperclip.paste()
@@ -669,14 +669,14 @@ class PyDetexGUI(object):
                 self._paste_timeout_error = 0
                 error = f'Paste process failed after {_MAX_PASTE_RETRY} attempts'
                 warn(error)
-            return
+            return None
 
         self._paste_timeout_error = 0
         text = text.strip()
         if text == '':
             return self._status(self._cfg.lang('clip_empty'), True)
         self._insert_in(text, True)
-        self._process()
+        return self._process()
 
     def _get_pipeline_results(self) -> str:
         """

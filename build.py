@@ -11,12 +11,12 @@ import struct
 import sys
 
 assert len(sys.argv) == 2, 'Argument is required, usage: build.py pyinstaller/pip/twine'
-mode = sys.argv[1].strip()
-sys_arch = struct.calcsize('P') * 8
+mode: str = sys.argv[1].strip()
+sys_arch: int = struct.calcsize('P') * 8
 
 if mode == 'pyinstaller':
     # Check upx
-    upx = ''
+    upx: str = ''
     if sys.platform == 'win32' and sys_arch == 64:
         upx = '--upx-dir specs'
     pyinstaller = f'python -m PyInstaller' if sys.platform == 'win32' else 'pyinstaller'
