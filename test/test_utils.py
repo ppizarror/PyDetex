@@ -436,6 +436,16 @@ class UtilsTest(BaseTest):
         self.assertEqual(ut.get_tex_commands_args(s), (('command', ('[not_optional]', False)),))
         s = 'This is \\command [optional]'
         self.assertEqual(ut.get_tex_commands_args(s), (('command', ('optional', True)),))
+        s = """
+        \institutionentry{\msc \lng{%
+            en Ciencias, Mención Computación}{in Computer Science%
+        }}{2021}{2023}{\lng{%
+            Desarrollo de pipelines de aprendizaje profundo para vectorización, reconstrucción geométrica y evaluación de datos visuales a gran escala%
+        }{%
+            Developed deep learning pipelines for vectorization, geometric reconstruction, and evaluation of large-scale visual data%
+        }\short{.}\\full{, \\thesistitle[196842]{Wall polygon retrieval from architectural floor plan images using vectorization and deep learning methods}} \\firstclass{2023}}
+        """
+        self.assertEqual(len(ut.get_tex_commands_args(s)[0]), 5)
 
     def test_find_tex_commands_no_argv(self) -> None:
         """
